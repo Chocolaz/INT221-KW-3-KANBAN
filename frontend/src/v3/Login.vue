@@ -54,6 +54,8 @@
 import { useRouter } from 'vue-router'
 import VueJwtDecode from 'vue-jwt-decode'
 
+const baseUrl = import.meta.env.VITE_API_URL2
+
 export default {
   setup() {
     const router = useRouter()
@@ -70,7 +72,7 @@ export default {
   methods: {
     async login() {
       try {
-        const response = await fetch('http://localhost:8080/login', {
+        const response = await fetch(`${baseUrl}/login`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
