@@ -49,7 +49,7 @@ public class UserController {
 
         // If there are validation errors, return them all
         if (!errors.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("message", String.join(", ", errors)));
+            return ResponseEntity.badRequest().body(Map.of("error", String.join(", ", errors)));
         }
 
         // If validation passes, proceed with authentication
@@ -60,7 +60,7 @@ public class UserController {
             String token = jwtTokenUtil.generateToken(user);
             return ResponseEntity.ok(Map.of("access_token", token));
         } else {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "The username or password is incorrect."));
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "The username or password is incorrect."));
         }
     }
 }
