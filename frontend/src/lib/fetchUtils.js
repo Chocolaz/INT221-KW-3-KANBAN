@@ -1,7 +1,17 @@
+import { useRouter } from 'vue-router'
+
 const baseUrl = import.meta.env.VITE_API_URL
+
+const router = useRouter()
 
 const handleResponse = async (response) => {
   if (!response.ok) {
+    if (response.status === 401) {
+      // Reset authentication state and redirect to login page
+      localStorage.removeItem('isAuthenticated')
+      localStorage.removeItem('token')
+      router.push('/login')
+    }
     throw new Error(`HTTP error! Status: ${response.status}`)
   }
   const responseData = await response.json()
@@ -10,8 +20,13 @@ const handleResponse = async (response) => {
 
 const fetchData = async (url, taskId = null) => {
   try {
+    const token = localStorage.getItem('token')
     const fullUrl = taskId ? `${baseUrl}/${url}/${taskId}` : `${baseUrl}/${url}`
-    const response = await fetch(fullUrl)
+    const response = await fetch(fullUrl, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
     const responseData = await handleResponse(response)
     if (taskId) {
       responseData.data.taskId = taskId
@@ -25,10 +40,12 @@ const fetchData = async (url, taskId = null) => {
 
 const postData = async (url, data) => {
   try {
+    const token = localStorage.getItem('token')
     const response = await fetch(`${baseUrl}/${url}`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(data)
     })
@@ -43,10 +60,12 @@ const postData = async (url, data) => {
 
 const putData = async (url, data) => {
   try {
+    const token = localStorage.getItem('token')
     const response = await fetch(`${baseUrl}/${url}`, {
       method: 'PUT',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
       },
       body: JSON.stringify(data)
     })
@@ -61,8 +80,12 @@ const putData = async (url, data) => {
 
 const deleteData = async (url) => {
   try {
+    const token = localStorage.getItem('token')
     const response = await fetch(`${baseUrl}/${url}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
     const responseData = await handleResponse(response)
     console.log('Data deleted successfully. Status code:', response.status)
@@ -75,8 +98,12 @@ const deleteData = async (url) => {
 
 const deleteAndTransferData = async (url, newId) => {
   try {
+    const token = localStorage.getItem('token')
     const response = await fetch(`${baseUrl}/${url}/${newId}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
     })
     const responseData = await handleResponse(response)
     console.log(

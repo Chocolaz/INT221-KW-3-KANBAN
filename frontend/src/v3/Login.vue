@@ -70,6 +70,7 @@ export default {
     }
   },
   methods: {
+    // Method to handle the login process
     async login() {
       try {
         const response = await fetch(`${baseUrl}/login`, {
@@ -89,7 +90,7 @@ export default {
           this.showError = false
           localStorage.setItem('isAuthenticated', 'true')
 
-          // เก็บ token
+          // Store token
           if (data.access_token) {
             this.decodeAndLogToken(data.access_token)
             localStorage.setItem('token', data.access_token)
@@ -110,12 +111,32 @@ export default {
         this.showError = true
         this.errorMessage = 'There is a problem. Please try again later.'
       }
+
       if (this.showError) {
         setTimeout(() => {
           this.showError = false
         }, 3000)
       }
     },
+
+    // Utility method to make requests with the stored token
+    async requestWithToken(url, options = {}) {
+      const token = localStorage.getItem('token')
+      const headers = {
+        ...options.headers,
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+
+      const response = await fetch(url, {
+        ...options,
+        headers
+      })
+
+      return response
+    },
+
+    // Method to decode the token and store the username
     decodeAndLogToken(token) {
       try {
         const decodedToken = VueJwtDecode.decode(token)
