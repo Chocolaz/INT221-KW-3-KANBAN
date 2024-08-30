@@ -33,12 +33,12 @@ public class JwtTokenUtil {
         information.put("role", user.getRole());
 
         return Jwts.builder()
-                .setHeaderParam("typ", "JWT") // Explicitly set the token type as JWT
+                .setHeaderParam("typ", "JWT")
                 .setClaims(information)
-                .setIssuer("https://intproj23.sit.kmutt.ac.th/kw3/") // Set the correct issuer
+                .setIssuer("https://intproj23.sit.kmutt.ac.th/kw3/")
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
-                .signWith(secretKey) // Sign with HS256
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -48,5 +48,19 @@ public class JwtTokenUtil {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+    }
+
+    public String getUsernameFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        return claims.get("email", String.class);
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
