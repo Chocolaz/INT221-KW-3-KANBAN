@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import TaskList from './components/TaskList.vue'
 import StatusList from './v2/StatusList.vue'
 import Login from './v3/Login.vue'
+import BoardAdd from './v3/BoardAdd.vue'
 
 const routes = [
   {
@@ -34,6 +35,13 @@ const routes = [
     component: Login
   },
   {
+
+    //add board
+    path: '/board/add',
+    name: 'boardAdd',
+    component: BoardAdd
+  },
+  {
     path: '/',
     redirect: '/task'
   },
@@ -41,6 +49,7 @@ const routes = [
     path: '/:pathMatch(.*)*',
     redirect: '/task'
   }
+  
 ]
 
 const router = createRouter({

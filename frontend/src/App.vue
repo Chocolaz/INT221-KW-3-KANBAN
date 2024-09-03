@@ -27,3 +27,4 @@ const showNavbar = computed(() => {
   background-color: #ffff;
 }
 </style>
+
