@@ -1,17 +1,16 @@
 package com.example.integradeproject.controllers;
 
-import com.example.integradeproject.dtos.*;
-import com.example.integradeproject.project_management.pmEntitities.Task2;
+import com.example.integradeproject.project_management.pm_dtos.NewTask2DTO;
+import com.example.integradeproject.project_management.pm_dtos.Task2DTO;
+import com.example.integradeproject.project_management.pm_dtos.Task2IdDTO;
+import com.example.integradeproject.project_management.pm_entities.Task2;
 import com.example.integradeproject.services.ListMapper;
 import com.example.integradeproject.services.Task2Service;
 import com.example.integradeproject.services.TaskValidator;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;

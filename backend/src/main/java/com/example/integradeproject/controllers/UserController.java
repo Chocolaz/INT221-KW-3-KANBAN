@@ -1,9 +1,9 @@
 package com.example.integradeproject.controllers;
 
 import com.example.integradeproject.security.JwtTokenUtil;
-import com.example.integradeproject.user_account.LoginRequest;
-import com.example.integradeproject.user_account.User;
-import com.example.integradeproject.user_account.UserRepository;
+import com.example.integradeproject.user_account.ua_dtos.UserLoginDTO;
+import com.example.integradeproject.user_account.ua_entities.User;
+import com.example.integradeproject.user_account.ua_repositories.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,7 +30,7 @@ public class UserController {
     private JwtTokenUtil jwtTokenUtil;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> login(@RequestBody UserLoginDTO loginRequest) {
         List<String> errors = new ArrayList<>();
 
         // Validate username

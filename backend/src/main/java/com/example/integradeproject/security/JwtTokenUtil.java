@@ -1,6 +1,6 @@
 package com.example.integradeproject.security;
 
-import com.example.integradeproject.user_account.User;
+import com.example.integradeproject.user_account.ua_entities.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -63,4 +63,19 @@ public class JwtTokenUtil {
             return false;
         }
     }
+
+    public User getUserFromToken(String token) {
+        return null ;
+    }
+    public String getNameFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        return claims.get("name", String.class); // Assuming "name" is stored in the token
+    }
+    public String getUidFromToken(String token) {
+        Claims claims = getClaimsFromToken(token);
+        return claims.get("oid", String.class); // Ensure this returns a String
+    }
+
+
+
 }

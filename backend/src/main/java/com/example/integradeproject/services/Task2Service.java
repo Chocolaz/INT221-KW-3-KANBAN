@@ -1,12 +1,12 @@
 package com.example.integradeproject.services;
 
-import com.example.integradeproject.dtos.NewTask2DTO;
-import com.example.integradeproject.dtos.StatusDTO;
-import com.example.integradeproject.dtos.Task2DTO;
-import com.example.integradeproject.project_management.pmEntitities.Status;
-import com.example.integradeproject.project_management.pmEntitities.Task2;
-import com.example.integradeproject.project_management.pmRepositories.StatusRepository;
-import com.example.integradeproject.project_management.pmRepositories.Task2Repository;
+import com.example.integradeproject.project_management.pm_dtos.NewTask2DTO;
+import com.example.integradeproject.project_management.pm_dtos.StatusDTO;
+import com.example.integradeproject.project_management.pm_dtos.Task2DTO;
+import com.example.integradeproject.project_management.pm_entities.Status;
+import com.example.integradeproject.project_management.pm_entities.Task2;
+import com.example.integradeproject.project_management.pm_repositories.StatusRepository;
+import com.example.integradeproject.project_management.pm_repositories.Task2Repository;
 import jakarta.transaction.Transactional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,36 +112,7 @@ public class Task2Service {
         return createdTaskDTO;
     }
 
-//    public NewTask2DTO createTask(NewTask2DTO newTask2DTO) {
-//        // Validate the title
-//        if (newTask2DTO.getTitle() == null || newTask2DTO.getTitle().trim().isEmpty()) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title cannot be null or empty");
-//        }
-//        //สร้าง instance
-//        Task2 task = new Task2();
-//        task.setTitle(newTask2DTO.getTitle());
-//        task.setDescription(newTask2DTO.getDescription());
-//        task.setAssignees(newTask2DTO.getAssignees());
-//
-//        if (newTask2DTO.getStatusName() != null) {
-//            try {
-//                int statusId = Integer.parseInt(newTask2DTO.getStatusName());
-//                // ถ้าพบ Status จะตั้งค่าให้ task
-//                Status status = statusRepository.findById(statusId)
-//                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status Id " + statusId + " DOES NOT EXIST !!!"));
-//                task.setStatusId(status);
-//            } catch (NumberFormatException e) {
-//                throw new IllegalArgumentException("Invalid status ID format");
-//            }
-//        }
-//
-//
-//        Task2 savedTask = repository.save(task);
-//        NewTask2DTO createdTaskDTO = mapper.map(savedTask, NewTask2DTO.class);
-//        createdTaskDTO.setStatusName(savedTask.getStatusId().getStatusName());
-//
-//        return createdTaskDTO;
-//    }
+
 public NewTask2DTO updateTask(Integer taskId, NewTask2DTO newTask2DTO) {
     // Validate title
     if (newTask2DTO.getTitle() == null || newTask2DTO.getTitle().trim().isEmpty()) {

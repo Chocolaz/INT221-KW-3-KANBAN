@@ -1,6 +1,6 @@
 package com.example.integradeproject.services;
 
-import com.example.integradeproject.dtos.NewTask2DTO;
+import com.example.integradeproject.project_management.pm_dtos.NewTask2DTO;
 import com.example.integradeproject.exceptions.InvalidTaskDataException;
 
 public class TaskValidator {

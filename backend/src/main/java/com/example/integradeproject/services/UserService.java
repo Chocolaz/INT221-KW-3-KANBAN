@@ -1,12 +1,10 @@
 
 package com.example.integradeproject.services;
 
-import com.example.integradeproject.user_account.User;
-import com.example.integradeproject.user_account.UserRepository;
+import com.example.integradeproject.user_account.ua_entities.User;
+import com.example.integradeproject.user_account.ua_repositories.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;

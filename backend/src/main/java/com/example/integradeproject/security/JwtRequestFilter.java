@@ -51,21 +51,22 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                 request.setAttribute("jwt_error", "JWT Token is invalid");
             }
         } else {
-            logger.warn("JWT Token does not begin with Bearer String");
             request.setAttribute("jwt_error", "JWT Token is missing or invalid");
         }
 
-        // If we got username, then token is valid
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = new org.springframework.security.core.userdetails.User(username, "", new ArrayList<>());
 
-            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
-                    userDetails, null, userDetails.getAuthorities());
-            usernamePasswordAuthenticationToken
-                    .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+            if (jwtTokenUtil.validateToken(jwtToken)) {
+                UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(
+                        userDetails, null, userDetails.getAuthorities());
+                usernamePasswordAuthenticationToken
+                        .setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                SecurityContextHolder.getContext().setAuthentication(usernamePasswordAuthenticationToken);
+            }
         }
 
         chain.doFilter(request, response);
     }
+
 }

@@ -1,10 +1,10 @@
 package com.example.integradeproject.services;
 
-import com.example.integradeproject.dtos.StatusDTO;
-import com.example.integradeproject.project_management.pmEntitities.Status;
-import com.example.integradeproject.project_management.pmEntitities.Task2;
-import com.example.integradeproject.project_management.pmRepositories.StatusRepository;
-import com.example.integradeproject.project_management.pmRepositories.Task2Repository;
+import com.example.integradeproject.project_management.pm_dtos.StatusDTO;
+import com.example.integradeproject.project_management.pm_entities.Status;
+import com.example.integradeproject.project_management.pm_entities.Task2;
+import com.example.integradeproject.project_management.pm_repositories.StatusRepository;
+import com.example.integradeproject.project_management.pm_repositories.Task2Repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;

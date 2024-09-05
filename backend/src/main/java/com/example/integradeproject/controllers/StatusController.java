@@ -1,7 +1,7 @@
 package com.example.integradeproject.controllers;
 
-import com.example.integradeproject.dtos.StatusDTO;
-import com.example.integradeproject.project_management.pmEntitities.Status;
+import com.example.integradeproject.project_management.pm_dtos.StatusDTO;
+import com.example.integradeproject.project_management.pm_entities.Status;
 import com.example.integradeproject.services.ListMapper;
 import com.example.integradeproject.services.StatusService;
 import org.modelmapper.ModelMapper;
