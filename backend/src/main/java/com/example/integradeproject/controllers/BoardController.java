@@ -3,15 +3,19 @@ package com.example.integradeproject.controllers;
 import com.example.integradeproject.project_management.pm_dtos.BoardDTO;
 import com.example.integradeproject.project_management.pm_dtos.NewTask2DTO;
 import com.example.integradeproject.project_management.pm_dtos.Task2DTO;
+import com.example.integradeproject.project_management.pm_entities.Board;
+import com.example.integradeproject.project_management.pm_entities.Status;
 import com.example.integradeproject.services.BoardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v3/boards")
@@ -39,6 +43,7 @@ public class BoardController {
                     .body(Map.of("error", "Failed to create board: " + e.getMessage()));
         }
     }
+   
 
     @GetMapping("")
     public ResponseEntity<?> getBoards(@RequestHeader("Authorization") String token) {
@@ -125,7 +130,7 @@ public class BoardController {
         String jwtToken = token.substring(7);
         try {
             boardService.deleteTask(boardId, taskId, jwtToken);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to delete task: " + e.getMessage()));

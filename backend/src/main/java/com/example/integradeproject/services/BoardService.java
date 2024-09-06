@@ -8,8 +8,11 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,6 +35,7 @@ public class BoardService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Transactional
     public BoardDTO createBoard(String boardName, String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
         String ownerName = jwtTokenUtil.getNameFromToken(token);
@@ -42,7 +46,31 @@ public class BoardService {
 
         Board savedBoard = boardRepository.save(board);
 
+        // Create default statuses
+        List<Status> defaultStatuses = createDefaultStatuses(savedBoard);
+        statusRepository.saveAll(defaultStatuses);
+
         return convertToDTO(savedBoard, ownerName);
+    }
+
+    private List<Status> createDefaultStatuses(Board board) {
+        List<String> defaultStatusNames = Arrays.asList("No Status", "To Do", "In Progress", "Done");
+        List<String> defaultStatusDescriptions = Arrays.asList(
+                "The default status",
+                "The task is included in the project",
+                "The task is being worked on",
+                "Finished"
+        );
+
+        List<Status> statuses = new ArrayList<>();
+        for (int i = 0; i < defaultStatusNames.size(); i++) {
+            Status status = new Status();
+            status.setStatusName(defaultStatusNames.get(i));
+            status.setStatusDescription(defaultStatusDescriptions.get(i));
+            status.setBoardId(board);
+            statuses.add(status);
+        }
+        return statuses;
     }
 
     public List<BoardDTO> getBoardsForUser(String token) {
