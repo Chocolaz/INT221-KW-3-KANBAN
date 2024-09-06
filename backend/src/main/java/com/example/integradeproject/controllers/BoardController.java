@@ -3,19 +3,15 @@ package com.example.integradeproject.controllers;
 import com.example.integradeproject.project_management.pm_dtos.BoardDTO;
 import com.example.integradeproject.project_management.pm_dtos.NewTask2DTO;
 import com.example.integradeproject.project_management.pm_dtos.Task2DTO;
-import com.example.integradeproject.project_management.pm_entities.Board;
-import com.example.integradeproject.project_management.pm_entities.Status;
 import com.example.integradeproject.services.BoardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v3/boards")
@@ -43,7 +39,6 @@ public class BoardController {
                     .body(Map.of("error", "Failed to create board: " + e.getMessage()));
         }
     }
-   
 
     @GetMapping("")
     public ResponseEntity<?> getBoards(@RequestHeader("Authorization") String token) {
