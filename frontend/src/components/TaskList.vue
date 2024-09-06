@@ -80,6 +80,10 @@ const statusStyle = (status) => {
       return { background: 'linear-gradient(to right, #D9A3FF, #B473FF)' }
     case 'IN PROGRESS':
       return { background: 'linear-gradient(to right, #FFB347, #FFA733)' }
+    case 'REVIEWING':
+      return { background: 'linear-gradient(to right, #FFB6C1, #FF69B4)' }
+    case 'TESTING':
+      return { background: 'linear-gradient(to right, #ADD8E6, #87CEEB)' }
     default:
       return { background: 'linear-gradient(to right, #A0CED9, #6CBEE6)' }
   }

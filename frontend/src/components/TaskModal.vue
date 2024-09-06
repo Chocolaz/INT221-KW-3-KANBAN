@@ -1,254 +1,174 @@
-<script>
-export default {
-  props: {
-    task: {
-      type: Object,
-      required: true
-    },
-    timezone: {
-      type: String,
-      required: true
-    },
-    createdDate: {
-      type: String,
-      required: true
-    },
-    updatedDate: {
-      type: String,
-      required: true
-    },
-    closeModal: {
-      type: Function,
-      required: true
-    }
-  }
-}
-</script>
-
 <template>
-  <div class="modal-wrapper">
-    <div class="modal">
-      <div class="modal-content">
-        <h2 class="modal-title">{{ task.title }}</h2>
+  <div
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto w-full z-50 flex items-center justify-center"
+  >
+    <div
+      class="relative text-base bg-white rounded-lg shadow-xl max-w-4xl w-full m-4 mt-20 p-6 animate-fade-in-up"
+    >
+      <div class="absolute top-4 right-4">
+        <button
+          @click="closeModal"
+          class="text-gray-400 hover:text-gray-600 transition duration-150 ease-in-out"
+        >
+          <svg
+            class="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
 
-        <div class="grid-container">
-          <!-- Description -->
-          <div class="description-box grid-item">
-            <strong>Description</strong>
-            <p class="itbkk-description">
-              <span v-if="!task.description" class="no-data"
-                >No Description Provided</span
-              >
-              <span v-else>{{ task.description }}</span>
+      <h2 class="text-2xl font-bold text-primary mb-4 pr-8 itbkk-title">
+        {{ task.title }}
+      </h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="md:col-span-2">
+          <div class="bg-gray-50 rounded-lg p-4 mb-6 h-48">
+            <h3 class="text-base font-semibold text-gray-700 mb-2">
+              Description
+            </h3>
+            <p class="text-gray-600 itbkk-description text-start">
+              {{ task.description || 'No description provided' }}
             </p>
           </div>
 
-          <!-- Timezone, Created Date, Updated Date -->
-          <div class="timezone-created-updated-box grid-item">
-            <div class="timezone-box">
-              <strong>Timezone</strong>
-              <p class="timezone itbkk-timezone">{{ timezone }}</p>
-            </div>
-
-            <div class="created-date-box">
-              <strong>Created Date</strong>
-              <p class="itbkk-created-on">{{ createdDate }}</p>
-            </div>
-
-            <div class="updated-date-box">
-              <strong>Updated Date</strong>
-              <p class="itbkk-updated-on">{{ updatedDate }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Assignees and Status -->
-        <div class="assignees-status-container">
-          <div class="assignees-box">
-            <strong>Assignees</strong>
-            <p class="itbkk-assignees">
-              <template v-if="task.assignees">{{ task.assignees }}</template>
-              <template v-else><i class="no-data">Unassigned</i></template>
-            </p>
-          </div>
-
-          <div class="status-box">
-            <strong>Status</strong>
-            <p class="itbkk-status">
-              <template v-if="task.statusName">{{ task.statusName }}</template>
-              <template v-else><i class="no-data">Unassigned</i></template>
+          <div class="bg-gray-50 rounded-lg p-4">
+            <h3 class="text-base font-semibold text-gray-700 mb-2">
+              Assignees
+            </h3>
+            <p class="text-gray-600 itbkk-assignees text-start mb-5">
+              {{ task.assignees || 'Unassigned' }}
             </p>
           </div>
         </div>
 
-        <div class="modal-buttons">
-          <button class="itbkk-button button-done" @click="closeModal">
-            Done
-          </button>
-          <button class="itbkk-button button-close" @click="closeModal">
-            Close
-          </button>
+        <div>
+          <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 class="text-base font-semibold text-gray-700 mb-2">Status</h3>
+            <span
+              class="px-3 py-1 rounded-full text-sm font-semibold itbkk-status"
+              :style="statusStyle(task.statusName)"
+            >
+              {{ task.statusName || 'Unassigned' }}
+            </span>
+          </div>
+
+          <div class="bg-gray-50 rounded-lg p-4 space-y-4">
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Timezone</h4>
+              <p class="text-gray-700 itbkk-timezone">{{ timezone }}</p>
+            </div>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Created</h4>
+              <p class="text-gray-700 itbkk-created-on">{{ createdDate }}</p>
+            </div>
+            <div>
+              <h4 class="text-sm font-medium text-gray-500">Updated</h4>
+              <p class="text-gray-700 itbkk-updated-on">{{ updatedDate }}</p>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div class="flex justify-end space-x-4">
+        <button
+          @click="closeModal"
+          class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition duration-150 ease-in-out itbkk-button"
+        >
+          Close
+        </button>
+        <button
+          @click="closeModal"
+          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-150 ease-in-out itbkk-button"
+        >
+          Done
+        </button>
       </div>
     </div>
   </div>
 </template>
 
+<script setup>
+import { defineProps } from 'vue'
+
+const props = defineProps({
+  task: {
+    type: Object,
+    required: true
+  },
+  timezone: {
+    type: String,
+    required: true
+  },
+  createdDate: {
+    type: String,
+    required: true
+  },
+  updatedDate: {
+    type: String,
+    required: true
+  },
+  closeModal: {
+    type: Function,
+    required: true
+  }
+})
+
+const statusStyle = (status) => {
+  const statusUpperCase = status?.toUpperCase() || 'NO STATUS'
+  switch (statusUpperCase) {
+    case 'TO DO':
+      return { background: 'linear-gradient(to right, #FF9A9E, #F67C5E)' }
+    case 'DOING':
+      return { background: 'linear-gradient(to right, #FFE066, #F6E05E)' }
+    case 'DONE':
+      return { background: 'linear-gradient(to right, #AAF6BE, #68D391)' }
+    case 'NO STATUS':
+      return {
+        backgroundColor: 'rgba(245, 245, 245, 0.8)',
+        color: '#888',
+        fontStyle: 'italic'
+      }
+    case 'WAITING':
+      return { background: 'linear-gradient(to right, #D9A3FF, #B473FF)' }
+    case 'IN PROGRESS':
+      return { background: 'linear-gradient(to right, #FFB347, #FFA733)' }
+    case 'REVIEWING':
+      return { background: 'linear-gradient(to right, #FFB6C1, #FF69B4)' }
+    case 'TESTING':
+      return { background: 'linear-gradient(to right, #ADD8E6, #87CEEB)' }
+    default:
+      return { background: 'linear-gradient(to right, #A0CED9, #6CBEE6)' }
+  }
+}
+</script>
+
 <style scoped>
-.modal-wrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5); 
-  z-index: 1000;
-  backdrop-filter: blur(8px); 
-  display: flex;
-  justify-content: center;
-  align-items: center;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
-.modal {
-  position: relative;
-  background-color: #fff;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  width: 900px;
-  max-height: 80vh;
-  overflow-y: auto;
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
 }
 
-.modal-content {
-  padding: 30px;
-}
-
-.close {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  font-size: 24px;
-  color: #333;
-  cursor: pointer;
-}
-
-h2 {
-  margin-top: 0;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-p {
-  margin-bottom: 15px;
-  font-size: 16px;
-}
-
-strong {
-  font-weight: bold;
-}
-
-i {
-  font-style: italic;
-}
-
-.no-data {
-  font-style: italic;
-  color: #888;
-}
-
-.timezone {
-  font-size: 14px;
-  color: #888;
-  margin-bottom: 15px;
-}
-
-.description-box {
-  width: 500px;
-  height: 200px;
-  overflow-y: auto;
-  margin-bottom: 20px;
-  padding: 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  word-wrap: break-word;
-  text-align: left;
-}
-
-.timezone-created-updated-box {
-  text-align: left;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  width: 200px;
-  padding: 15px;
-}
-
-.assignees-box,
-.status-box {
-  overflow-y: auto;
-  margin-bottom: 20px;
-  padding: 15px;
-  border: 1px solid #ccc;
-  border-radius: 8px;
-  word-wrap: break-word;
-  text-align: left;
-}
-
-.assignees-box {
-  margin-right: 10px;
-  width: calc(50% - 10px);
-}
-
-.status-box {
-  margin-left: 10px;
-  width: calc(50% - 10px);
-}
-.assignees-status-container {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.modal-title {
-  max-width: 800px;
-  word-wrap: break-word;
-  text-align: left;
-}
-
-.grid-container {
-  display: flex;
-  justify-content: space-between;
-}
-
-.grid-item {
-  margin-bottom: 20px;
-}
-
-.modal-buttons {
-  position: absolute;
-  bottom: 10px;
-  right: 30px;
-}
-
-.itbkk-button {
-  padding: 10px 20px;
-  margin-left: 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.button-done {
-  background-color: #68d391;
-  color: #fff;
-}
-
-.button-close {
-  background-color: #f67c5e;
-  color: #fff;
-}
-
-.button-done:hover,
-.button-close:hover {
-  opacity: 0.8;
+.text-primary {
+  color: #ff6b6b;
 }
 </style>
