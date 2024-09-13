@@ -8,8 +8,11 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,6 +35,7 @@ public class BoardService {
     @Autowired
     private ModelMapper modelMapper;
 
+    @Transactional
     public BoardDTO createBoard(String boardName, String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
         String ownerName = jwtTokenUtil.getNameFromToken(token);
@@ -42,9 +46,32 @@ public class BoardService {
 
         Board savedBoard = boardRepository.save(board);
 
+        // Create default statuses
+        List<Status> defaultStatuses = createDefaultStatuses(savedBoard);
+        statusRepository.saveAll(defaultStatuses);
+
         return convertToDTO(savedBoard, ownerName);
     }
 
+    private List<Status> createDefaultStatuses(Board board) {
+        List<String> defaultStatusNames = Arrays.asList("No Status", "To Do", "In Progress", "Done");
+        List<String> defaultStatusDescriptions = Arrays.asList(
+                "The default status",
+                "The task is included in the project",
+                "The task is being worked on",
+                "Finished"
+        );
+
+        List<Status> statuses = new ArrayList<>();
+        for (int i = 0; i < defaultStatusNames.size(); i++) {
+            Status status = new Status();
+            status.setStatusName(defaultStatusNames.get(i));
+            status.setStatusDescription(defaultStatusDescriptions.get(i));
+            status.setBoardId(board);
+            statuses.add(status);
+        }
+        return statuses;
+    }
     public List<BoardDTO> getBoardsForUser(String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
         String ownerName = jwtTokenUtil.getNameFromToken(token);
@@ -94,15 +121,17 @@ public class BoardService {
         task.setBoardId(board);
 
         if (newTaskDTO.getStatusName() != null) {
-            Status status = statusRepository.findByStatusName(newTaskDTO.getStatusName())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not found"));
+            Status status = statusRepository.findByStatusNameAndBoardId(newTaskDTO.getStatusName(), board);
+            if (status == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not found in this board");
+            }
             task.setStatusId(status);
         }
 
         TaskV3 savedTask = taskRepository.save(task);
         return convertToNewTaskDTO(savedTask);
     }
-
+    @Transactional
     public NewTask2DTO updateTask(String boardId, Integer taskId, NewTask2DTO updateTaskDTO, String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
         Board board = boardRepository.findByIdAndOwnerOid(boardId, ownerOid)
@@ -116,8 +145,10 @@ public class BoardService {
         task.setAssignees(updateTaskDTO.getAssignees());
 
         if (updateTaskDTO.getStatusName() != null) {
-            Status status = statusRepository.findByStatusName(updateTaskDTO.getStatusName())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not found"));
+            Status status = statusRepository.findByStatusNameAndBoardId(updateTaskDTO.getStatusName(), board);
+            if (status == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not found in this board");
+            }
             task.setStatusId(status);
         }
 
@@ -125,7 +156,7 @@ public class BoardService {
         return convertToNewTaskDTO(updatedTask);
     }
 
-    public NewTask2DTO deleteTask(String boardId, Integer taskId, String token) {
+    public void deleteTask(String boardId, Integer taskId, String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
         Board board = boardRepository.findByIdAndOwnerOid(boardId, ownerOid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
@@ -133,9 +164,7 @@ public class BoardService {
         TaskV3 task = (TaskV3) taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
-        NewTask2DTO deletedTaskDTO = convertToNewTaskDTO(task);
         taskRepository.delete(task);
-        return deletedTaskDTO;
     }
 
     private BoardDTO convertToDTO(Board board, String ownerName) {
@@ -156,12 +185,8 @@ public class BoardService {
     }
 
     private NewTask2DTO convertToNewTaskDTO(TaskV3 task) {
-        NewTask2DTO dto = new NewTask2DTO();
-        dto.setTaskId(task.getTaskId());
-        dto.setTitle(task.getTitle());
-        dto.setDescription(task.getDescription());
-        dto.setAssignees(task.getAssignees());
-        dto.setStatusName(task.getStatusId() != null ? task.getStatusId().getStatusName() : null);
+        NewTask2DTO dto = modelMapper.map(task, NewTask2DTO.class);
+        dto.setStatusName(task.getStatusId().getStatusName());
         return dto;
     }
 }

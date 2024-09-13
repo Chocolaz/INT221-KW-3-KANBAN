@@ -11,18 +11,19 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "statuses" , schema = "project_management")
+@Table(name = "statuses", schema = "project_management")
 public class Status {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer statusId ;
+    private Integer statusId;
     private String statusName;
     private String statusDescription;
+
     @ManyToOne
     @JoinColumn(name = "boardId", nullable = false)
     private Board boardId;
 
-    @OneToMany(mappedBy = "statusId", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "statusId")
     private List<Task2> tasks;
 
     public void setName(String name) {
@@ -32,6 +33,4 @@ public class Status {
     public void setDescription(String description) {
         this.statusDescription = description == null ? null : description.trim();
     }
-
-
 }

@@ -125,7 +125,7 @@ public class BoardController {
         String jwtToken = token.substring(7);
         try {
             boardService.deleteTask(boardId, taskId, jwtToken);
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.ok().build();
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to delete task: " + e.getMessage()));
