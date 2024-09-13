@@ -30,9 +30,8 @@ public class Board {
     @OneToMany(mappedBy = "boardId", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Status> statuses;
 
-    @OneToMany(mappedBy = "boardId", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "boardId")
     private List<Task2> tasks;
-
     @PrePersist
     private void prePersist() {
         if (this.id == null) {

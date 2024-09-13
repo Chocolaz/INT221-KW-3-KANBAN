@@ -61,6 +61,7 @@ public class StatusV3Controller {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
     @DeleteMapping("/{statusId}/{newStatusId}")
     public ResponseEntity<?> deleteStatusAndTransferTasks(@PathVariable String boardId,
                                                           @PathVariable Integer statusId,

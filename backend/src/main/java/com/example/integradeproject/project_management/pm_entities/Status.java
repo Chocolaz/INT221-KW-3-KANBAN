@@ -23,7 +23,7 @@ public class Status {
     @JoinColumn(name = "boardId", nullable = false)
     private Board boardId;
 
-    @OneToMany(mappedBy = "statusId", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "statusId")
     private List<Task2> tasks;
 
     public void setName(String name) {

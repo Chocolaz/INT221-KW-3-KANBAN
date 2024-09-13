@@ -134,10 +134,14 @@ public class StatusService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete 'No Status' or 'Done' status");
         }
 
+        // Transfer tasks to the new status
         List<Task2> tasksWithCurrentStatus = task2Repository.findByStatusId(currentStatus);
-        tasksWithCurrentStatus.forEach(task -> task.setStatusId(newStatus));
+        for (Task2 task : tasksWithCurrentStatus) {
+            task.setStatusId(newStatus);
+        }
         task2Repository.saveAll(tasksWithCurrentStatus);
 
+        // Delete the old status
         statusRepository.delete(currentStatus);
     }
 }
