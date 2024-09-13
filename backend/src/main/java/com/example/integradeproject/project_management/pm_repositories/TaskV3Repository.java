@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TaskV3Repository extends JpaRepository<TaskV3, Integer> {
-    List<Task2> findByStatusId(Status string);
+    List<TaskV3> findByStatusId(Status string);
     @Query("SELECT t FROM TaskV3 t WHERE t.statusId.statusName IN :statusNames")
     List<Task2> findByStatusNames(@Param("statusNames") List<String> statusNames);
 

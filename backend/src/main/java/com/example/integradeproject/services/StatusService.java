@@ -4,9 +4,11 @@ import com.example.integradeproject.project_management.pm_dtos.StatusDTO;
 import com.example.integradeproject.project_management.pm_entities.Board;
 import com.example.integradeproject.project_management.pm_entities.Status;
 import com.example.integradeproject.project_management.pm_entities.Task2;
+import com.example.integradeproject.project_management.pm_entities.TaskV3;
+
 import com.example.integradeproject.project_management.pm_repositories.BoardRepository;
 import com.example.integradeproject.project_management.pm_repositories.StatusRepository;
-import com.example.integradeproject.project_management.pm_repositories.Task2Repository;
+import com.example.integradeproject.project_management.pm_repositories.TaskV3Repository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -26,7 +28,7 @@ public class StatusService {
     @Autowired
     private BoardRepository boardRepository;
     @Autowired
-    private Task2Repository task2Repository;
+    private TaskV3Repository taskV3Repository;
     @Autowired
     ModelMapper mapper;
     @Autowired
@@ -108,7 +110,7 @@ public class StatusService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete 'No Status' or 'Done' status");
         }
 
-        if (task2Repository.existsByStatusId(status.getStatusId())) {
+        if (taskV3Repository.existsByStatusId(status.getStatusId())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete Status as it is currently in use");
         }
 
@@ -135,11 +137,11 @@ public class StatusService {
         }
 
         // Transfer tasks to the new status
-        List<Task2> tasksWithCurrentStatus = task2Repository.findByStatusId(currentStatus);
-        for (Task2 task : tasksWithCurrentStatus) {
+        List<TaskV3> tasksWithCurrentStatus = taskV3Repository.findByStatusId(currentStatus);
+        for (TaskV3 task : tasksWithCurrentStatus) {
             task.setStatusId(newStatus);
         }
-        task2Repository.saveAll(tasksWithCurrentStatus);
+        taskV3Repository.saveAll(tasksWithCurrentStatus);
 
         // Delete the old status
         statusRepository.delete(currentStatus);
