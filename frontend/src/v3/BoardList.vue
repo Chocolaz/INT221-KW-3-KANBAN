@@ -78,7 +78,7 @@ const fetchBoards = async () => {
 }
 
 const viewBoardTasks = (boardId) => {
-  router.push({ name: 'TaskList', params: { boardId } })
+  router.push({ name: 'taskView', params: { boardId } })
 }
 
 onMounted(fetchBoards)

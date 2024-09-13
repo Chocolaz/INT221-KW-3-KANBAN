@@ -23,22 +23,33 @@ const handleResponse = async (response) => {
 const fetchData = async (url, boardId, taskId = null) => {
   try {
     const token = localStorage.getItem('token')
+    if (!token) {
+      throw new Error('No authentication token found')
+    }
+    if (!boardId) {
+      throw new Error('Board ID is required')
+    }
+
     const fullUrl = taskId
       ? `${baseUrl3}/boards/${boardId}/${url}/${taskId}`
       : `${baseUrl3}/boards/${boardId}/${url}`
+
     const response = await fetch(fullUrl, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     })
+
     const responseData = await handleResponse(response)
+
     if (taskId) {
       responseData.data.taskId = taskId
     }
+
     return responseData.data
   } catch (error) {
     console.error('Error fetching data:', error)
-    throw error
+    throw error // Rethrow error for further handling if needed
   }
 }
 

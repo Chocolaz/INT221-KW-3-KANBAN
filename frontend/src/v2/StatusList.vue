@@ -8,16 +8,17 @@ const tasks = ref([])
 const route = useRoute()
 const router = useRouter()
 
-const boardId = route.params.boardId
-
 // Fetch data function
 async function fetchData() {
   try {
-    statuses.value = await fetchUtils.fetchData('statuses')
-    tasks.value = await fetchUtils.fetchData('tasks')
+    const boardId = route.params.boardId
+    if (!boardId) {
+      throw new Error('Board ID is not available')
+    }
+    statuses.value = await fetchUtils.fetchData(`statuses`, boardId)
+    tasks.value = await fetchUtils.fetchData(`tasks`, boardId)
 
     const statusId = route.params.statusId
-
     if (statusId) {
       const status = statuses.value.find(
         (s) => s.statusId === parseInt(statusId)
@@ -29,9 +30,14 @@ async function fetchData() {
   }
 }
 
-// Back to Homepage functions
 const backToHomePage = () => {
-  router.push({ name: 'taskView', params: { boardId } })
+  const boardId = route.params.boardId
+  if (boardId) {
+    router.push(`/boards/${boardId}/tasks`)
+  } else {
+    console.error('Board ID is not defined')
+    router.push({ name: 'taskView', params: { boardId } })
+  }
 }
 
 // Add modal

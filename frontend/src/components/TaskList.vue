@@ -51,6 +51,7 @@ const fetchTasks = async () => {
 
     // Fetch tasks using boardId
     const data = await FetchUtils.fetchData('tasks', boardId)
+    console.log('Fetched tasks:', data)
     tasks.value = data
 
     const taskId = route.params.taskId
@@ -71,10 +72,23 @@ const fetchStatuses = async () => {
 
     // Fetch statuses using boardId
     const data = await FetchUtils.fetchData('statuses', boardId)
+    console.log('Fetched statuses:', data)
     statuses.value = data
   } catch (error) {
     console.error('Error fetching statuses:', error)
   }
+}
+
+const getStatusLabel = (statusName, statuses) => {
+  console.log('statusName:', statusName)
+  console.log('statuses:', statuses)
+  const status = statuses.find((s) => {
+    console.log(`Comparing: '${s.name}' with '${statusName}'`)
+    return s.name === statusName
+  })
+  const result = status ? status.name : 'No Status'
+  console.log('Result:', result)
+  return result
 }
 
 const statusStyle = (status) => {
@@ -132,11 +146,6 @@ const filteredTasks = computed(() => {
     return sortedTasks.value
   }
 })
-
-const getStatusLabel = (statusName, statuses) => {
-  const status = statuses.find((s) => s.statusName === statusName)
-  return status ? status.statusName : 'No Status'
-}
 
 const openModal = async (taskId) => {
   if (!taskId) {

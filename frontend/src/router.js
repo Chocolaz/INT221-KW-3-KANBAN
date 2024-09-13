@@ -7,43 +7,50 @@ import BoardList from './v3/BoardList.vue'
 
 const routes = [
   {
-    path: '/v3/boards/:boardId/tasks',
+    path: '/boards/:boardId/tasks',
     name: 'taskView',
     component: TaskList,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
+    props: (route) => ({ boardId: route.params.boardId })
   },
   {
-    path: '/v3/boards/:boardId/tasks/:taskId',
+    path: '/boards/:boardId/tasks/:taskId',
     name: 'taskDetail',
     component: TaskList,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
+    props: (route) => ({
+      boardId: route.params.boardId,
+      taskId: route.params.taskId
+    })
   },
-  ,
   {
-    path: '/status',
+    path: '/boards/:boardId/status',
     name: 'statusView',
     component: StatusList,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
+    props: (route) => ({ boardId: route.params.boardId })
   },
   {
-    path: '/status/:statusId',
+    path: '/boards/:boardId/status/:statusId',
     name: 'statusDetail',
     component: StatusList,
-    meta: { requiresAuth: true }
+    meta: { requiresAuth: true },
+    props: (route) => ({
+      boardId: route.params.boardId,
+      statusId: route.params.statusId
+    })
   },
   {
     path: '/login',
     name: 'loginView',
     component: Login
   },
-
   {
     path: '/board',
     name: 'boardView',
     component: BoardList
   },
   {
-    //add board
     path: '/board/add',
     name: 'boardAdd',
     component: BoardAdd
@@ -54,13 +61,7 @@ const routes = [
   },
   {
     path: '/:pathMatch(.*)*',
-    redirect: '/task'
-  },
-  {
-    path: '/v3/boards/:boardId/tasks',
-    name: 'TaskList',
-    component: TaskList,
-    props: (route) => ({ boardId: route.params.boardId })
+    redirect: '/board'
   }
 ]
 
@@ -75,7 +76,7 @@ router.beforeEach((to, from, next) => {
 
   if (to.name === 'loginView') {
     if (isAuthenticated) {
-      next('/task')
+      next('/boards/someBoardId/tasks') // Redirect to a default path if authenticated
     } else {
       next()
     }
@@ -87,7 +88,7 @@ router.beforeEach((to, from, next) => {
     }
   } else {
     next()
-  } 
+  }
 })
 
 export default router
