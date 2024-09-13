@@ -44,7 +44,7 @@ export default {
             title: '',
             description: '',
             assignees: '',
-            status: 'No Status'
+            statusName: 'No Status'
           }
           this.closeModal()
         } else {
@@ -60,7 +60,14 @@ export default {
   },
   async created() {
     try {
-      const data = await FetchUtils.fetchData('statuses')
+      const boardId = this.$route.params.boardId // Retrieve boardId from route params
+
+      if (!boardId) {
+        throw new Error('Board ID is undefined')
+      }
+
+      // Fetch statuses using boardId
+      const data = await FetchUtils.fetchData('statuses', boardId)
       this.statuses = data
     } catch (error) {
       console.error('Error fetching statuses:', error)

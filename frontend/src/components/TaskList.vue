@@ -29,6 +29,8 @@ const sortOrder = ref(0)
 const route = useRoute()
 const router = useRouter()
 
+const boardId = route.params.boardId
+
 const formatLocalDate = (dateString) => {
   const date = new Date(dateString)
   return date.toLocaleString('en-GB')
@@ -40,12 +42,20 @@ const timezone = computed(
 
 const fetchTasks = async () => {
   try {
-    const data = await FetchUtils.fetchData('tasks')
+    const boardId = route.params.boardId
+
+    // Ensure boardId is present
+    if (!boardId) {
+      throw new Error('Board ID is undefined')
+    }
+
+    // Fetch tasks using boardId
+    const data = await FetchUtils.fetchData('tasks', boardId)
     tasks.value = data
 
     const taskId = route.params.taskId
     if (taskId && !tasks.value.some((task) => task.taskId === taskId)) {
-      router.push('/task')
+      router.push({ name: 'boardView' })
     }
   } catch (error) {
     console.error('Error fetching tasks:', error)
@@ -54,7 +64,13 @@ const fetchTasks = async () => {
 
 const fetchStatuses = async () => {
   try {
-    const data = await FetchUtils.fetchData('statuses')
+    // Ensure boardId is present
+    if (!boardId) {
+      throw new Error('Board ID is undefined')
+    }
+
+    // Fetch statuses using boardId
+    const data = await FetchUtils.fetchData('statuses', boardId)
     statuses.value = data
   } catch (error) {
     console.error('Error fetching statuses:', error)
@@ -221,7 +237,7 @@ const handleEditSuccess = (status) => {
   showSuccessModal.value = true
 }
 const goToStatusManagement = () => {
-  router.push({ name: 'statusView' })
+  router.push({ name: 'statusView', params: { boardId } })
 }
 
 const sortTasksByStatus = () => {

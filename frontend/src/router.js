@@ -7,17 +7,18 @@ import BoardList from './v3/BoardList.vue'
 
 const routes = [
   {
-    path: '/task',
+    path: '/v3/boards/:boardId/tasks',
     name: 'taskView',
     component: TaskList,
     meta: { requiresAuth: true }
   },
   {
-    path: '/task/:taskId',
+    path: '/v3/boards/:boardId/tasks/:taskId',
     name: 'taskDetail',
     component: TaskList,
     meta: { requiresAuth: true }
   },
+  ,
   {
     path: '/status',
     name: 'statusView',
@@ -86,7 +87,7 @@ router.beforeEach((to, from, next) => {
     }
   } else {
     next()
-  }
+  } 
 })
 
 export default router

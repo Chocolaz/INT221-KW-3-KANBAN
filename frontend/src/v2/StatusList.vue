@@ -8,6 +8,8 @@ const tasks = ref([])
 const route = useRoute()
 const router = useRouter()
 
+const boardId = route.params.boardId
+
 // Fetch data function
 async function fetchData() {
   try {
@@ -29,7 +31,7 @@ async function fetchData() {
 
 // Back to Homepage functions
 const backToHomePage = () => {
-  router.push({ name: 'taskView' })
+  router.push({ name: 'taskView', params: { boardId } })
 }
 
 // Add modal

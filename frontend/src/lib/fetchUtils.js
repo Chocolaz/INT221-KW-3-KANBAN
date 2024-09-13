@@ -8,22 +8,24 @@ const router = useRouter()
 
 const handleResponse = async (response) => {
   if (!response.ok) {
-    /*if (response.status === 401) {
+    if (response.status === 401) {
       // Reset authentication state and redirect to login page
       localStorage.removeItem('isAuthenticated')
       localStorage.removeItem('token')
       router.push('/login')
-    } */
+    }
     throw new Error(`HTTP error! Status: ${response.status}`)
   }
   const responseData = await response.json()
   return { success: true, data: responseData, statusCode: response.status }
 }
 
-const fetchData = async (url, taskId = null) => {
+const fetchData = async (url, boardId, taskId = null) => {
   try {
     const token = localStorage.getItem('token')
-    const fullUrl = taskId ? `${baseUrl3}/${url}/${taskId}` : `${baseUrl3}/${url}`
+    const fullUrl = taskId
+      ? `${baseUrl3}/boards/${boardId}/${url}/${taskId}`
+      : `${baseUrl3}/boards/${boardId}/${url}`
     const response = await fetch(fullUrl, {
       headers: {
         Authorization: `Bearer ${token}`
