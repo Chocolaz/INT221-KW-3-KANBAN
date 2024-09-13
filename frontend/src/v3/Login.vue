@@ -50,108 +50,99 @@
   </div>
 </template>
 
-<script>
+<script setup>
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import VueJwtDecode from 'vue-jwt-decode'
 
 const baseUrl = import.meta.env.VITE_API_URL2
+const router = useRouter()
 
-export default {
-  setup() {
-    const router = useRouter()
-    return { router }
-  },
-  data() {
-    return {
-      username: '',
-      password: '',
-      showError: false,
-      errorMessage: ''
-    }
-  },
-  methods: {
-    // Method to handle the login process
-    async login() {
-      try {
-        const response = await fetch(`${baseUrl}/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            userName: this.username,
-            password: this.password
-          })
-        })
+const username = ref('')
+const password = ref('')
+const showError = ref(false)
+const errorMessage = ref('')
 
-        if (response.status === 200) {
-          const data = await response.json()
-          console.log('Login successful')
-          this.showError = false
-          localStorage.setItem('isAuthenticated', 'true')
+const isSignInDisabled = computed(() => {
+  return username.value.trim() === '' || password.value.trim() === ''
+})
 
-          // Store token
-          if (data.access_token) {
-            this.decodeAndLogToken(data.access_token)
-            localStorage.setItem('token', data.access_token)
-          }
-
-          this.$router.push('/task')
-        } else if (response.status === 401 || response.status === 400) {
-          console.log('Login failed: Unauthorized')
-          this.showError = true
-          this.errorMessage = 'Username or Password is incorrect.'
-        } else {
-          console.log('Login failed: Other error', response.status)
-          this.showError = true
-          this.errorMessage = 'There is a problem. Please try again later.'
-        }
-      } catch (error) {
-        console.error('Error during login:', error)
-        this.showError = true
-        this.errorMessage = 'There is a problem. Please try again later.'
-      }
-
-      if (this.showError) {
-        setTimeout(() => {
-          this.showError = false
-        }, 3000)
-      }
-    },
-
-    // Utility method to make requests with the stored token
-    async requestWithToken(url, options = {}) {
-      const token = localStorage.getItem('token')
-      const headers = {
-        ...options.headers,
-        Authorization: `Bearer ${token}`,
+const login = async () => {
+  try {
+    const response = await fetch(`${baseUrl}/login`, {
+      method: 'POST',
+      headers: {
         'Content-Type': 'application/json'
-      }
-
-      const response = await fetch(url, {
-        ...options,
-        headers
+      },
+      body: JSON.stringify({
+        userName: username.value,
+        password: password.value
       })
+    })
 
-      return response
-    },
+    if (response.status === 200) {
+      const data = await response.json()
+      console.log('Login successful')
+      showError.value = false
+      console.log('Login successful, response data:', data)
+      localStorage.setItem('isAuthenticated', 'true')
 
-    // Method to decode the token and store the username
-    decodeAndLogToken(token) {
-      try {
-        const decodedToken = VueJwtDecode.decode(token)
-        localStorage.setItem('username', decodedToken.name)
-        console.log('Decoded token:', decodedToken)
-      } catch (error) {
-        console.error('Error decoding token:', error)
+      if (data.access_token) {
+        decodeAndLogToken(data.access_token)
+        localStorage.setItem('token', data.access_token)
+        console.log(
+          'Token stored in localStorage:',
+          localStorage.getItem('token')
+        )
       }
+
+      router.push('/board')
+    } else if (response.status === 401 || response.status === 400) {
+      console.log('Login failed: Unauthorized')
+      showError.value = true
+      errorMessage.value = 'Username or Password is incorrect.'
+    } else {
+      console.log('Login failed: Other error', response.status)
+      showError.value = true
+      errorMessage.value = 'There is a problem. Please try again later.'
     }
-  },
-  computed: {
-    isSignInDisabled() {
-      return this.username.trim() === '' || this.password.trim() === ''
-    }
+  } catch (error) {
+    console.error('Error during login:', error)
+    showError.value = true
+    errorMessage.value = 'There is a problem. Please try again later.'
   }
+
+  if (showError.value) {
+    setTimeout(() => {
+      showError.value = false
+    }, 3000)
+  }
+}
+
+const decodeAndLogToken = (token) => {
+  try {
+    const decodedToken = VueJwtDecode.decode(token)
+    localStorage.setItem('username', decodedToken.name)
+    console.log('Decoded token:', decodedToken)
+  } catch (error) {
+    console.error('Error decoding token:', error)
+  }
+}
+
+const requestWithToken = async (url, options = {}) => {
+  const token = localStorage.getItem('token')
+  const headers = {
+    ...options.headers,
+    Authorization: `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers
+  })
+
+  return response
 }
 </script>
 

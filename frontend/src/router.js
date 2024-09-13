@@ -3,6 +3,7 @@ import TaskList from './components/TaskList.vue'
 import StatusList from './v2/StatusList.vue'
 import Login from './v3/Login.vue'
 import BoardAdd from './v3/BoardAdd.vue'
+import BoardList from './v3/BoardList.vue'
 
 const routes = [
   {
@@ -34,8 +35,13 @@ const routes = [
     name: 'loginView',
     component: Login
   },
-  {
 
+  {
+    path: '/board',
+    name: 'boardView',
+    component: BoardList
+  },
+  {
     //add board
     path: '/board/add',
     name: 'boardAdd',
@@ -43,13 +49,18 @@ const routes = [
   },
   {
     path: '/',
-    redirect: '/task'
+    redirect: '/board'
   },
   {
     path: '/:pathMatch(.*)*',
     redirect: '/task'
+  },
+  {
+    path: '/v3/boards/:boardId/tasks',
+    name: 'TaskList',
+    component: TaskList,
+    props: (route) => ({ boardId: route.params.boardId })
   }
-  
 ]
 
 const router = createRouter({

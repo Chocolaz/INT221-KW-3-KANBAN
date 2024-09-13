@@ -2,7 +2,7 @@
   <nav class="navbar">
     <div class="navbar-content">
       <div class="logo-container">
-        <router-link to="/task">
+        <router-link to="/board">
           <img src="../assets/KANBANLOGO.png" alt="KANBAN Logo" class="logo" />
         </router-link>
       </div>
