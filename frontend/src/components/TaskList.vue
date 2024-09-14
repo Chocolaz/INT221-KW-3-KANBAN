@@ -80,14 +80,10 @@ const fetchStatuses = async () => {
 }
 
 const getStatusLabel = (statusName, statuses) => {
-  console.log('statusName:', statusName)
-  console.log('statuses:', statuses)
   const status = statuses.find((s) => {
-    console.log(`Comparing: '${s.name}' with '${statusName}'`)
     return s.name === statusName
   })
   const result = status ? status.name : 'No Status'
-  console.log('Result:', result)
   return result
 }
 

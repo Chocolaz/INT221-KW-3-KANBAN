@@ -15,8 +15,10 @@ async function fetchData() {
     if (!boardId) {
       throw new Error('Board ID is not available')
     }
-    statuses.value = await fetchUtils.fetchData(`statuses`, boardId)
+    statuses.value = await fetchUtils.fetchData('statuses', boardId)
     tasks.value = await fetchUtils.fetchData(`tasks`, boardId)
+
+    console.log('statuses', statuses.value)
 
     const statusId = route.params.statusId
     if (statusId) {
@@ -48,7 +50,7 @@ const closeModal = () => {
   isAddOpen.value = false
   isEditOpen.value = false
   isDeleteOpen.value = false
-  isTransferOpen.value = false
+  //isTransferOpen.value = false
 }
 const handleStatusAdded = () => fetchData()
 
@@ -75,7 +77,7 @@ const openDeleteModal = (status) => {
 const handleDelete = () => fetchData()
 
 // Transfer modal
-import TransferStatusModal from './TransferStatusModal.vue'
+/*import TransferStatusModal from './TransferStatusModal.vue'
 const isTransferOpen = ref(false)
 const selectedStatusIdToTransfer = ref(null)
 const openTransferModal = (status) => {
@@ -90,14 +92,14 @@ const checkTasksBeforeDelete = (status) => {
     (task) => task.statusName === status.statusName
   )
   statusInUse ? openTransferModal(status) : openDeleteModal(status)
-}
+} */
 
 // Fetch data for update
 onMounted(fetchData)
 
 // Status Style function
-const statusStyle = (status) => {
-  const statusUpperCase = status.toUpperCase()
+const statusStyle = (statusName) => {
+  const statusUpperCase = statusName.toUpperCase()
   switch (statusUpperCase) {
     case 'TO DO':
       return { background: 'linear-gradient(to right, #FF9A9E, #F67C5E)' }
@@ -165,16 +167,14 @@ const statusStyle = (status) => {
                 <td class="border px-4 py-2" style="text-align: center">
                   {{ index + 1 }}
                 </td>
-                <td
-                  class="itbkk-status-name"
-                  :style="statusStyle(status.statusName)"
-                >
-                  {{ status.statusName }}
+                <td class="itbkk-status-name" :style="statusStyle(status.name)">
+                  {{ status.name }}
                 </td>
+
                 <td class="itbkk-status-description">
                   <span
-                    v-if="status.statusDescription"
-                    v-html="status.statusDescription"
+                    v-if="status.description"
+                    v-html="status.description"
                   ></span>
                   <span v-else class="no-description"
                     >No description provided</span
@@ -222,12 +222,12 @@ const statusStyle = (status) => {
       @statusDeleted="handleDelete"
       :statusIdToDelete="selectedStatusIdToDelete"
     />
-    <TransferStatusModal
+    <!-- <TransferStatusModal
       :isOpen="isTransferOpen"
       @closeModal="closeModal"
       @statusTransfered="handleTransfer"
       :statusIdToTransfer="selectedStatusIdToTransfer"
-    />
+    /> -->
 
     <div class="fab" @click="backToHomePage">
       <i class="fa fa-home"></i>
