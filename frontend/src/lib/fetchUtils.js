@@ -53,10 +53,19 @@ const fetchData = async (url, boardId, taskId = null) => {
   }
 }
 
-const postData = async (url, data) => {
+const postData = async (url, boardId, data) => {
   try {
     const token = localStorage.getItem('token')
-    const response = await fetch(`${baseUrl}/${url}`, {
+    if (!token) {
+      throw new Error('No authentication token found')
+    }
+    if (!boardId) {
+      throw new Error('Board ID is required')
+    }
+
+    const fullUrl = `${baseUrl3}/boards/${boardId}/${url}`
+
+    const response = await fetch(fullUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

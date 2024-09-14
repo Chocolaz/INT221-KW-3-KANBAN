@@ -1,5 +1,6 @@
 <script setup>
 import { defineProps, defineEmits, ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import fetchUtils from '../lib/fetchUtils'
 import Toast from './Toast.vue'
 
@@ -8,6 +9,9 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['closeModal', 'statusAdded'])
+
+const route = useRoute()
+const boardId = route.params.boardId
 
 const statusName = ref('')
 const statusDescription = ref('')
@@ -32,7 +36,7 @@ const isSaveDisabled = computed(() => {
 const addStatus = async () => {
   operationType.value = 'add'
   try {
-    const existingStatuses = await fetchUtils.fetchData('statuses')
+    const existingStatuses = await fetchUtils.fetchData('statuses', boardId)
     const existingStatusNames = existingStatuses.map(
       (status) => status.statusName
     )
@@ -46,7 +50,7 @@ const addStatus = async () => {
       statusName: statusName.value,
       statusDescription: statusDescription.value
     }
-    const response = await fetchUtils.postData('statuses', newStatus)
+    const response = await fetchUtils.postData('statuses', boardId, newStatus) // Pass boardId
     statusCode.value = response.statusCode
     if (response.success) {
       closeModal()
