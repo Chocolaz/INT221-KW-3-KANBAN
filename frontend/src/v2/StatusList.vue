@@ -32,6 +32,7 @@ async function fetchData() {
     statuses.value = await fetchUtils.fetchData('statuses', boardId)
     tasks.value = await fetchUtils.fetchData('tasks', boardId)
 
+    console.log(statuses.value)
     const statusId = route.params.statusId
     if (statusId) {
       const status = statuses.value.find(
@@ -67,9 +68,11 @@ const openEditModal = (status) => {
   isEditOpen.value = true
 }
 const openDeleteModal = (status) => {
-  selectedStatusIdToDelete.value = status.statusId
+  selectedStatusIdToDelete.value = status.id
+  console.log('Status ID:', status.id)
   isDeleteOpen.value = true
 }
+
 const openTransferModal = (status) => {
   selectedStatusIdToTransfer.value = status.statusId
   isTransferOpen.value = true

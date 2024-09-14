@@ -1,7 +1,6 @@
 import { useRouter } from 'vue-router'
 
 const baseUrl = import.meta.env.VITE_API_URL
-
 const baseUrl3 = import.meta.env.VITE_API_URL3
 
 const router = useRouter()
@@ -20,52 +19,52 @@ const handleResponse = async (response) => {
   return { success: true, data: responseData, statusCode: response.status }
 }
 
+const getToken = () => {
+  const token = localStorage.getItem('token')
+  if (!token) {
+    throw new Error('No authentication token found')
+  }
+  return token
+}
+
+const validateBoardId = (boardId) => {
+  if (!boardId) {
+    throw new Error('Board ID is required')
+  }
+}
+
+const buildUrl = (url, boardId, taskId = null) => {
+  return taskId
+    ? `${baseUrl3}/boards/${boardId}/${url}/${taskId}`
+    : `${baseUrl3}/boards/${boardId}/${url}`
+}
+
 const fetchData = async (url, boardId, taskId = null) => {
   try {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      throw new Error('No authentication token found')
-    }
-    if (!boardId) {
-      throw new Error('Board ID is required')
-    }
-
-    const fullUrl = taskId
-      ? `${baseUrl3}/boards/${boardId}/${url}/${taskId}`
-      : `${baseUrl3}/boards/${boardId}/${url}`
-
+    const token = getToken()
+    validateBoardId(boardId)
+    const fullUrl = buildUrl(url, boardId, taskId)
     const response = await fetch(fullUrl, {
       headers: {
         Authorization: `Bearer ${token}`
       }
     })
-
     const responseData = await handleResponse(response)
-
     if (taskId) {
       responseData.data.taskId = taskId
     }
-
     return responseData.data
   } catch (error) {
     console.error('Error fetching data:', error)
-    throw error // Rethrow error for further handling if needed
+    throw error
   }
 }
 
 const postData = async (url, boardId, data) => {
   try {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      throw new Error('No authentication token found')
-    }
-    if (!boardId) {
-      throw new Error('Board ID is required')
-    }
-
-    const fullUrl = `${baseUrl3}/boards/${boardId}/${url}`
-
-    const response = await fetch(fullUrl, {
+    const token = getToken()
+    validateBoardId(boardId)
+    const response = await fetch(buildUrl(url, boardId), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -84,7 +83,7 @@ const postData = async (url, boardId, data) => {
 
 const putData = async (url, data) => {
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     const response = await fetch(`${baseUrl}/${url}`, {
       method: 'PUT',
       headers: {
@@ -102,28 +101,45 @@ const putData = async (url, data) => {
   }
 }
 
-const deleteData = async (url) => {
+const handleDeleteResponse = async (response) => {
+  const text = await response.text()
+  if (!text) {
+    return { success: true, data: null, statusCode: response.status }
+  }
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(`${baseUrl}/${url}`, {
+    const responseData = JSON.parse(text)
+    console.log('Parsed response data:', responseData)
+    return { success: true, data: responseData, statusCode: response.status }
+  } catch (parseError) {
+    console.error('Error parsing JSON:', parseError)
+    throw new Error(`Invalid JSON response: ${text}`)
+  }
+}
+
+const deleteData = async (url, boardId) => {
+  try {
+    const token = getToken()
+    validateBoardId(boardId)
+    const response = await fetch(buildUrl(url, boardId), {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`
       }
     })
-    const responseData = await handleResponse(response)
-    console.log('Data deleted successfully. Status code:', response.status)
-    return responseData
+    console.log('Raw response:', response)
+    return await handleDeleteResponse(response)
   } catch (error) {
-    console.error('Error deleting data:', error)
+    console.error('Error deleting data:', error.message)
     throw error
   }
 }
 
-const deleteAndTransferData = async (url, newId) => {
+const deleteAndTransferData = async (url, newId, boardId) => {
   try {
-    const token = localStorage.getItem('token')
-    const response = await fetch(`${baseUrl}/${url}/${newId}`, {
+    const token = getToken()
+    validateBoardId(boardId)
+    const fullUrl = `${baseUrl3}/boards/${boardId}/${url}/${newId}`
+    const response = await fetch(fullUrl, {
       method: 'DELETE',
       headers: {
         Authorization: `Bearer ${token}`
@@ -134,20 +150,17 @@ const deleteAndTransferData = async (url, newId) => {
       'Data deleted and transferred successfully. Status code:',
       response.status
     )
+    console.log('Response Data:', responseData)
     return responseData
   } catch (error) {
-    console.error('Error deleting and transferring data:', error)
+    console.error('Error deleting and transferring data:', error.message)
     throw error
   }
 }
 
 const getBoards = async (boardId = null) => {
   try {
-    const token = localStorage.getItem('token')
-    if (!token) {
-      throw new Error('Token not found. Please log in.')
-    }
-
+    const token = getToken()
     const url = boardId ? `${baseUrl3}/boards/${boardId}` : `${baseUrl3}/boards`
     const response = await fetch(url, {
       headers: {
@@ -167,7 +180,7 @@ const getBoards = async (boardId = null) => {
 
 const addBoard = async (boardData) => {
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     const response = await fetch(`${baseUrl3}/boards`, {
       method: 'POST',
       headers: {
@@ -187,7 +200,7 @@ const addBoard = async (boardData) => {
 
 const getAllBoards = async () => {
   try {
-    const token = localStorage.getItem('token')
+    const token = getToken()
     const response = await fetch(`${baseUrl3}/boards`, {
       headers: {
         Authorization: `Bearer ${token}`

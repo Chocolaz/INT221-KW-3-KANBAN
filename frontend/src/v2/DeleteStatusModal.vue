@@ -2,6 +2,16 @@
 import { defineProps, defineEmits, ref } from 'vue'
 import fetchUtils from '../lib/fetchUtils'
 import Toast from './Toast.vue'
+import { useRoute } from 'vue-router'
+
+const ERROR_MESSAGES = {
+  NO_STATUS: 'The "No Status" status cannot be deleted',
+  DONE_STATUS: 'The "Done" status cannot be deleted',
+  UNKNOWN: 'Unknown error occurred'
+}
+
+const route = useRoute()
+const boardId = route.params.boardId
 
 const props = defineProps({
   isOpen: Boolean,
@@ -11,9 +21,7 @@ const props = defineProps({
 const emit = defineEmits(['closeModal', 'statusDeleted'])
 
 const showToast = ref(false)
-
 const statusCode = ref(0)
-
 const operationType = ref(null)
 
 const closeModal = () => {
@@ -22,27 +30,30 @@ const closeModal = () => {
 
 const deleteStatus = async () => {
   operationType.value = 'delete'
-  console.log('OpeartionType', operationType.value)
+  console.log('OperationType:', operationType.value)
+
   try {
-    if (typeof props.statusIdToDelete === 'undefined') {
+    const { statusIdToDelete } = props
+
+    if (statusIdToDelete === undefined) {
       throw new Error('Status ID to delete is not defined')
     }
 
-    if (props.statusIdToDelete === 1) {
-      alert('The "No Status" status cannot be deleted')
-      closeModal()
-      throw new Error('The "No Status" status cannot be deleted')
+    if (statusIdToDelete === 1) {
+      showErrorAndClose(ERROR_MESSAGES.NO_STATUS)
+      return
     }
 
-    if (props.statusIdToDelete === 6) {
-      alert('The "Done" status cannot be deleted')
-      closeModal()
-      throw new Error('The "No Status" status cannot be deleted')
+    if (statusIdToDelete === 6) {
+      showErrorAndClose(ERROR_MESSAGES.DONE_STATUS)
+      return
     }
 
     const response = await fetchUtils.deleteData(
-      `statuses/${props.statusIdToDelete}`
+      `statuses/${statusIdToDelete}`,
+      boardId
     )
+
     statusCode.value = response.statusCode
     if (response.success) {
       console.log('Status deleted successfully!', statusCode.value)
@@ -50,23 +61,30 @@ const deleteStatus = async () => {
       showToast.value = true
       closeModal()
     } else {
-      throw new Error(response.data.message)
+      throw new Error(response.data?.message || ERROR_MESSAGES.UNKNOWN)
     }
   } catch (error) {
     console.error('Error deleting status:', error.message)
-    if (error.message.includes('404')) {
-      statusCode.value = 404
-      console.log(statusCode.value)
-      showToast.value = true
-      closeModal()
-    }
-    if (error.message.includes('500')) {
-      statusCode.value = 500
-      console.log(statusCode.value)
-      showToast.value = true
-      closeModal()
-    }
+    handleErrors(error.message)
+    showToast.value = true
+    closeModal()
   }
+}
+
+const showErrorAndClose = (message) => {
+  alert(message)
+  closeModal()
+}
+
+const handleErrors = (message) => {
+  if (message.includes('404')) {
+    statusCode.value = 404
+  } else if (message.includes('500')) {
+    statusCode.value = 500
+  } else {
+    statusCode.value = 'unknown'
+  }
+  console.log(statusCode.value)
 }
 </script>
 
