@@ -2,204 +2,190 @@
 import { ref, onMounted } from 'vue'
 import fetchUtils from '../lib/fetchUtils'
 import { useRoute, useRouter } from 'vue-router'
+import AddStatusModal from '../v2/AddStatusModal.vue'
+import EditStatusModal from '../v2/EditStatusModal.vue'
+import DeleteStatusModal from '../v2/DeleteStatusModal.vue'
+import TransferStatusModal from '../v2/TransferStatusModal.vue'
 
+// State management
 const statuses = ref([])
 const tasks = ref([])
+const isAddOpen = ref(false)
+const isEditOpen = ref(false)
+const isDeleteOpen = ref(false)
+const isTransferOpen = ref(false)
+const selectedStatus = ref(null)
+const selectedStatusIdToEdit = ref(null)
+const selectedStatusIdToDelete = ref(null)
+const selectedStatusIdToTransfer = ref(null)
+
+// Route and router
 const route = useRoute()
 const router = useRouter()
 
-// Fetch data function
+// Fetch data
 async function fetchData() {
   try {
     const boardId = route.params.boardId
-    if (!boardId) {
-      throw new Error('Board ID is not available')
-    }
-    statuses.value = await fetchUtils.fetchData('statuses', boardId)
-    tasks.value = await fetchUtils.fetchData(`tasks`, boardId)
+    if (!boardId) throw new Error('Board ID is not available')
 
-    console.log('statuses', statuses.value)
+    statuses.value = await fetchUtils.fetchData('statuses', boardId)
+    tasks.value = await fetchUtils.fetchData('tasks', boardId)
 
     const statusId = route.params.statusId
     if (statusId) {
       const status = statuses.value.find(
         (s) => s.statusId === parseInt(statusId)
       )
-      status ? openEditModal(status) : router.push({ name: 'taskView' })
+      if (status) {
+        openEditModal(status)
+      } else {
+        router.push({ name: 'taskView' })
+      }
     }
   } catch (error) {
     console.error('Error fetching data:', error)
   }
 }
 
+// Navigation
 const backToHomePage = () => {
   const boardId = route.params.boardId
   if (boardId) {
     router.push(`/boards/${boardId}/tasks`)
   } else {
     console.error('Board ID is not defined')
-    router.push({ name: 'taskView', params: { boardId } })
+    router.push({ name: 'taskView' })
   }
 }
 
-// Add modal
-import AddStatusModal from './AddStatusModal.vue'
-const isAddOpen = ref(false)
+// Modal handlers
 const openAddModal = () => (isAddOpen.value = true)
+const openEditModal = (status) => {
+  selectedStatus.value = { ...status }
+  selectedStatusIdToEdit.value = status.statusId
+  isEditOpen.value = true
+}
+const openDeleteModal = (status) => {
+  selectedStatusIdToDelete.value = status.statusId
+  isDeleteOpen.value = true
+}
+const openTransferModal = (status) => {
+  selectedStatusIdToTransfer.value = status.statusId
+  isTransferOpen.value = true
+}
+
 const closeModal = () => {
   isAddOpen.value = false
   isEditOpen.value = false
   isDeleteOpen.value = false
   isTransferOpen.value = false
 }
+
 const handleStatusAdded = () => fetchData()
-
-// Edit modal
-import EditStatusModal from './EditStatusModal.vue'
-const isEditOpen = ref(false)
-const selectedStatus = ref(null)
-const selectedStatusIdToEdit = ref(null)
-const openEditModal = (status) => {
-  selectedStatus.value = { ...status }
-  selectedStatusIdToEdit.value = status.statusId
-  isEditOpen.value = true
-}
 const handleStatusEdited = () => fetchData()
-
-// Delete modal
-import DeleteStatusModal from './DeleteStatusModal.vue'
-const isDeleteOpen = ref(false)
-const selectedStatusIdToDelete = ref(null)
-const openDeleteModal = (status) => {
-  selectedStatusIdToDelete.value = status.statusId
-  isDeleteOpen.value = true
-}
 const handleDelete = () => fetchData()
-
-// Transfer modal
-import TransferStatusModal from './TransferStatusModal.vue'
-const isTransferOpen = ref(false)
-const selectedStatusIdToTransfer = ref(null)
-const openTransferModal = (status) => {
-  selectedStatusIdToTransfer.value = status.statusId
-  isTransferOpen.value = true
-}
 const handleTransfer = () => fetchData()
 
 // Check if status is in use
 const checkTasksBeforeDelete = (status) => {
   const statusInUse = tasks.value.some(
-    (task) => task.statusName === status.statusName
+    (task) => task.statusName === status.name
   )
   statusInUse ? openTransferModal(status) : openDeleteModal(status)
-} 
+}
 
-// Fetch data for update
+// Fetch data on mount
 onMounted(fetchData)
 
 // Status Style function
 const statusStyle = (statusName) => {
   const statusUpperCase = statusName.toUpperCase()
-  switch (statusUpperCase) {
-    case 'TO DO':
-      return { background: 'linear-gradient(to right, #FF9A9E, #F67C5E)' }
-    case 'DOING':
-      return { background: 'linear-gradient(to right, #FFE066, #F6E05E)' }
-    case 'DONE':
-      return { background: 'linear-gradient(to right, #AAF6BE, #68D391)' }
-    case 'NO STATUS':
-      return {
-        backgroundColor: 'rgba(245, 245, 245, 0.8)',
-        color: '#888',
-        fontStyle: 'italic'
-      }
-    case 'WAITING':
-      return { background: 'linear-gradient(to right, #D9A3FF, #B473FF)' }
-    case 'IN PROGRESS':
-      return { background: 'linear-gradient(to right, #FFB347, #FFA733)' }
-    case 'REVIEWING':
-      return { background: 'linear-gradient(to right, #FFB6C1, #FF69B4)' }
-    case 'TESTING':
-      return { background: 'linear-gradient(to right, #ADD8E6, #87CEEB)' }
-    default:
-      return { background: 'linear-gradient(to right, #A0CED9, #6CBEE6)' }
+  const styles = {
+    'TO DO': { background: 'linear-gradient(to right, #FF9A9E, #F67C5E)' },
+    DOING: { background: 'linear-gradient(to right, #FFE066, #F6E05E)' },
+    DONE: { background: 'linear-gradient(to right, #AAF6BE, #68D391)' },
+    'NO STATUS': {
+      backgroundColor: 'rgba(245, 245, 245, 0.8)',
+      color: '#888',
+      fontStyle: 'italic'
+    },
+    WAITING: { background: 'linear-gradient(to right, #D9A3FF, #B473FF)' },
+    'IN PROGRESS': {
+      background: 'linear-gradient(to right, #FFB347, #FFA733)'
+    },
+    REVIEWING: { background: 'linear-gradient(to right, #FFB6C1, #FF69B4)' },
+    TESTING: { background: 'linear-gradient(to right, #ADD8E6, #87CEEB)' }
   }
+  return (
+    styles[statusUpperCase] || {
+      background: 'linear-gradient(to right, #A0CED9, #6CBEE6)'
+    }
+  )
 }
 </script>
 
 <template>
-  <div>
-    <div id="app">
-      <div class="table-container">
-        <table class="table header-table">
-          <thead>
-            <tr>
-              <th class="itbkk-button-add" style="text-align: center">
-                <button @click="openAddModal" class="icon-button add-button">
-                  <i class="fas fa-plus-circle"></i>
-                </button>
-              </th>
-              <th>Name</th>
-              <th>Description</th>
-              <th style="width: 100px">
-                <i
-                  class="fas fa-ellipsis-h"
-                  style="
-                    width: 25px;
-                    height: 25px;
-                    display: block;
-                    margin: 0 auto;
-                    margin-top: 10px;
-                  "
-                ></i>
-              </th>
-            </tr>
-          </thead>
-        </table>
-        <div class="body-container">
-          <table class="table body-table">
-            <tbody>
-              <tr
-                v-for="(status, index) in statuses"
-                :key="status.id"
-                class="itbkk-item"
-              >
-                <td class="border px-4 py-2" style="text-align: center">
-                  {{ index + 1 }}
-                </td>
-                <td class="itbkk-status-name" :style="statusStyle(status.name)">
-                  {{ status.name }}
-                </td>
-
-                <td class="itbkk-status-description">
-                  <span
-                    v-if="status.description"
-                    v-html="status.description"
-                  ></span>
-                  <span v-else class="no-description"
-                    >No description provided</span
+  <div id="app">
+    <div class="table-container">
+      <table class="table header-table">
+        <thead>
+          <tr>
+            <th class="itbkk-button-add" style="text-align: center">
+              <button @click="openAddModal" class="icon-button add-button">
+                <i class="fas fa-plus-circle"></i>
+              </button>
+            </th>
+            <th>Name</th>
+            <th>Description</th>
+            <th style="width: 100px">
+              <i class="fas fa-ellipsis-h"></i>
+            </th>
+          </tr>
+        </thead>
+      </table>
+      <div class="body-container">
+        <table class="table body-table">
+          <tbody>
+            <tr
+              v-for="(status, index) in statuses"
+              :key="status.id"
+              class="itbkk-item"
+            >
+              <td class="border px-4 py-2" style="text-align: center">
+                {{ index + 1 }}
+              </td>
+              <td class="itbkk-status-name" :style="statusStyle(status.name)">
+                {{ status.name }}
+              </td>
+              <td class="itbkk-status-description">
+                <span
+                  v-if="status.description"
+                  v-html="status.description"
+                ></span>
+                <span v-else class="no-description"
+                  >No description provided</span
+                >
+              </td>
+              <td class="border px-4 py-2" style="width: 100px">
+                <div class="action-buttons">
+                  <button
+                    class="icon-button edit-button"
+                    @click="openEditModal(status)"
                   >
-                </td>
-                <td class="border px-4 py-2" style="width: 100px">
-                  <div class="action-buttons">
-                    <button
-                      class="icon-button edit-button"
-                      @click="openEditModal(status)"
-                    >
-                      <i class="fas fa-edit"></i>
-                    </button>
-                    <button
-                      class="icon-button delete-button"
-                      @click="checkTasksBeforeDelete(status)"
-                    >
-                      <i class="fas fa-trash-alt"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    class="icon-button delete-button"
+                    @click="checkTasksBeforeDelete(status)"
+                  >
+                    <i class="fas fa-trash-alt"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -222,7 +208,7 @@ const statusStyle = (statusName) => {
       @statusDeleted="handleDelete"
       :statusIdToDelete="selectedStatusIdToDelete"
     />
-     <TransferStatusModal
+    <TransferStatusModal
       :isOpen="isTransferOpen"
       @closeModal="closeModal"
       @statusTransfered="handleTransfer"
