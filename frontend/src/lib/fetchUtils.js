@@ -102,35 +102,25 @@ const putData = async (url, boardId, data) => {
 }
 
 const handleDeleteResponse = async (response) => {
-  const text = await response.text()
-  if (!text) {
-    return { success: true, data: null, statusCode: response.status }
-  }
   try {
-    const responseData = JSON.parse(text)
-    console.log('Parsed response data:', responseData)
-    return { success: true, data: responseData, statusCode: response.status }
-  } catch (parseError) {
-    console.error('Error parsing JSON:', parseError)
-    throw new Error(`Invalid JSON response: ${text}`)
-  }
-}
+    const text = await response.text()
+    if (text.trim() === '') {
+      // No content
+      return { success: true, data: null, statusCode: response.status }
+    }
 
-const deleteData = async (url, boardId) => {
-  try {
-    const token = getToken()
-    validateBoardId(boardId)
-    const response = await fetch(buildUrl(url, boardId), {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    console.log('Raw response:', response)
-    return await handleDeleteResponse(response)
+    // Try to parse the response as JSON
+    try {
+      const responseData = JSON.parse(text)
+      return { success: true, data: responseData, statusCode: response.status }
+    } catch (parseError) {
+      // If JSON parsing fails, return the raw text as data
+      console.warn('Warning: Response is not valid JSON. Raw text:', text)
+      return { success: true, data: text, statusCode: response.status }
+    }
   } catch (error) {
-    console.error('Error deleting data:', error.message)
-    throw error
+    console.error('Error handling delete response:', error)
+    throw new Error(`Error handling delete response: ${error.message}`)
   }
 }
 
@@ -145,15 +135,26 @@ const deleteAndTransferData = async (url, newId, boardId) => {
         Authorization: `Bearer ${token}`
       }
     })
-    const responseData = await handleResponse(response)
-    console.log(
-      'Data deleted and transferred successfully. Status code:',
-      response.status
-    )
-    console.log('Response Data:', responseData)
-    return responseData
+    return await handleDeleteResponse(response)
   } catch (error) {
     console.error('Error deleting and transferring data:', error.message)
+    throw error
+  }
+}
+const deleteData = async (url, boardId) => {
+  try {
+    const token = getToken()
+    validateBoardId(boardId)
+    const response = await fetch(buildUrl(url, boardId), {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+    console.log('Raw response:', response)
+    return await handleDeleteResponse(response)
+  } catch (error) {
+    console.error('Error deleting data:', error.message)
     throw error
   }
 }

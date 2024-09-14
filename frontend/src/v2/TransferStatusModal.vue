@@ -31,19 +31,21 @@ const closeModal = () => {
 
 const fetchExistingStatuses = async () => {
   try {
-    // Ensure boardId is provided
     if (!boardId.value) {
       throw new Error('Board ID is required')
     }
 
-    // Pass boardId to fetchData
     const response = await fetchUtils.fetchData('statuses', boardId.value)
     existingStatuses.value = response
+    console.log(
+      'Fetched statuses:',
+      JSON.stringify(existingStatuses.value, null, 2)
+    )
 
     const defaultStatus = existingStatuses.value.find(
-      (status) => status.statusId === props.statusIdToTransfer
+      (status) => status.id === props.statusIdToTransfer
     )
-    selectedStatusId.value = defaultStatus ? defaultStatus.statusId : null
+    selectedStatusId.value = defaultStatus ? defaultStatus.id : null
   } catch (error) {
     console.error('Error fetching existing statuses:', error)
   }
@@ -55,7 +57,6 @@ onMounted(() => {
 
 const transferStatus = async () => {
   operationType.value = 'transfer'
-  console.log('OperationType', operationType.value)
   try {
     if (typeof props.statusIdToTransfer === 'undefined') {
       throw new Error('Status ID to transfer is not defined')
@@ -73,14 +74,12 @@ const transferStatus = async () => {
 
     const response = await fetchUtils.deleteAndTransferData(
       `statuses/${props.statusIdToTransfer}`,
-      selectedStatusId.value
+      selectedStatusId.value,
+      boardId.value // Pass the boardId here
     )
+
     statusCode.value = response.statusCode
     if (response.success) {
-      console.log(
-        'Status transferred and deleted successfully!',
-        statusCode.value
-      )
       emit('statusTransfered')
       showToast.value = true
       closeModal()
@@ -91,13 +90,11 @@ const transferStatus = async () => {
     console.error('Error transferring status:', error.message)
     if (error.message.includes('404')) {
       statusCode.value = 404
-      console.log(statusCode.value)
       showToast.value = true
       closeModal()
     }
     if (error.message.includes('500')) {
       statusCode.value = 500
-      console.log(statusCode.value)
       showToast.value = true
       closeModal()
     }
@@ -106,56 +103,57 @@ const transferStatus = async () => {
 
 const filteredStatuses = computed(() => {
   return existingStatuses.value.filter(
-    (status) => status.statusId !== props.statusIdToTransfer
+    (status) => status.id !== props.statusIdToTransfer
   )
 })
 
 const defaultStatusName = computed(() => {
   const defaultStatus = existingStatuses.value.find(
-    (status) => status.statusId === props.statusIdToTransfer
+    (status) => status.id === props.statusIdToTransfer
   )
-  return defaultStatus ? defaultStatus.statusName : ''
+  return defaultStatus ? defaultStatus.name : 'Unknown Status'
 })
 </script>
 
 <template>
-  <div class="modal-mask" v-if="isOpen">
-    <div class="itbkk-message">
+  <div
+    v-if="isOpen"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+  >
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
       <h2 class="text-lg font-semibold mb-4">Transfer and Delete</h2>
       <p class="text-left mb-4">
         There are tasks in
         <span class="font-semibold">{{ defaultStatusName }}</span> status. In
         order to delete this status, the system must transfer tasks in this
-        status to existing status.
+        status to an existing status.
       </p>
       <select
         v-model="selectedStatusId"
         class="mb-4 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:border-blue-500 sm:text-sm"
       >
-        <option value="null" selected disabled hidden>
-          Select to transfer
-        </option>
+        <option value="" selected disabled hidden>Select to transfer</option>
         <option
           v-for="status in filteredStatuses"
-          :key="status.statusId"
-          :value="status.statusId"
+          :key="status.id"
+          :value="status.id"
           class="py-2"
         >
-          {{ status.statusName }}
+          {{ status.name }}
         </option>
       </select>
 
-      <div class="flex justify-end">
+      <div class="flex justify-end space-x-2">
         <button
           type="button"
-          class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md mr-2 itbkk-button-cancel"
+          class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md"
           @click="closeModal"
         >
           Cancel
         </button>
         <button
           type="button"
-          class="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-md itbkk-button-confirm"
+          class="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-md"
           @click="transferStatus"
         >
           Transfer and Delete
@@ -170,26 +168,3 @@ const defaultStatusName = computed(() => {
     @close="showToast = false"
   />
 </template>
-
-<style scoped>
-.modal-mask {
-  position: fixed;
-  z-index: 9998;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.itbkk-message {
-  width: 400px;
-  padding: 20px 30px;
-  background-color: #fff;
-  border-radius: 2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
-}
-</style>
