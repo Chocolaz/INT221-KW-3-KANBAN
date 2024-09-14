@@ -65,17 +65,16 @@ public class JwtTokenUtil {
     }
 
     public User getUserFromToken(String token) {
-        return null ;
+        return null;
     }
+
     public String getNameFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
-        return claims.get("name", String.class); // Assuming "name" is stored in the token
+        return claims.get("name", String.class);
     }
+
     public String getUidFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
-        return claims.get("oid", String.class); // Ensure this returns a String
+        return claims.get("oid", String.class);
     }
-
-
-
 }

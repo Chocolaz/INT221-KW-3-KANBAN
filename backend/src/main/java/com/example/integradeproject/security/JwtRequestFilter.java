@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -19,9 +18,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component
 public class JwtRequestFilter extends OncePerRequestFilter {
+
+    private static final Logger logger = LoggerFactory.getLogger(JwtRequestFilter.class);
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
@@ -40,17 +43,24 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             try {
                 username = jwtTokenUtil.getUsernameFromToken(jwtToken);
             } catch (ExpiredJwtException e) {
+                logger.error("JWT Token has expired", e);
                 request.setAttribute("jwt_error", "JWT Token has expired");
             } catch (MalformedJwtException e) {
+                logger.error("JWT Token is not well-formed", e);
                 request.setAttribute("jwt_error", "JWT Token is not well-formed");
             } catch (UnsupportedJwtException e) {
+                logger.error("JWT Token is not supported", e);
                 request.setAttribute("jwt_error", "JWT Token is not supported");
             } catch (SignatureException e) {
+                logger.error("JWT Token has been tampered with", e);
                 request.setAttribute("jwt_error", "JWT Token has been tampered with");
             } catch (IllegalArgumentException e) {
+                logger.error("JWT Token is invalid", e);
                 request.setAttribute("jwt_error", "JWT Token is invalid");
             }
+
         } else {
+            logger.warn("JWT Token is missing or invalid");
             request.setAttribute("jwt_error", "JWT Token is missing or invalid");
         }
 
@@ -68,5 +78,4 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         chain.doFilter(request, response);
     }
-
 }

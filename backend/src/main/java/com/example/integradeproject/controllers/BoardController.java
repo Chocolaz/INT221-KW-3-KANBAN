@@ -25,17 +25,12 @@ public class BoardController {
     public ResponseEntity<?> createBoard(@RequestBody Map<String, String> boardRequest, @RequestHeader("Authorization") String token) {
         String boardName = boardRequest.get("boardName");
 
-        if (boardName == null || boardName.trim().isEmpty()) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "boardName is null, empty, or length exceeds MAX-LENGTH"));
-        }
-
         try {
             String jwtToken = token.substring(7); // Remove "Bearer " prefix
             BoardDTO boardDTO = boardService.createBoard(boardName, jwtToken);
             return ResponseEntity.status(HttpStatus.CREATED).body(boardDTO);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Failed to create board: " + e.getMessage()));
         }
     }
