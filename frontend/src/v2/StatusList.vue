@@ -50,7 +50,7 @@ const closeModal = () => {
   isAddOpen.value = false
   isEditOpen.value = false
   isDeleteOpen.value = false
-  //isTransferOpen.value = false
+  isTransferOpen.value = false
 }
 const handleStatusAdded = () => fetchData()
 
@@ -77,7 +77,7 @@ const openDeleteModal = (status) => {
 const handleDelete = () => fetchData()
 
 // Transfer modal
-/*import TransferStatusModal from './TransferStatusModal.vue'
+import TransferStatusModal from './TransferStatusModal.vue'
 const isTransferOpen = ref(false)
 const selectedStatusIdToTransfer = ref(null)
 const openTransferModal = (status) => {
@@ -92,7 +92,7 @@ const checkTasksBeforeDelete = (status) => {
     (task) => task.statusName === status.statusName
   )
   statusInUse ? openTransferModal(status) : openDeleteModal(status)
-} */
+} 
 
 // Fetch data for update
 onMounted(fetchData)
@@ -222,12 +222,12 @@ const statusStyle = (statusName) => {
       @statusDeleted="handleDelete"
       :statusIdToDelete="selectedStatusIdToDelete"
     />
-    <!-- <TransferStatusModal
+     <TransferStatusModal
       :isOpen="isTransferOpen"
       @closeModal="closeModal"
       @statusTransfered="handleTransfer"
       :statusIdToTransfer="selectedStatusIdToTransfer"
-    /> -->
+    />
 
     <div class="fab" @click="backToHomePage">
       <i class="fa fa-home"></i>

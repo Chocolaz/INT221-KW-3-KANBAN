@@ -10,6 +10,10 @@ const props = defineProps({
 
 const emit = defineEmits(['closeModal', 'statusTransfered'])
 
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const boardId = ref(route.params.boardId)
 const showToast = ref(false)
 const statusCode = ref(0)
 const operationType = ref(null)
@@ -27,14 +31,18 @@ const closeModal = () => {
 
 const fetchExistingStatuses = async () => {
   try {
-    const response = await fetchUtils.fetchData('statuses')
+    // Ensure boardId is provided
+    if (!boardId.value) {
+      throw new Error('Board ID is required')
+    }
+
+    // Pass boardId to fetchData
+    const response = await fetchUtils.fetchData('statuses', boardId.value)
     existingStatuses.value = response
-    const operationType = 'transfer'
 
     const defaultStatus = existingStatuses.value.find(
       (status) => status.statusId === props.statusIdToTransfer
     )
-
     selectedStatusId.value = defaultStatus ? defaultStatus.statusId : null
   } catch (error) {
     console.error('Error fetching existing statuses:', error)
