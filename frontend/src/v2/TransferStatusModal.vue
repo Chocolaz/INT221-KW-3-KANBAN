@@ -1,7 +1,8 @@
 <script setup>
-import { defineProps, defineEmits, ref, onMounted, computed } from 'vue'
+import { defineProps, defineEmits, ref, onMounted, computed, watch } from 'vue'
 import fetchUtils from '../lib/fetchUtils'
 import Toast from './Toast.vue'
+import { useRoute } from 'vue-router'
 
 const props = defineProps({
   isOpen: Boolean,
@@ -10,18 +11,16 @@ const props = defineProps({
 
 const emit = defineEmits(['closeModal', 'statusTransfered'])
 
-import { useRoute } from 'vue-router'
-
 const route = useRoute()
 const boardId = ref(route.params.boardId)
 const showToast = ref(false)
 const statusCode = ref(0)
 const operationType = ref(null)
 const existingStatuses = ref([])
-const selectedStatusId = ref(null)
+const selectedStatusId = ref('')
 
 const resetSelectedStatus = () => {
-  selectedStatusId.value = null
+  selectedStatusId.value = ''
 }
 
 const closeModal = () => {
@@ -41,11 +40,6 @@ const fetchExistingStatuses = async () => {
       'Fetched statuses:',
       JSON.stringify(existingStatuses.value, null, 2)
     )
-
-    const defaultStatus = existingStatuses.value.find(
-      (status) => status.id === props.statusIdToTransfer
-    )
-    selectedStatusId.value = defaultStatus ? defaultStatus.id : null
   } catch (error) {
     console.error('Error fetching existing statuses:', error)
   }
@@ -54,6 +48,15 @@ const fetchExistingStatuses = async () => {
 onMounted(() => {
   fetchExistingStatuses()
 })
+
+watch(
+  () => props.isOpen,
+  (newValue) => {
+    if (newValue) {
+      fetchExistingStatuses()
+    }
+  }
+)
 
 const transferStatus = async () => {
   operationType.value = 'transfer'
@@ -75,7 +78,7 @@ const transferStatus = async () => {
     const response = await fetchUtils.deleteAndTransferData(
       `statuses/${props.statusIdToTransfer}`,
       selectedStatusId.value,
-      boardId.value // Pass the boardId here
+      boardId.value
     )
 
     statusCode.value = response.statusCode
@@ -132,7 +135,9 @@ const defaultStatusName = computed(() => {
         v-model="selectedStatusId"
         class="mb-4 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:border-blue-500 sm:text-sm"
       >
-        <option value="" selected disabled hidden>Select to transfer</option>
+        <option value="" disabled selected>
+          Please select a status to transfer tasks
+        </option>
         <option
           v-for="status in filteredStatuses"
           :key="status.id"
