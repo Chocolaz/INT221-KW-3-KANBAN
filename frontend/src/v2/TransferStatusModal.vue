@@ -36,10 +36,6 @@ const fetchExistingStatuses = async () => {
 
     const response = await fetchUtils.fetchData('statuses', boardId.value)
     existingStatuses.value = response
-    console.log(
-      'Fetched statuses:',
-      JSON.stringify(existingStatuses.value, null, 2)
-    )
   } catch (error) {
     console.error('Error fetching existing statuses:', error)
   }

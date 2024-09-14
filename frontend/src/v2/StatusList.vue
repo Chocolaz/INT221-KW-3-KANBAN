@@ -14,7 +14,7 @@ const isAddOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteOpen = ref(false)
 const isTransferOpen = ref(false)
-const selectedStatus = ref(null) // store the selected status data
+const selectedStatus = ref(null)
 const selectedStatusIdToEdit = ref(null)
 const selectedStatusIdToDelete = ref(null)
 const selectedStatusIdToTransfer = ref(null)
@@ -32,11 +32,7 @@ async function fetchData() {
     statuses.value = await fetchUtils.fetchData('statuses', boardId)
     tasks.value = await fetchUtils.fetchData('tasks', boardId)
 
-    console.log('Fetched statuses:', statuses.value)
-
-    // Handle statusId only if available
     const statusId = route.params.statusId
-    console.log('Status ID:', statusId) // Check if it's available
 
     if (statusId) {
       const status = statuses.value.find(
@@ -68,20 +64,20 @@ const backToHomePage = () => {
 const openAddModal = () => (isAddOpen.value = true)
 const openEditModal = (status) => {
   if (status) {
-    const statusValue = status.value || status // Use status.value if it's a Ref or use status directly
+    const statusValue = status.value || status
     if (statusValue && statusValue.id) {
-      selectedStatus.value = { ...statusValue } // Pass the status data
-      console.log(selectedStatus.value) // Log the selected status object
+      selectedStatus.value = { ...statusValue }
+      console.log(selectedStatus.value)
 
-      selectedStatusIdToEdit.value = statusValue.id // Access id from statusValue
-      console.log('id to edit: ' + selectedStatusIdToEdit.value) // Log the id to edit
+      selectedStatusIdToEdit.value = statusValue.id
+      console.log('id to edit: ' + selectedStatusIdToEdit.value)
 
-      isEditOpen.value = true // Open the edit modal
+      isEditOpen.value = true
     } else {
-      console.error('Invalid status object:', statusValue) // Log an error if status is not valid
+      console.error('Invalid status object:', statusValue)
     }
   } else {
-    console.error('Status is undefined or null:', status) // Log an error if status is undefined
+    console.error('Status is undefined or null:', status)
   }
 }
 
