@@ -2,7 +2,7 @@ package com.example.integradeproject.controllers;
 
 import com.example.integradeproject.project_management.pm_dtos.StatusDTO;
 import com.example.integradeproject.project_management.pm_entities.Status;
-import com.example.integradeproject.services.StatusService;
+import com.example.integradeproject.services.StatusV3Service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +17,7 @@ import java.util.Map;
 public class StatusV3Controller {
 
     @Autowired
-    private StatusService statusService;
+    private StatusV3Service statusService;
 
     @GetMapping("")
     public ResponseEntity<?> getAllStatuses(@PathVariable String boardId) {

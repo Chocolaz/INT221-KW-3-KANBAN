@@ -5,7 +5,7 @@ import com.example.integradeproject.project_management.pm_dtos.Task2DTO;
 import com.example.integradeproject.project_management.pm_dtos.Task2IdDTO;
 import com.example.integradeproject.project_management.pm_entities.Task2;
 import com.example.integradeproject.services.ListMapper;
-import com.example.integradeproject.services.Task2Service;
+import com.example.integradeproject.services.Task3Service;
 import com.example.integradeproject.services.TaskValidator;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +22,7 @@ import java.util.List;
 
 public class Task2Controller {
     @Autowired
-    private Task2Service service;
+    private Task3Service service;
     @Autowired
     private ModelMapper modelMapper;
     @Autowired
