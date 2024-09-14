@@ -14,7 +14,7 @@ const isAddOpen = ref(false)
 const isEditOpen = ref(false)
 const isDeleteOpen = ref(false)
 const isTransferOpen = ref(false)
-const selectedStatus = ref(null)
+const selectedStatus = ref(null) // store the selected status data
 const selectedStatusIdToEdit = ref(null)
 const selectedStatusIdToDelete = ref(null)
 const selectedStatusIdToTransfer = ref(null)
@@ -32,8 +32,12 @@ async function fetchData() {
     statuses.value = await fetchUtils.fetchData('statuses', boardId)
     tasks.value = await fetchUtils.fetchData('tasks', boardId)
 
-    console.log(statuses.value)
+    console.log('Fetched statuses:', statuses.value)
+
+    // Handle statusId only if available
     const statusId = route.params.statusId
+    console.log('Status ID:', statusId) // Check if it's available
+
     if (statusId) {
       const status = statuses.value.find(
         (s) => s.statusId === parseInt(statusId)
@@ -63,8 +67,9 @@ const backToHomePage = () => {
 // Modal handlers
 const openAddModal = () => (isAddOpen.value = true)
 const openEditModal = (status) => {
-  selectedStatus.value = { ...status }
+  selectedStatus.value = { ...status } // pass the status data
   selectedStatusIdToEdit.value = status.statusId
+  console.log(selectedStatusIdToEdit)
   isEditOpen.value = true
 }
 const openDeleteModal = (status) => {
@@ -74,7 +79,8 @@ const openDeleteModal = (status) => {
 }
 
 const openTransferModal = (status) => {
-  selectedStatusIdToTransfer.value = status.statusId
+  selectedStatusIdToTransfer.value = status.id
+  console.log(selectedStatusIdToTransfer)
   isTransferOpen.value = true
 }
 

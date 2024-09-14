@@ -81,10 +81,12 @@ const postData = async (url, boardId, data) => {
   }
 }
 
-const putData = async (url, data) => {
+const putData = async (url, boardId, data) => {
   try {
     const token = getToken()
-    const response = await fetch(`${baseUrl}/${url}`, {
+    validateBoardId(boardId)
+    const fullUrl = buildUrl(url, boardId)
+    const response = await fetch(fullUrl, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',

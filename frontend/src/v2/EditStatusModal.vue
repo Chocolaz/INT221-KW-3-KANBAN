@@ -6,7 +6,8 @@ import Toast from './Toast.vue'
 const props = defineProps({
   isOpen: Boolean,
   statusData: Object,
-  selectedStatusIdToEdit: Number
+  selectedStatusIdToEdit: Number,
+  boardId: String 
 })
 
 const emit = defineEmits(['closeModal', 'statusEdited'])
@@ -32,11 +33,13 @@ watch(
 )
 
 const isSaveDisabled = computed(() => {
+  const statusName = editedStatus.value.statusName || ''
+  const statusDescription = editedStatus.value.statusDescription || ''
   return (
     JSON.stringify(editedStatus.value) ===
       JSON.stringify(initialStatus.value) ||
-    editedStatus.value.statusName.length > 50 ||
-    editedStatus.value.statusDescription.length > 200
+    statusName.length > 50 ||
+    statusDescription.length > 200
   )
 })
 
@@ -52,10 +55,13 @@ const saveChanges = async () => {
     if (props.selectedStatusIdToEdit === 6) {
       alert('The "DONE" status cannot be edited')
       emit('closeModal')
-      throw new Error('The "No Status" status cannot be edited')
+      throw new Error('The "DONE" status cannot be edited') // Fixed the error message
     }
 
-    const existingStatuses = await fetchUtils.fetchData('statuses')
+    const existingStatuses = await fetchUtils.fetchData(
+      'statuses',
+      props.boardId
+    )
     const existingStatusNames = existingStatuses.map(
       (status) => status.statusName
     )
@@ -63,15 +69,16 @@ const saveChanges = async () => {
     if (editedStatus.value.statusName !== initialStatus.value.statusName) {
       if (existingStatusNames.includes(editedStatus.value.statusName)) {
         alert('Status name must be unique. Please enter a different name.')
-        emit('closeModal')
         return
       }
     }
 
     const response = await fetchUtils.putData(
       `statuses/${props.selectedStatusIdToEdit}`,
-      editedStatus.value
+      editedStatus.value,
+      props.boardId // Ensure boardId is passed correctly
     )
+
     statusCode.value = response.statusCode
     if (response.success) {
       emit('closeModal')
@@ -111,17 +118,31 @@ const saveChanges = async () => {
               class="w-full border rounded-md p-2 font-medium itbkk-status-name"
             />
             <small
-              v-if="editedStatus.statusName.length > 50"
+              v-if="
+                editedStatus.statusName && editedStatus.statusName.length > 50
+              "
               class="text-red-500"
-              >Name must be at most 50 characters long.</small
             >
+              Name must be at most 50 characters long.
+            </small>
+
+            <small
+              v-if="
+                editedStatus.statusDescription &&
+                editedStatus.statusDescription.length > 200
+              "
+              class="text-red-500"
+            >
+              Description must be at most 200 characters long.
+            </small>
           </div>
           <div class="mb-4">
             <label
               for="statusDescription"
               class="block font-semibold mb-1 text-left itbkk-status-description"
-              >Description:</label
             >
+              Description:
+            </label>
             <textarea
               v-model="editedStatus.statusDescription"
               id="statusDescription"
@@ -133,8 +154,9 @@ const saveChanges = async () => {
             <small
               v-if="editedStatus.statusDescription.length > 200"
               class="text-red-500"
-              >Description must be at most 200 characters long.</small
             >
+              Description must be at most 200 characters long.
+            </small>
           </div>
           <div class="flex justify-end">
             <button

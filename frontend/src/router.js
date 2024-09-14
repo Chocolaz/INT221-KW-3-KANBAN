@@ -57,7 +57,7 @@ const routes = [
   },
   {
     path: '/',
-    redirect: '/board'
+    redirect: '/login'
   },
   {
     path: '/:pathMatch(.*)*',
@@ -76,7 +76,7 @@ router.beforeEach((to, from, next) => {
 
   if (to.name === 'loginView') {
     if (isAuthenticated) {
-      next('/boards/someBoardId/tasks') // Redirect to a default path if authenticated
+      next('/boards') // Redirect to a default path if authenticated
     } else {
       next()
     }
