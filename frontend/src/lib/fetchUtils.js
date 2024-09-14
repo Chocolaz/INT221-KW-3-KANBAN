@@ -84,7 +84,7 @@ const postData = async (url, boardId, data) => {
 const putData = async (url, boardId, data) => {
   try {
     const token = getToken()
-    validateBoardId(boardId)
+    validateBoardId(boardId) // Ensure boardId is valid
     const fullUrl = buildUrl(url, boardId)
     const response = await fetch(fullUrl, {
       method: 'PUT',
@@ -94,9 +94,7 @@ const putData = async (url, boardId, data) => {
       },
       body: JSON.stringify(data)
     })
-    const responseData = await handleResponse(response)
-    console.log('Data updated successfully. Status code:', response.status)
-    return responseData
+    return await handleResponse(response)
   } catch (error) {
     console.error('Error updating data:', error)
     throw error

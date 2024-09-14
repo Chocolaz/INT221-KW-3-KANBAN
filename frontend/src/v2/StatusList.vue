@@ -67,11 +67,24 @@ const backToHomePage = () => {
 // Modal handlers
 const openAddModal = () => (isAddOpen.value = true)
 const openEditModal = (status) => {
-  selectedStatus.value = { ...status } // pass the status data
-  selectedStatusIdToEdit.value = status.statusId
-  console.log(selectedStatusIdToEdit)
-  isEditOpen.value = true
+  if (status) {
+    const statusValue = status.value || status // Use status.value if it's a Ref or use status directly
+    if (statusValue && statusValue.id) {
+      selectedStatus.value = { ...statusValue } // Pass the status data
+      console.log(selectedStatus.value) // Log the selected status object
+
+      selectedStatusIdToEdit.value = statusValue.id // Access id from statusValue
+      console.log('id to edit: ' + selectedStatusIdToEdit.value) // Log the id to edit
+
+      isEditOpen.value = true // Open the edit modal
+    } else {
+      console.error('Invalid status object:', statusValue) // Log an error if status is not valid
+    }
+  } else {
+    console.error('Status is undefined or null:', status) // Log an error if status is undefined
+  }
 }
+
 const openDeleteModal = (status) => {
   selectedStatusIdToDelete.value = status.id
   console.log('Status ID:', status.id)
@@ -211,6 +224,7 @@ const statusStyle = (statusName) => {
       :statusData="selectedStatus"
       :selectedStatusIdToEdit="selectedStatusIdToEdit"
     />
+
     <DeleteStatusModal
       :isOpen="isDeleteOpen"
       @closeModal="closeModal"

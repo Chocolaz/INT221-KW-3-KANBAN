@@ -1,40 +1,44 @@
 <script setup>
-import { defineProps, defineEmits, ref, watch, computed } from 'vue'
+import { ref, watch, computed } from 'vue'
 import fetchUtils from '../lib/fetchUtils'
 import Toast from './Toast.vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
+const boardId = route.params.boardId
 
 const props = defineProps({
   isOpen: Boolean,
   statusData: Object,
-  selectedStatusIdToEdit: Number,
-  boardId: String 
+  selectedStatusIdToEdit: Number
 })
 
 const emit = defineEmits(['closeModal', 'statusEdited'])
 
 const editedStatus = ref({ statusName: '', statusDescription: '' })
 const initialStatus = ref({ statusName: '', statusDescription: '' })
-
 const showToast = ref(false)
 const statusCode = ref(0)
 const operationType = ref(null)
 
+// Update `editedStatus` and `initialStatus` based on `statusData`
 watch(
   () => props.statusData,
   (newValue) => {
     if (newValue) {
-      editedStatus.value = { ...newValue }
-      initialStatus.value = { ...newValue }
-    } else {
-      editedStatus.value = { statusName: '', statusDescription: '' }
-      initialStatus.value = { statusName: '', statusDescription: '' }
+      editedStatus.value = {
+        statusName: newValue.name || '',
+        statusDescription: newValue.description || ''
+      }
+      initialStatus.value = { ...editedStatus.value }
     }
-  }
+  },
+  { immediate: true }
 )
 
+// Disable save button if status is unchanged or invalid
 const isSaveDisabled = computed(() => {
-  const statusName = editedStatus.value.statusName || ''
-  const statusDescription = editedStatus.value.statusDescription || ''
+  const { statusName, statusDescription } = editedStatus.value
   return (
     JSON.stringify(editedStatus.value) ===
       JSON.stringify(initialStatus.value) ||
@@ -43,40 +47,40 @@ const isSaveDisabled = computed(() => {
   )
 })
 
+// Save changes to status
 const saveChanges = async () => {
   operationType.value = 'edit'
   try {
-    if (props.selectedStatusIdToEdit === 1) {
-      alert('The "No Status" status cannot be edited')
+    if (!boardId) throw new Error('Board ID is required')
+
+    if ([1, 6].includes(props.selectedStatusIdToEdit)) {
+      const statusErrorMessage =
+        props.selectedStatusIdToEdit === 1
+          ? 'The "No Status" status cannot be edited'
+          : 'The "DONE" status cannot be edited'
+      alert(statusErrorMessage)
       emit('closeModal')
-      throw new Error('The "No Status" status cannot be edited')
+      throw new Error(statusErrorMessage)
     }
 
-    if (props.selectedStatusIdToEdit === 6) {
-      alert('The "DONE" status cannot be edited')
-      emit('closeModal')
-      throw new Error('The "DONE" status cannot be edited') // Fixed the error message
-    }
-
-    const existingStatuses = await fetchUtils.fetchData(
-      'statuses',
-      props.boardId
-    )
+    const existingStatuses = await fetchUtils.fetchData('statuses', boardId)
     const existingStatusNames = existingStatuses.map(
       (status) => status.statusName
     )
 
-    if (editedStatus.value.statusName !== initialStatus.value.statusName) {
-      if (existingStatusNames.includes(editedStatus.value.statusName)) {
-        alert('Status name must be unique. Please enter a different name.')
-        return
-      }
+    // Ensure status name is unique
+    if (
+      editedStatus.value.statusName !== initialStatus.value.statusName &&
+      existingStatusNames.includes(editedStatus.value.statusName)
+    ) {
+      alert('Status name must be unique. Please enter a different name.')
+      return
     }
 
     const response = await fetchUtils.putData(
       `statuses/${props.selectedStatusIdToEdit}`,
-      editedStatus.value,
-      props.boardId // Ensure boardId is passed correctly
+      boardId,
+      editedStatus.value
     )
 
     statusCode.value = response.statusCode
@@ -99,12 +103,16 @@ const saveChanges = async () => {
 </script>
 
 <template>
-  <div v-if="isOpen" class="fixed inset-0 flex items-center justify-center">
-    <div class="fixed inset-0 bg-black opacity-50"></div>
-    <div class="bg-white rounded-lg p-6 max-w-md w-full relative z-10">
+  <div
+    v-if="isOpen"
+    class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
+  >
+    <div
+      class="bg-white rounded-lg p-6 max-w-md w-full relative border-2 border-red-500"
+    >
       <h2 class="text-lg font-semibold mb-4">Edit Status</h2>
       <div v-if="editedStatus">
-        <form @submit.prevent="saveChanges" class="itbkk-modal-status">
+        <form @submit.prevent="saveChanges">
           <div class="mb-4">
             <label for="statusName" class="block font-semibold mb-1 text-left"
               >Name:</label
@@ -113,67 +121,42 @@ const saveChanges = async () => {
               v-model="editedStatus.statusName"
               type="text"
               id="statusName"
-              name="statusName"
               maxlength="50"
-              class="w-full border rounded-md p-2 font-medium itbkk-status-name"
+              class="w-full border rounded-md p-2 font-medium"
             />
-            <small
-              v-if="
-                editedStatus.statusName && editedStatus.statusName.length > 50
-              "
-              class="text-red-500"
-            >
-              Name must be at most 50 characters long.
-            </small>
-
-            <small
-              v-if="
-                editedStatus.statusDescription &&
-                editedStatus.statusDescription.length > 200
-              "
-              class="text-red-500"
-            >
-              Description must be at most 200 characters long.
-            </small>
           </div>
           <div class="mb-4">
             <label
               for="statusDescription"
-              class="block font-semibold mb-1 text-left itbkk-status-description"
+              class="block font-semibold mb-1 text-left"
+              >Description:</label
             >
-              Description:
-            </label>
             <textarea
               v-model="editedStatus.statusDescription"
               id="statusDescription"
-              name="statusDescription"
               rows="4"
               maxlength="200"
               class="w-full border rounded-md p-2 font-medium"
+              placeholder="No description provided"
             ></textarea>
-            <small
-              v-if="editedStatus.statusDescription.length > 200"
-              class="text-red-500"
-            >
-              Description must be at most 200 characters long.
-            </small>
           </div>
           <div class="flex justify-end">
             <button
               type="button"
               @click="emit('closeModal')"
-              class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md mr-2 itbkk-button-cancel"
+              class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md mr-2"
             >
               Cancel
             </button>
             <button
               :disabled="isSaveDisabled"
               type="submit"
-              class="px-4 py-2 rounded-md itbkk-button-confirm"
-              :class="{
-                'bg-gray-400 text-gray-600 cursor-not-allowed': isSaveDisabled,
-                'bg-blue-500 text-white hover:bg-blue-600': !isSaveDisabled
-              }"
+              class="px-4 py-2 rounded-md"
+              :class="
+                isSaveDisabled
+                  ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                  : 'bg-blue-500 text-white hover:bg-blue-600'
+              "
             >
               Save
             </button>
