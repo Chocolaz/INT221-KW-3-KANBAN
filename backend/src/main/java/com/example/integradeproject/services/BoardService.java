@@ -37,8 +37,16 @@ public class BoardService {
 
     @Transactional
     public BoardDTO createBoard(String boardName, String token) {
+        if (boardName == null || boardName.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Board name cannot be empty");
+        }
+
+        if (boardName.length() > 120) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Board name cannot exceed 120 characters");
+        }
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
         String ownerName = jwtTokenUtil.getNameFromToken(token);
+
 
         Board board = new Board();
         board.setName(boardName);
@@ -54,7 +62,7 @@ public class BoardService {
     }
 
     private List<Status> createDefaultStatuses(Board board) {
-        List<String> defaultStatusNames = Arrays.asList("No Status", "To Do", "In Progress", "Done");
+        List<String> defaultStatusNames = Arrays.asList("No Status", "To Do", "Doing", "Done");
         List<String> defaultStatusDescriptions = Arrays.asList(
                 "The default status",
                 "The task is included in the project",
@@ -76,7 +84,10 @@ public class BoardService {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
         String ownerName = jwtTokenUtil.getNameFromToken(token);
 
+
+
         List<Board> boards = boardRepository.findAllByOwnerOid(ownerOid);
+
         return boards.stream().map(board -> convertToDTO(board, ownerName)).collect(Collectors.toList());
     }
 
