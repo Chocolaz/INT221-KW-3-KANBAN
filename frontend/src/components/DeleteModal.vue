@@ -3,8 +3,8 @@ import FetchUtils from '../lib/fetchUtils'
 import { defineProps, defineEmits } from 'vue'
 import { useRoute } from 'vue-router'
 
-const route = useRoute() 
-const boardId = route.params.boardId 
+const route = useRoute()
+const boardId = route.params.boardId
 
 const props = defineProps({
   closeModal: {
@@ -55,7 +55,7 @@ const cancelModal = () => {
   <div
     class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50"
   >
-    <div class="bg-white shadow-lg rounded-lg w-96 p-6">
+    <div class="bg-white shadow-lg rounded-lg w-96 p-6 animate-fade-in-up">
       <h2 class="text-xl font-bold mb-4">DELETE TASK</h2>
       <p class="text-gray-700 mb-6">
         Do you want to delete the task number "{{ taskIndex }}" <br />
@@ -79,4 +79,19 @@ const cancelModal = () => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+</style>

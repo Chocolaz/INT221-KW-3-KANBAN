@@ -1,5 +1,12 @@
 <script setup>
-import { ref, computed, onMounted, defineProps, defineEmits } from 'vue'
+import {
+  ref,
+  computed,
+  onMounted,
+  onUnmounted,
+  defineProps,
+  defineEmits
+} from 'vue'
 import FetchUtils from '../lib/fetchUtils'
 import { useRoute } from 'vue-router'
 
@@ -22,6 +29,8 @@ const taskDetails = ref({
 })
 
 const statuses = ref([])
+const isDropdownOpen = ref(false)
+const hoverStatus = ref(null)
 
 const isSaveDisabled = computed(() => {
   const { title, description, assignees } = taskDetails.value
@@ -91,8 +100,73 @@ async function fetchStatuses() {
   }
 }
 
+const statusStyle = (status) => {
+  const statusUpperCase = status?.toUpperCase() || 'NO STATUS'
+  const styles = {
+    'TO DO': {
+      background: 'linear-gradient(to right, #FF9A9E, #F67C5E)',
+      color: '#fff'
+    },
+    DOING: {
+      background: 'linear-gradient(to right, #FFE066, #F6E05E)',
+      color: '#fff'
+    },
+    DONE: {
+      background: 'linear-gradient(to right, #AAF6BE, #68D391)',
+      color: '#fff'
+    },
+    'NO STATUS': {
+      backgroundColor: 'rgba(245, 245, 245, 0.8)',
+      color: '#888',
+      fontStyle: 'italic'
+    },
+    WAITING: {
+      background: 'linear-gradient(to right, #D9A3FF, #B473FF)',
+      color: '#fff'
+    },
+    'IN PROGRESS': {
+      background: 'linear-gradient(to right, #FFB347, #FFA733)',
+      color: '#fff'
+    },
+    REVIEWING: {
+      background: 'linear-gradient(to right, #FFB6C1, #FF69B4)',
+      color: '#fff'
+    },
+    TESTING: {
+      background: 'linear-gradient(to right, #ADD8E6, #87CEEB)',
+      color: '#fff'
+    }
+  }
+  return (
+    styles[statusUpperCase] || {
+      background: 'linear-gradient(to right, #A0CED9, #6CBEE6)',
+      color: '#fff'
+    }
+  )
+}
+
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
+
+const selectStatus = (status) => {
+  taskDetails.value.statusName = status
+  isDropdownOpen.value = false
+}
+
+const closeDropdown = (event) => {
+  if (!event.target.closest('.status-dropdown')) {
+    isDropdownOpen.value = false
+  }
+}
+
 onMounted(() => {
   fetchStatuses()
+  document.addEventListener('click', closeDropdown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeDropdown)
 })
 </script>
 
@@ -101,7 +175,9 @@ onMounted(() => {
     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     @click.self="cancelModal"
   >
-    <div class="bg-white shadow-lg rounded-lg w-full max-w-lg mt-14">
+    <div
+      class="bg-white shadow-lg rounded-lg w-full max-w-lg mt-14 animate-fade-in-up"
+    >
       <div class="p-6">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold text-red-600">Add Task</h2>
@@ -115,7 +191,9 @@ onMounted(() => {
 
         <form @submit.prevent="handleSaveTask">
           <div class="mb-4">
-            <label for="title" class="block text-sm font-medium text-gray-700"
+            <label
+              for="title"
+              class="block text-sm font-semibold text-start text-gray-700"
               >Title</label
             >
             <input
@@ -135,7 +213,7 @@ onMounted(() => {
           <div class="mb-4">
             <label
               for="description"
-              class="block text-sm font-medium text-gray-700"
+              class="block text-sm font-semibold text-start text-gray-700"
               >Description</label
             >
             <textarea
@@ -156,7 +234,7 @@ onMounted(() => {
           <div class="mb-4">
             <label
               for="assignees"
-              class="block text-sm font-medium text-gray-700"
+              class="block text-sm font-semibold text-start text-gray-700"
               >Assignees</label
             >
             <input
@@ -175,26 +253,43 @@ onMounted(() => {
             </small>
           </div>
 
-          <div class="mb-4">
-            <label for="status" class="block text-sm font-medium text-gray-700"
+          <div class="mb-4 status-dropdown">
+            <label
+              for="status"
+              class="block text-sm font-semibold text-start text-gray-700"
               >Status</label
             >
-            <select
-              id="status"
-              v-model="taskDetails.statusName"
-              class="mt-1 p-2 block border border-gray-300 w-60 mx-auto rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-            >
-              <option v-if="statuses.length === 0" value="" disabled>
-                Loading...
-              </option>
-              <option
-                v-for="status in statuses"
-                :key="status.id"
-                :value="status.name"
+            <div class="relative">
+              <div
+                class="block p-2 border border-gray-300 rounded-md shadow-sm cursor-pointer text-xs w-36 hover:opacity-80 transition-opacity duration-200"
+                :style="statusStyle(taskDetails.statusName)"
+                @click="toggleDropdown"
               >
-                {{ status.name }}
-              </option>
-            </select>
+                {{ taskDetails.statusName || 'Select Status' }}
+              </div>
+
+              <transition name="fade">
+                <div
+                  v-if="isDropdownOpen"
+                  class="absolute top-full mt-1 w-36 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto h-20 z-20"
+                >
+                  <ul class="list-none p-0 m-0">
+                    <li
+                      v-for="status in statuses"
+                      :key="status.id"
+                      class="p-2 cursor-pointer text-xs transition-colors duration-200"
+                      :style="statusStyle(status.name)"
+                      @click="selectStatus(status.name)"
+                      @mouseenter="hoverStatus = status.name"
+                      @mouseleave="hoverStatus = null"
+                      :class="{ 'opacity-80': hoverStatus === status.name }"
+                    >
+                      {{ status.name }}
+                    </li>
+                  </ul>
+                </div>
+              </transition>
+            </div>
           </div>
 
           <div class="flex justify-end space-x-2">
@@ -220,4 +315,33 @@ onMounted(() => {
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+textarea {
+  resize: none;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+</style>

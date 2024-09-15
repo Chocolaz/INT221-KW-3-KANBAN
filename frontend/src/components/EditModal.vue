@@ -161,7 +161,9 @@ onUnmounted(() => {
     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     @click.self="props.closeModal"
   >
-    <div class="bg-white shadow-lg rounded-lg w-full max-w-lg mt-14">
+    <div
+      class="bg-white shadow-lg rounded-lg w-full max-w-lg mt-14 animate-fade-in-up"
+    >
       <div class="p-4">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold text-red-600">Edit Task</h2>
@@ -215,6 +217,25 @@ onUnmounted(() => {
             </small>
           </div>
 
+          <div class="mb-4">
+            <label
+              for="assignees"
+              class="block text-sm font-semibold text-start text-gray-700"
+              >Assignees</label
+            >
+            <input
+              type="text"
+              id="assignees"
+              v-model="editedTask.assignees"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              maxlength="30"
+              placeholder="Enter assignees"
+            />
+            <small v-if="editedTask.assignees.length > 25" class="text-red-600">
+              {{ 30 - editedTask.assignees.length }} characters left
+            </small>
+          </div>
+
           <div class="mb-4 status-dropdown">
             <label
               for="status"
@@ -233,7 +254,7 @@ onUnmounted(() => {
               <transition name="fade">
                 <div
                   v-if="isDropdownOpen"
-                  class="absolute top-full mt-1 w-36 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto h-24 z-20"
+                  class="absolute top-full mt-1 w-36 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto h-20 z-20"
                 >
                   <ul class="list-none p-0 m-0">
                     <li
@@ -290,5 +311,20 @@ textarea {
 .fade-enter-from,
 .fade-leave-to {
   opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
 }
 </style>

@@ -46,7 +46,9 @@ watch(
   <div
     class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
   >
-    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+    <div
+      class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md mt-16 animate-fade-in-up"
+    >
       <h2 class="text-2xl font-semibold mb-4">Select Statuses to Filter</h2>
       <div class="space-y-4">
         <!-- Select All Checkbox -->
@@ -108,4 +110,19 @@ watch(
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+</style>
