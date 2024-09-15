@@ -12,19 +12,22 @@
           required
           class="w-full p-2 mb-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <button
-          type="submit"
-          class="w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          Add Board
-        </button>
+        <div class="flex justify-between">
+          <button
+            type="submit"
+            class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+                <i class="fas fa-plus-circle"></i>
+            Add Board
+          </button>
+          <button
+            class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            @click="closeModal"
+          >
+            Close
+          </button>
+        </div>
       </form>
-      <button
-        class="mt-4 bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500"
-        @click="closeModal"
-      >
-        Close
-      </button>
     </div>
   </div>
 </template>

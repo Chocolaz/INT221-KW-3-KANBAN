@@ -68,7 +68,7 @@ const handleEditTask = async () => {
     }
   } catch (error) {
     console.error('Error updating task:', error)
-    alert('Error to updating task. Please try again.')
+    alert('Error updating task. Please try again.')
   }
 }
 const formatLocalDate = (dateString) => {
@@ -95,238 +95,132 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="modal-wrapper">
-    <div class="modal">
-      <div class="modal-content">
-        <h2 class="modal-title">Edit Task</h2>
+  <div
+    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+  >
+    <div class="bg-white shadow-lg rounded-lg w-full max-w-lg p-6 relative">
+      <h2 class="text-xl font-bold mb-4">Edit Task</h2>
 
-        <form @submit.prevent="handleEditTask">
-          <!-- Title -->
-          <div class="form-group">
-            <label for="title">Title:</label>
-            <input
-              type="text"
-              id="title"
-              v-model="editedTask.title"
-              class="itbkk-title"
-              required
-              maxlength="100"
-            />
-            <small v-if="editedTask.title.length > 100" class="error">
-              Title must be at most 100 characters long.
-            </small>
-          </div>
+      <form @submit.prevent="handleEditTask">
+        <!-- Title -->
+        <div class="mb-4">
+          <label for="title" class="block font-semibold mb-1">Title:</label>
+          <input
+            type="text"
+            id="title"
+            v-model="editedTask.title"
+            class="w-full px-3 py-2 border rounded-md"
+            required
+            maxlength="100"
+          />
+          <small
+            v-if="editedTask.title.length > 100"
+            class="text-red-500 text-sm"
+          >
+            Title must be at most 100 characters long.
+          </small>
+        </div>
 
-          <!-- Description -->
-          <div class="form-group">
-            <label for="description">Description:</label>
-            <textarea
-              id="description"
-              v-model="editedTask.description"
-              class="itbkk-description"
-              :placeholder="
-                editedTask.description ? '' : 'No Description Provided'
-              "
-              maxlength="500"
-            ></textarea>
-            <small v-if="editedTask.description.length > 500" class="error">
-              Description must be at most 500 characters long.
-            </small>
-          </div>
+        <!-- Description -->
+        <div class="mb-4">
+          <label for="description" class="block font-semibold mb-1"
+            >Description:</label
+          >
+          <textarea
+            id="description"
+            v-model="editedTask.description"
+            class="w-full px-3 py-2 border rounded-md"
+            :placeholder="
+              editedTask.description ? '' : 'No Description Provided'
+            "
+            maxlength="500"
+          ></textarea>
+          <small
+            v-if="editedTask.description.length > 500"
+            class="text-red-500 text-sm"
+          >
+            Description must be at most 500 characters long.
+          </small>
+        </div>
 
-          <!-- Assignees -->
-          <div class="form-group">
-            <label for="assignees">Assignees:</label>
-            <input
-              type="text"
-              id="assignees"
-              v-model="editedTask.assignees"
-              class="itbkk-assignees"
-              :placeholder="editedTask.assignees ? '' : 'Unassigned'"
-              maxlength="30"
-            />
-            <small v-if="editedTask.assignees.length > 30" class="error">
-              Assignees must be at most 30 characters long.
-            </small>
-          </div>
+        <!-- Assignees -->
+        <div class="mb-4">
+          <label for="assignees" class="block font-semibold mb-1"
+            >Assignees:</label
+          >
+          <input
+            type="text"
+            id="assignees"
+            v-model="editedTask.assignees"
+            class="w-full px-3 py-2 border rounded-md"
+            :placeholder="editedTask.assignees ? '' : 'Unassigned'"
+            maxlength="30"
+          />
+          <small
+            v-if="editedTask.assignees.length > 30"
+            class="text-red-500 text-sm"
+          >
+            Assignees must be at most 30 characters long.
+          </small>
+        </div>
 
-          <!-- Status -->
-          <div class="form-group">
-            <label for="status">Status:</label>
-            <select
-              id="status"
-              v-model="editedTask.statusName"
-              class="itbkk-status"
+        <!-- Status -->
+        <div class="mb-4">
+          <label for="status" class="block font-semibold mb-1">Status:</label>
+          <select
+            id="status"
+            v-model="editedTask.statusName"
+            class="w-full px-3 py-2 border rounded-md"
+          >
+            <option v-if="statuses.length === 0" value="" disabled>
+              Loading...
+            </option>
+            <option
+              v-else
+              v-for="status in statuses"
+              :key="status.statusId"
+              :value="status.statusName"
             >
-              <option v-if="statuses.length === 0" value="" disabled>
-                Loading...
-              </option>
-              <option
-                v-else
-                v-for="status in statuses"
-                :key="status.statusId"
-                :value="status.statusName"
-              >
-                {{ status.statusName }}
-              </option>
-            </select>
-          </div>
+              {{ status.statusName }}
+            </option>
+          </select>
+        </div>
 
-          <!-- button -->
-          <div class="modal-buttons">
-            <button
-              class="itbkk-button itbkk-button-confirm"
-              type="submit"
-              :class="{ disabled: isSaveDisabled }"
-              :disabled="isSaveDisabled"
-            >
-              Save
-            </button>
-            <button
-              class="itbkk-button itbkk-button-cancel"
-              type="button"
-              @click="closeModal"
-            >
-              Cancel
-            </button>
-          </div>
+        <!-- buttons -->
+        <div class="flex justify-end space-x-4 mt-6">
+          <button
+            class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
+            type="submit"
+            :disabled="isSaveDisabled"
+          >
+            Save
+          </button>
+          <button
+            class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+            type="button"
+            @click="closeModal"
+          >
+            Cancel
+          </button>
+        </div>
 
-          <!-- timezone, created date, updated date -->
-          <div class="details-container">
-            <div class="details-group">
-              <strong>Timezone:</strong> {{ timezone }}
-              <p>
-                <strong>Created Date:</strong>
-                {{ formatLocalDate(task.createdOn) }}
-              </p>
-              <p>
-                <strong>Updated Date:</strong>
-                {{ formatLocalDate(task.updatedOn) }}
-              </p>
-            </div>
+        <!-- timezone, created date, updated date -->
+        <div
+          class="absolute top-4 right-4 p-2 border rounded-md bg-white shadow-md text-sm"
+        >
+          <div><strong>Timezone:</strong> {{ timezone }}</div>
+          <div>
+            <strong>Created Date:</strong>
+            {{ formatLocalDate(task.createdOn) }}
           </div>
-        </form>
-      </div>
+          <div>
+            <strong>Updated Date:</strong>
+            {{ formatLocalDate(task.updatedOn) }}
+          </div>
+        </div>
+      </form>
     </div>
   </div>
 </template>
 
-<style scoped>
-.modal-wrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal {
-  background-color: white;
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-  border-radius: 8px;
-  width: 700px;
-}
-
-.modal-content {
-  padding: 30px;
-}
-
-.modal-title {
-  margin-top: 0;
-  font-size: 24px;
-  font-weight: bold;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  font-weight: bold;
-  text-align: left;
-}
-
-input[type='text'],
-textarea,
-select {
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-}
-
-input[type='text'] {
-  width: 500px;
-}
-
-textarea {
-  width: 500px;
-  height: 200px;
-  resize: none;
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.itbkk-button {
-  padding: 10px 20px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.itbkk-button-confirm {
-  background-color: #68d391;
-  color: #fff;
-}
-
-.itbkk-button-cancel {
-  background-color: #f67c5e;
-  color: #fff;
-}
-
-.itbkk-button-confirm:hover,
-.itbkk-button-cancel:hover {
-  opacity: 0.8;
-}
-
-.details-container {
-  position: absolute;
-  top: 30px;
-  right: 30px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  width: 250px;
-  height: 90px;
-  text-align: right;
-  background-color: #ffffffd2;
-}
-
-.details-group {
-  margin-bottom: 10px;
-  font-size: 13px;
-  padding: 10px;
-}
-
-.disabled {
-  background-color: gray;
-  cursor: not-allowed;
-}
-
-.error {
-  color: red;
-  font-size: 12px;
-}
-
-.itbkk-description::placeholder,
-.itbkk-assignees::placeholder {
-  font-style: italic;
-}
-</style>
+<style scoped></style>
