@@ -60,13 +60,12 @@ export default {
   },
   async created() {
     try {
-      const boardId = this.$route.params.boardId // Retrieve boardId from route params
+      const boardId = this.$route.params.boardId
 
       if (!boardId) {
         throw new Error('Board ID is undefined')
       }
 
-      // Fetch statuses using boardId
       const data = await FetchUtils.fetchData('statuses', boardId)
       this.statuses = data
     } catch (error) {
@@ -77,61 +76,92 @@ export default {
 </script>
 
 <template>
-  <div class="modal-wrapper" @click.self="cancelModal">
-    <div class="modal" :class="{ 'modal-open': true }">
-      <div class="modal-content">
-        <h2 class="modal-title">Add Task</h2>
-        <button class="close-button" @click="cancelModal">&times;</button>
+  <div
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+    @click.self="cancelModal"
+  >
+    <div class="bg-white shadow-lg rounded-lg w-full max-w-lg mt-14">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-red-600">Add Task</h2>
+          <button
+            class="text-2xl text-red-600 hover:text-red-800"
+            @click="cancelModal"
+          >
+            &times;
+          </button>
+        </div>
 
         <form @submit.prevent="handleSaveTask">
-          <div class="form-group">
-            <label for="title">Title:</label>
+          <div class="mb-4">
+            <label for="title" class="block text-sm font-medium text-gray-700"
+              >Title</label
+            >
             <input
               type="text"
               id="title"
               v-model="taskDetails.title"
-              class="itbkk-title"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
               required
               maxlength="100"
               placeholder="Enter task title"
             />
-            <small v-if="taskDetails.title.length > 90" class="error">
+            <small v-if="taskDetails.title.length > 90" class="text-red-600">
               {{ 100 - taskDetails.title.length }} characters left
             </small>
           </div>
-          <div class="form-group">
-            <label for="description">Description:</label>
+
+          <div class="mb-4">
+            <label
+              for="description"
+              class="block text-sm font-medium text-gray-700"
+              >Description</label
+            >
             <textarea
               id="description"
               v-model="taskDetails.description"
-              class="itbkk-description"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
               maxlength="500"
               placeholder="Enter task description"
             ></textarea>
-            <small v-if="taskDetails.description.length > 450" class="error">
+            <small
+              v-if="taskDetails.description.length > 450"
+              class="text-red-600"
+            >
               {{ 500 - taskDetails.description.length }} characters left
             </small>
           </div>
-          <div class="form-group">
-            <label for="assignees">Assignees:</label>
+
+          <div class="mb-4">
+            <label
+              for="assignees"
+              class="block text-sm font-medium text-gray-700"
+              >Assignees</label
+            >
             <input
               type="text"
               id="assignees"
               v-model="taskDetails.assignees"
-              class="itbkk-assignees"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
               maxlength="30"
               placeholder="Enter assignees"
             />
-            <small v-if="taskDetails.assignees.length > 25" class="error">
+            <small
+              v-if="taskDetails.assignees.length > 25"
+              class="text-red-600"
+            >
               {{ 30 - taskDetails.assignees.length }} characters left
             </small>
           </div>
-          <div class="form-group">
-            <label for="status">Status:</label>
+
+          <div class="mb-4">
+            <label for="status" class="block text-sm font-medium text-gray-700"
+              >Status</label
+            >
             <select
               id="status"
               v-model="taskDetails.statusName"
-              class="itbkk-status"
+              class="mt-1 p-2 block border border-gray-300 w-60 mx-auto rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
             >
               <option v-if="statuses.length === 0" value="" disabled>
                 Loading...
@@ -147,19 +177,19 @@ export default {
             </select>
           </div>
 
-          <div class="modal-buttons">
+          <div class="flex justify-end space-x-2">
             <button
-              class="itbkk-button itbkk-button-cancel"
               type="button"
+              class="py-2 px-4 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
               @click="cancelModal"
             >
               Cancel
             </button>
             <button
-              class="itbkk-button itbkk-button-confirm"
               type="submit"
-              :class="{ disabled: isSaveDisabled }"
+              :class="{ 'opacity-50 cursor-not-allowed': isSaveDisabled }"
               :disabled="isSaveDisabled"
+              class="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700"
             >
               Save
             </button>
@@ -171,166 +201,4 @@ export default {
 </template>
 
 <style scoped>
-.modal-wrapper {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1000;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal {
-  background-color: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  width: 80%;
-  max-width: 500px;
-  font-size: 13px;
-}
-
-.modal-content {
-  padding: 20px;
-  position: relative;
-}
-
-.modal-title {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 20px;
-  font-weight: bold;
-  color: #e74c3c;
-}
-
-.close-button {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  font-size: 20px;
-  background: none;
-  border: none;
-  color: #ff6b6b;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.close-button:hover {
-  color: #f06543;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-label {
-  display: block;
-  font-weight: bold;
-  margin-bottom: 3px;
-  color: #343a40;
-}
-
-input[type='text'],
-textarea,
-select {
-  width: 100%;
-  padding: 8px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  font-size: 14px;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-input[type='text']:focus,
-textarea:focus,
-select:focus {
-  outline: none;
-  border-color: #ff6b6b;
-  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.2);
-}
-
-textarea {
-  height: 100px;
-  resize: vertical;
-}
-
-.itbkk-status {
-  width: 100px;
-}
-
-.modal-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.itbkk-button {
-  padding: 8px 16px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  transition: background-color 0.3s ease, transform 0.1s ease;
-}
-
-.itbkk-button:active {
-  transform: scale(0.95);
-}
-
-.itbkk-button-confirm {
-  background-color: #ff6b6b;
-  color: #fff;
-}
-
-.itbkk-button-cancel {
-  background-color: #f8f9fa;
-  color: #343a40;
-}
-
-.itbkk-button-confirm:hover {
-  background-color: #f06543;
-}
-
-.itbkk-button-cancel:hover {
-  background-color: #e9ecef;
-}
-
-.error {
-  color: #ff6b6b;
-  font-size: 11px;
-  margin-top: 5px;
-}
-
-.disabled {
-  background-color: #ced4da;
-  cursor: not-allowed;
-}
-
-@keyframes shake {
-  0%,
-  100% {
-    transform: translateX(0);
-  }
-  10%,
-  30%,
-  50%,
-  70%,
-  90% {
-    transform: translateX(-5px);
-  }
-  20%,
-  40%,
-  60%,
-  80% {
-    transform: translateX(5px);
-  }
-}
-
-.error {
-  animation: shake 0.82s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-}
 </style>
