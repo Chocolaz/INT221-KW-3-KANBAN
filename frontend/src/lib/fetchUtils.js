@@ -15,8 +15,13 @@ const handleResponse = async (response) => {
     }
     throw new Error(`HTTP error! Status: ${response.status}`)
   }
-  const responseData = await response.json()
-  return { success: true, data: responseData, statusCode: response.status }
+  const text = await response.text()
+  if (text) {
+    const responseData = JSON.parse(text)
+    return { success: true, data: responseData, statusCode: response.status }
+  } else {
+    return { success: true, data: {}, statusCode: response.status }
+  }
 }
 
 const getToken = () => {
@@ -84,7 +89,7 @@ const postData = async (url, boardId, data) => {
 const putData = async (url, boardId, data) => {
   try {
     const token = getToken()
-    validateBoardId(boardId) 
+    validateBoardId(boardId) // Ensure boardId is valid
     const fullUrl = buildUrl(url, boardId)
     const response = await fetch(fullUrl, {
       method: 'PUT',

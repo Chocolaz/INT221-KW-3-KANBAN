@@ -14,7 +14,7 @@
     </div>
 
     <!-- Message when the board limit is reached -->
-     <p v-if="boards.length >= 4" class="text-red-500 text-center">
+    <p v-if="boards.length >= 4" class="text-red-500 text-center">
       You can only create up to 4 boards.
     </p>
 
@@ -22,20 +22,19 @@
       <table class="table header-table">
         <thead>
           <tr>
-            <th>No </th>
-            <th>Name </th>
+            <th>No</th>
+            <th>Name</th>
           </tr>
         </thead>
         <tbody>
-
-        <!-- Check if there are no boards -->
-        <tr v-if="boards.length === 0">
+          <!-- Check if there are no boards -->
+          <tr v-if="boards.length === 0">
             <td colspan="2" class="text-gray-500 text-xl text-center py-6">
               No personal board
             </td>
           </tr>
-        <!-- Render boards if available -->
-        <tr
+          <!-- Render boards if available -->
+          <tr
             v-for="(board, index) in boards"
             :key="board.id"
             class="border-b hover:bg-gray-100"
@@ -53,8 +52,6 @@
         </tbody>
       </table>
     </div>
-
-    
 
     <!-- Modal for Add Board -->
     <AddBoard
@@ -77,10 +74,16 @@ const router = useRouter()
 
 const fetchBoards = async () => {
   try {
+    // Add debugging information
+    console.log('Fetching boards...')
     const response = await fetchUtils.getBoards()
-    boards.value = response
+    console.log('Fetched boards response:', response)
+
+    // Ensure response is an array
+    boards.value = Array.isArray(response) ? response : []
   } catch (error) {
-    console.error('Error fetching boards:', error)
+    console.error('Error fetching boards:', error.message)
+    // Optional: show user-friendly error message
   }
 }
 
@@ -133,7 +136,8 @@ tbody tr:hover {
   overflow: hidden;
 }
 
-.table th, .table td {
+.table th,
+.table td {
   text-align: center;
 }
 
