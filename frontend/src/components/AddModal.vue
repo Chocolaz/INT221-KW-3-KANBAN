@@ -1,78 +1,99 @@
-<script>
+<script setup>
+import { ref, computed, onMounted, defineProps, defineEmits } from 'vue'
 import FetchUtils from '../lib/fetchUtils'
+import { useRoute } from 'vue-router'
 
-export default {
-  props: {
-    closeModal: {
-      type: Function,
-      required: true
-    }
-  },
-  data() {
-    return {
-      taskDetails: {
-        title: '',
-        description: '',
-        assignees: '',
-        statusName: 'No Status'
-      },
-      statuses: []
-    }
-  },
-  computed: {
-    isSaveDisabled() {
-      return (
-        !this.taskDetails.title.trim() ||
-        this.taskDetails.title.length > 100 ||
-        this.taskDetails.description.length > 500 ||
-        this.taskDetails.assignees.length > 30
-      )
-    }
-  },
-  methods: {
-    async handleSaveTask() {
-      try {
-        const { success, data, statusCode } = await FetchUtils.postData(
-          'tasks',
-          this.taskDetails
-        )
-        if (success && statusCode === 201) {
-          console.log('The task has been successfully added', statusCode)
-          this.$emit('taskSaved', data)
-          this.$emit('showStatusModal', statusCode)
-          this.taskDetails = {
-            title: '',
-            description: '',
-            assignees: '',
-            statusName: 'No Status'
-          }
-          this.closeModal()
-        } else {
-          console.error('Something wrong while adding the task')
-        }
-      } catch (error) {
-        console.error('Error saving task:', error)
-      }
-    },
-    cancelModal() {
-      this.closeModal()
-    }
-  },
-  async created() {
-    try {
-      const boardId = this.$route.params.boardId
+const props = defineProps({
+  closeModal: {
+    type: Function,
+    required: true
+  }
+})
 
-      if (!boardId) {
-        throw new Error('Board ID is undefined')
-      }
+const emit = defineEmits(['taskSaved', 'showStatusModal'])
 
-      const data = await FetchUtils.fetchData('statuses', boardId)
-      this.statuses = data
-    } catch (error) {
-      console.error('Error fetching statuses:', error)
+const route = useRoute()
+
+const taskDetails = ref({
+  title: '',
+  description: '',
+  assignees: '',
+  statusName: 'No Status'
+})
+
+const statuses = ref([])
+
+const isSaveDisabled = computed(() => {
+  const { title, description, assignees } = taskDetails.value
+  return (
+    !title.trim() ||
+    title.length > 100 ||
+    description.length > 500 ||
+    assignees.length > 30
+  )
+})
+
+async function handleSaveTask() {
+  const boardId = route.params.boardId
+
+  if (!boardId) {
+    console.error('Board ID is undefined')
+    return
+  }
+
+  try {
+    const { success, data, statusCode } = await FetchUtils.postData(
+      'tasks',
+      boardId,
+      taskDetails.value
+    )
+
+    if (success && statusCode === 201) {
+      console.log('Task added successfully:', statusCode)
+      emit('taskSaved', data)
+      emit('showStatusModal', statusCode)
+      resetTaskDetails()
+      props.closeModal()
+    } else {
+      console.error('Failed to add task')
     }
+  } catch (error) {
+    console.error('Error saving task:', error)
   }
 }
+
+function cancelModal() {
+  props.closeModal()
+}
+
+function resetTaskDetails() {
+  taskDetails.value = {
+    title: '',
+    description: '',
+    assignees: '',
+    statusName: 'No Status'
+  }
+}
+
+async function fetchStatuses() {
+  const boardId = route.params.boardId
+
+  if (!boardId) {
+    console.error('Board ID is undefined')
+    return
+  }
+
+  try {
+    const data = await FetchUtils.fetchData('statuses', boardId)
+    statuses.value = data
+  } catch (error) {
+    console.error('Error fetching statuses:', error)
+  }
+}
+
+onMounted(() => {
+  fetchStatuses()
+})
 </script>
 
 <template>
@@ -167,12 +188,11 @@ export default {
                 Loading...
               </option>
               <option
-                v-else
                 v-for="status in statuses"
-                :key="status.statusId"
-                :value="status.statusName"
+                :key="status.id"
+                :value="status.name"
               >
-                {{ status.statusName }}
+                {{ status.name }}
               </option>
             </select>
           </div>
@@ -200,5 +220,4 @@ export default {
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>
