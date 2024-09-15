@@ -239,7 +239,6 @@ const onTaskUpdated = (updatedTask, status) => {
   if (taskIndex !== -1) {
     tasks.value[taskIndex] = updatedTask
   }
-  // Call handleEditSuccess after updating the task
   handleEditSuccess(status)
 }
 

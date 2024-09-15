@@ -1,5 +1,12 @@
 <script setup>
-import { ref, computed, defineProps, defineEmits, onMounted } from 'vue'
+import {
+  ref,
+  computed,
+  defineProps,
+  defineEmits,
+  onMounted,
+  onUnmounted
+} from 'vue'
 import { useRoute } from 'vue-router'
 import FetchUtils from '../lib/fetchUtils'
 
@@ -20,18 +27,13 @@ const props = defineProps({
     required: true
   }
 })
-const emit = defineEmits(['editSuccess'])
-const editedTask = ref({
-  title: '',
-  description: '',
-  assignees: '',
-  statusName: ''
-})
-const statuses = ref([])
 
-if (props.task) {
-  editedTask.value = { ...props.task }
-}
+const emit = defineEmits(['editSuccess'])
+
+const editedTask = ref({ ...props.task })
+const statuses = ref([])
+const isDropdownOpen = ref(false)
+const hoverStatus = ref(null)
 
 const initialTask = JSON.parse(JSON.stringify(props.task))
 
@@ -60,17 +62,14 @@ const handleEditTask = async () => {
       updatedTask
     )
 
-    if (response) {
-      if (response.success) {
-        props.onTaskUpdated(response.data)
-        props.closeModal()
-
-        emit('editSuccess', response.statusCode, 'edit')
-        console.log('Task updated successfully.', response.statusCode)
-      } else {
-        console.error('Failed to update task')
-        alert('Failed to edit task. Please try again.')
-      }
+    if (response?.success) {
+      props.onTaskUpdated(response.data)
+      props.closeModal()
+      emit('editSuccess', response.statusCode, 'edit')
+      console.log('Task updated successfully.', response.statusCode)
+    } else {
+      console.error('Failed to update task')
+      alert('Failed to edit task. Please try again.')
     }
   } catch (error) {
     console.error('Error updating task:', error)
@@ -87,8 +86,73 @@ const fetchStatuses = async () => {
   }
 }
 
+const statusStyle = (status) => {
+  const statusUpperCase = status?.toUpperCase() || 'NO STATUS'
+  const styles = {
+    'TO DO': {
+      background: 'linear-gradient(to right, #FF9A9E, #F67C5E)',
+      color: '#fff'
+    },
+    DOING: {
+      background: 'linear-gradient(to right, #FFE066, #F6E05E)',
+      color: '#fff'
+    },
+    DONE: {
+      background: 'linear-gradient(to right, #AAF6BE, #68D391)',
+      color: '#fff'
+    },
+    'NO STATUS': {
+      backgroundColor: 'rgba(245, 245, 245, 0.8)',
+      color: '#888',
+      fontStyle: 'italic'
+    },
+    WAITING: {
+      background: 'linear-gradient(to right, #D9A3FF, #B473FF)',
+      color: '#fff'
+    },
+    'IN PROGRESS': {
+      background: 'linear-gradient(to right, #FFB347, #FFA733)',
+      color: '#fff'
+    },
+    REVIEWING: {
+      background: 'linear-gradient(to right, #FFB6C1, #FF69B4)',
+      color: '#fff'
+    },
+    TESTING: {
+      background: 'linear-gradient(to right, #ADD8E6, #87CEEB)',
+      color: '#fff'
+    }
+  }
+  return (
+    styles[statusUpperCase] || {
+      background: 'linear-gradient(to right, #A0CED9, #6CBEE6)',
+      color: '#fff'
+    }
+  )
+}
+
+const toggleDropdown = () => {
+  isDropdownOpen.value = !isDropdownOpen.value
+}
+
+const selectStatus = (status) => {
+  editedTask.value.statusName = status
+  isDropdownOpen.value = false
+}
+
+const closeDropdown = (event) => {
+  if (!event.target.closest('.status-dropdown')) {
+    isDropdownOpen.value = false
+  }
+}
+
 onMounted(() => {
   fetchStatuses()
+  document.addEventListener('click', closeDropdown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeDropdown)
 })
 </script>
 
@@ -98,7 +162,7 @@ onMounted(() => {
     @click.self="props.closeModal"
   >
     <div class="bg-white shadow-lg rounded-lg w-full max-w-lg mt-14">
-      <div class="p-6">
+      <div class="p-4">
         <div class="flex justify-between items-center mb-4">
           <h2 class="text-xl font-semibold text-red-600">Edit Task</h2>
           <button
@@ -111,7 +175,9 @@ onMounted(() => {
 
         <form @submit.prevent="handleEditTask">
           <div class="mb-4">
-            <label for="title" class="block text-sm font-medium text-gray-700"
+            <label
+              for="title"
+              class="block text-sm text-gray-700 text-start font-semibold"
               >Title</label
             >
             <input
@@ -131,7 +197,7 @@ onMounted(() => {
           <div class="mb-4">
             <label
               for="description"
-              class="block text-sm font-medium text-gray-700"
+              class="block text-sm text-gray-700 text-start font-semibold"
               >Description</label
             >
             <textarea
@@ -149,45 +215,43 @@ onMounted(() => {
             </small>
           </div>
 
-          <div class="mb-4">
+          <div class="mb-4 status-dropdown">
             <label
-              for="assignees"
-              class="block text-sm font-medium text-gray-700"
-              >Assignees</label
-            >
-            <input
-              type="text"
-              id="assignees"
-              v-model="editedTask.assignees"
-              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-              maxlength="30"
-              placeholder="Enter assignees"
-            />
-            <small v-if="editedTask.assignees.length > 25" class="text-red-600">
-              {{ 30 - editedTask.assignees.length }} characters left
-            </small>
-          </div>
-
-          <div class="mb-4">
-            <label for="status" class="block text-sm font-medium text-gray-700"
+              for="status"
+              class="block text-sm text-gray-700 text-start font-semibold"
               >Status</label
             >
-            <select
-              id="status"
-              v-model="editedTask.statusName"
-              class="mt-1 p-2 block border border-gray-300 w-60 mx-auto rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-            >
-              <option v-if="statuses.length === 0" value="" disabled>
-                Loading...
-              </option>
-              <option
-                v-for="status in statuses"
-                :key="status.id"
-                :value="status.name"
+            <div class="relative">
+              <div
+                class="block p-2 border border-gray-300 rounded-md shadow-sm cursor-pointer text-xs w-36 hover:opacity-80 transition-opacity duration-200"
+                :style="statusStyle(editedTask.statusName)"
+                @click="toggleDropdown"
               >
-                {{ status.name }}
-              </option>
-            </select>
+                {{ editedTask.statusName || 'Select Status' }}
+              </div>
+
+              <transition name="fade">
+                <div
+                  v-if="isDropdownOpen"
+                  class="absolute top-full mt-1 w-36 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto h-24 z-20"
+                >
+                  <ul class="list-none p-0 m-0">
+                    <li
+                      v-for="status in statuses"
+                      :key="status.id"
+                      class="p-2 cursor-pointer text-xs transition-colors duration-200"
+                      :style="statusStyle(status.name)"
+                      @click="selectStatus(status.name)"
+                      @mouseenter="hoverStatus = status.name"
+                      @mouseleave="hoverStatus = null"
+                      :class="{ 'opacity-80': hoverStatus === status.name }"
+                    >
+                      {{ status.name }}
+                    </li>
+                  </ul>
+                </div>
+              </transition>
+            </div>
           </div>
 
           <div class="flex justify-end space-x-2">
@@ -216,5 +280,15 @@ onMounted(() => {
 <style scoped>
 textarea {
   resize: none;
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.2s;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
