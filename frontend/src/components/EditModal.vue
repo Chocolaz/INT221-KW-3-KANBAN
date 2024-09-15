@@ -1,6 +1,10 @@
 <script setup>
 import { ref, computed, defineProps, defineEmits, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import FetchUtils from '../lib/fetchUtils'
+
+const route = useRoute()
+const boardId = route.params.boardId
 
 const props = defineProps({
   task: {
@@ -52,37 +56,31 @@ const handleEditTask = async () => {
 
     const response = await FetchUtils.putData(
       `tasks/${props.task.taskId}`,
+      boardId,
       updatedTask
     )
 
-    if (response && response.success) {
-      props.onTaskUpdated(response.data)
-      props.closeModal()
-      if (response.statusCode === 201) {
+    if (response) {
+      if (response.success) {
+        props.onTaskUpdated(response.data)
+        props.closeModal()
+
         emit('editSuccess', response.statusCode, 'edit')
-        console.log('Task updated successfully.')
+        console.log('Task updated successfully.', response.statusCode)
+      } else {
+        console.error('Failed to update task')
+        alert('Failed to edit task. Please try again.')
       }
-    } else {
-      console.error('Failed to update task')
-      alert('Failed to edit task. Please try again.')
     }
   } catch (error) {
     console.error('Error updating task:', error)
     alert('Error updating task. Please try again.')
   }
 }
-const formatLocalDate = (dateString) => {
-  const date = new Date(dateString)
-  return date.toLocaleString('en-GB')
-}
-
-const timezone = computed(
-  () => Intl.DateTimeFormat().resolvedOptions().timeZone
-)
 
 const fetchStatuses = async () => {
   try {
-    const data = await FetchUtils.fetchData('statuses')
+    const data = await FetchUtils.fetchData('statuses', boardId)
     statuses.value = data
   } catch (error) {
     console.error('Error fetching statuses:', error)
@@ -96,131 +94,127 @@ onMounted(() => {
 
 <template>
   <div
-    class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+    @click.self="props.closeModal"
   >
-    <div class="bg-white shadow-lg rounded-lg w-full max-w-lg p-6 relative">
-      <h2 class="text-xl font-bold mb-4">Edit Task</h2>
-
-      <form @submit.prevent="handleEditTask">
-        <!-- Title -->
-        <div class="mb-4">
-          <label for="title" class="block font-semibold mb-1">Title:</label>
-          <input
-            type="text"
-            id="title"
-            v-model="editedTask.title"
-            class="w-full px-3 py-2 border rounded-md"
-            required
-            maxlength="100"
-          />
-          <small
-            v-if="editedTask.title.length > 100"
-            class="text-red-500 text-sm"
+    <div class="bg-white shadow-lg rounded-lg w-full max-w-lg mt-14">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-xl font-semibold text-red-600">Edit Task</h2>
+          <button
+            class="text-2xl text-red-600 hover:text-red-800"
+            @click="props.closeModal"
           >
-            Title must be at most 100 characters long.
-          </small>
+            &times;
+          </button>
         </div>
 
-        <!-- Description -->
-        <div class="mb-4">
-          <label for="description" class="block font-semibold mb-1"
-            >Description:</label
-          >
-          <textarea
-            id="description"
-            v-model="editedTask.description"
-            class="w-full px-3 py-2 border rounded-md"
-            :placeholder="
-              editedTask.description ? '' : 'No Description Provided'
-            "
-            maxlength="500"
-          ></textarea>
-          <small
-            v-if="editedTask.description.length > 500"
-            class="text-red-500 text-sm"
-          >
-            Description must be at most 500 characters long.
-          </small>
-        </div>
-
-        <!-- Assignees -->
-        <div class="mb-4">
-          <label for="assignees" class="block font-semibold mb-1"
-            >Assignees:</label
-          >
-          <input
-            type="text"
-            id="assignees"
-            v-model="editedTask.assignees"
-            class="w-full px-3 py-2 border rounded-md"
-            :placeholder="editedTask.assignees ? '' : 'Unassigned'"
-            maxlength="30"
-          />
-          <small
-            v-if="editedTask.assignees.length > 30"
-            class="text-red-500 text-sm"
-          >
-            Assignees must be at most 30 characters long.
-          </small>
-        </div>
-
-        <!-- Status -->
-        <div class="mb-4">
-          <label for="status" class="block font-semibold mb-1">Status:</label>
-          <select
-            id="status"
-            v-model="editedTask.statusName"
-            class="w-full px-3 py-2 border rounded-md"
-          >
-            <option v-if="statuses.length === 0" value="" disabled>
-              Loading...
-            </option>
-            <option
-              v-else
-              v-for="status in statuses"
-              :key="status.statusId"
-              :value="status.statusName"
+        <form @submit.prevent="handleEditTask">
+          <div class="mb-4">
+            <label for="title" class="block text-sm font-medium text-gray-700"
+              >Title</label
             >
-              {{ status.statusName }}
-            </option>
-          </select>
-        </div>
-
-        <!-- buttons -->
-        <div class="flex justify-end space-x-4 mt-6">
-          <button
-            class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 disabled:opacity-50"
-            type="submit"
-            :disabled="isSaveDisabled"
-          >
-            Save
-          </button>
-          <button
-            class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
-            type="button"
-            @click="closeModal"
-          >
-            Cancel
-          </button>
-        </div>
-
-        <!-- timezone, created date, updated date -->
-        <div
-          class="absolute top-4 right-4 p-2 border rounded-md bg-white shadow-md text-sm"
-        >
-          <div><strong>Timezone:</strong> {{ timezone }}</div>
-          <div>
-            <strong>Created Date:</strong>
-            {{ formatLocalDate(task.createdOn) }}
+            <input
+              type="text"
+              id="title"
+              v-model="editedTask.title"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              required
+              maxlength="100"
+              placeholder="Enter task title"
+            />
+            <small v-if="editedTask.title.length > 90" class="text-red-600">
+              {{ 100 - editedTask.title.length }} characters left
+            </small>
           </div>
-          <div>
-            <strong>Updated Date:</strong>
-            {{ formatLocalDate(task.updatedOn) }}
+
+          <div class="mb-4">
+            <label
+              for="description"
+              class="block text-sm font-medium text-gray-700"
+              >Description</label
+            >
+            <textarea
+              id="description"
+              v-model="editedTask.description"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              maxlength="500"
+              placeholder="Enter task description"
+            ></textarea>
+            <small
+              v-if="editedTask.description.length > 450"
+              class="text-red-600"
+            >
+              {{ 500 - editedTask.description.length }} characters left
+            </small>
           </div>
-        </div>
-      </form>
+
+          <div class="mb-4">
+            <label
+              for="assignees"
+              class="block text-sm font-medium text-gray-700"
+              >Assignees</label
+            >
+            <input
+              type="text"
+              id="assignees"
+              v-model="editedTask.assignees"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              maxlength="30"
+              placeholder="Enter assignees"
+            />
+            <small v-if="editedTask.assignees.length > 25" class="text-red-600">
+              {{ 30 - editedTask.assignees.length }} characters left
+            </small>
+          </div>
+
+          <div class="mb-4">
+            <label for="status" class="block text-sm font-medium text-gray-700"
+              >Status</label
+            >
+            <select
+              id="status"
+              v-model="editedTask.statusName"
+              class="mt-1 p-2 block border border-gray-300 w-60 mx-auto rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+            >
+              <option v-if="statuses.length === 0" value="" disabled>
+                Loading...
+              </option>
+              <option
+                v-for="status in statuses"
+                :key="status.id"
+                :value="status.name"
+              >
+                {{ status.name }}
+              </option>
+            </select>
+          </div>
+
+          <div class="flex justify-end space-x-2">
+            <button
+              type="button"
+              class="py-2 px-4 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
+              @click="props.closeModal"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              :class="{ 'opacity-50 cursor-not-allowed': isSaveDisabled }"
+              :disabled="isSaveDisabled"
+              class="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700"
+            >
+              Save
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+textarea {
+  resize: none;
+}
+</style>

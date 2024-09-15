@@ -36,7 +36,7 @@ export default {
           <h2 class="modal-title" style="color: #f67c5e">DELETE SUCCESS!</h2>
           <p class="itbkk-message">The task has been deleted.</p>
         </div>
-        <div v-else-if="statusCode === 201 && operationType === 'edit'">
+        <div v-else-if="statusCode === 200 && operationType === 'edit'">
           <h2 class="modal-title" style="color: #f28c28">EDIT SUCCESS!</h2>
           <p>The task has been successfully edited.</p>
         </div>

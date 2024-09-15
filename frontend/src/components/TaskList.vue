@@ -144,7 +144,6 @@ const filteredTasks = computed(() => {
 })
 
 const openModal = async (taskId) => {
-  // Ensure that both boardId and taskId are valid
   if (!taskId || !boardId) {
     console.error('Task ID or Board ID is invalid or missing.')
     return
@@ -218,7 +217,7 @@ const handleShowStatusModal = (status) => {
 }
 const openEditModal = async (taskId) => {
   try {
-    const data = await FetchUtils.fetchData('tasks', taskId)
+    const data = await FetchUtils.fetchData('tasks', boardId, taskId) // Pass boardId and taskId
     taskToEdit.value = data
     if (taskToEdit.value) {
       operationType.value = 'edit'
@@ -229,17 +228,21 @@ const openEditModal = async (taskId) => {
     alert('Failed to edit task. Please try again.')
   }
 }
+
 const closeEditModal = () => {
   showEditModal.value = false
 }
-const onTaskUpdated = (updatedTask) => {
+const onTaskUpdated = (updatedTask, status) => {
   const taskIndex = tasks.value.findIndex(
     (task) => task.taskId === updatedTask.taskId
   )
   if (taskIndex !== -1) {
     tasks.value[taskIndex] = updatedTask
   }
+  // Call handleEditSuccess after updating the task
+  handleEditSuccess(status)
 }
+
 const handleEditSuccess = (status) => {
   console.log('Received status code after edit:', status)
   statusCode.value = status
