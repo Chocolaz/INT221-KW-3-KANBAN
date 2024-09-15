@@ -39,12 +39,23 @@ const deleteStatus = async () => {
       throw new Error('Status ID to delete is not defined')
     }
 
-    if (statusIdToDelete === 1) {
+    const rawStatuses = await fetchUtils.fetchData('statuses', boardId)
+    const statusToDelete = rawStatuses.find(
+      (status) => status.id === statusIdToDelete
+    )
+
+    if (!statusToDelete) {
+      throw new Error('Status not found')
+    }
+
+    const statusName = statusToDelete.name.toUpperCase()
+
+    if (statusName === 'NO STATUS') {
       showErrorAndClose(ERROR_MESSAGES.NO_STATUS)
       return
     }
 
-    if (statusIdToDelete === 6) {
+    if (statusName === 'DONE') {
       showErrorAndClose(ERROR_MESSAGES.DONE_STATUS)
       return
     }
@@ -93,7 +104,9 @@ const handleErrors = (message) => {
     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
     v-if="isOpen"
   >
-    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm animate-fade-in-up">
+    <div
+      class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm animate-fade-in-up"
+    >
       <h2 class="text-lg font-semibold mb-4 text-red-600">Delete Status</h2>
       <p class="text-left mb-4">Are you sure you want to delete the status?</p>
       <div class="flex justify-end space-x-2">

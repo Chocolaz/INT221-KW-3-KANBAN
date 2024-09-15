@@ -38,7 +38,7 @@ const addStatus = async () => {
   try {
     const existingStatuses = await fetchUtils.fetchData('statuses', boardId)
     const existingStatusNames = existingStatuses.map(
-      (status) => status.statusName
+      (status) => status.name
     )
 
     if (existingStatusNames.includes(statusName.value)) {
@@ -47,10 +47,10 @@ const addStatus = async () => {
     }
 
     const newStatus = {
-      statusName: statusName.value,
-      statusDescription: statusDescription.value
+      name: statusName.value,
+      description: statusDescription.value
     }
-    const response = await fetchUtils.postData('statuses', boardId, newStatus) // Pass boardId
+    const response = await fetchUtils.postData('statuses', boardId, newStatus) 
     statusCode.value = response.statusCode
     if (response.success) {
       closeModal()
@@ -139,6 +139,7 @@ const addStatus = async () => {
     @close="showToast = false"
   />
 </template>
+
 <style>
 @keyframes fadeInUp {
   from {

@@ -43,40 +43,56 @@ const isSaveDisabled = computed(() => {
     JSON.stringify(editedStatus.value) ===
       JSON.stringify(initialStatus.value) ||
     statusName.length > 50 ||
-    statusDescription.length > 200
+    statusDescription.length > 200 ||
+    statusName === 'TO DO' ||
+    statusName === 'DONE'
   )
 })
 
-// Save changes to status
+const restrictedStatuses = ['NO STATUS', 'DONE']
+
 const saveChanges = async () => {
   operationType.value = 'edit'
   try {
     if (!boardId) throw new Error('Board ID is required')
 
-    if ([1, 6].includes(props.selectedStatusIdToEdit)) {
-      const statusErrorMessage =
-        props.selectedStatusIdToEdit === 1
-          ? 'The "No Status" status cannot be edited'
-          : 'The "DONE" status cannot be edited'
+    // Ensure the original status name is obtained and processed
+    const originalStatusName = props.statusData.name?.toUpperCase() || ''
+
+    // Check if the status is restricted
+    if (restrictedStatuses.includes(originalStatusName)) {
+      const statusErrorMessage = `The "${props.statusData.name}" status cannot be edited.`
       alert(statusErrorMessage)
       emit('closeModal')
-      throw new Error(statusErrorMessage)
+      return
     }
 
-    const existingStatuses = await fetchUtils.fetchData('statuses', boardId)
-    const existingStatusNames = existingStatuses.map(
-      (status) => status.statusName
-    )
+    // Fetch raw statuses and debug output
+    const rawStatuses = await fetchUtils.fetchData('statuses', boardId)
+    console.log('Raw statuses:', rawStatuses)
 
-    // Ensure status name is unique
+    // Process response to get existing status names
+    const existingStatusNames = rawStatuses
+      .filter((status) => status.name)
+      .map((status) => status.name.toUpperCase())
+
+    console.log('Existing status names:', existingStatusNames)
+
+    // Convert edited and initial status names to uppercase for comparison
+    const editedStatusName = editedStatus.value.statusName?.toUpperCase() || ''
+    const initialStatusName =
+      initialStatus.value.statusName?.toUpperCase() || ''
+
+    // Ensure the status name is unique
     if (
-      editedStatus.value.statusName !== initialStatus.value.statusName &&
-      existingStatusNames.includes(editedStatus.value.statusName)
+      editedStatusName !== initialStatusName &&
+      existingStatusNames.includes(editedStatusName)
     ) {
       alert('Status name must be unique. Please enter a different name.')
       return
     }
 
+    // Update the status
     const response = await fetchUtils.putData(
       `statuses/${props.selectedStatusIdToEdit}`,
       boardId,
