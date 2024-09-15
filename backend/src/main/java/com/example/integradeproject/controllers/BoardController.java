@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -61,7 +62,7 @@ public class BoardController {
                 return ResponseEntity.ok(boardDTOOptional.get());
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Board not found or you do not have access to it."));
+                        .body(Map.of("error", "Board not found"));
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -78,6 +79,9 @@ public class BoardController {
         try {
             List<Task2DTO> tasks = boardService.getTasksForBoard(id, jwtToken, sortBy, filterStatuses);
             return ResponseEntity.ok(tasks);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to retrieve tasks: " + e.getMessage()));
@@ -92,6 +96,9 @@ public class BoardController {
         try {
             NewTask2DTO createdTask = boardService.createTask(id, newTaskDTO, jwtToken);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to create task: " + e.getMessage()));
@@ -107,6 +114,9 @@ public class BoardController {
         try {
             NewTask2DTO updatedTask = boardService.updateTask(boardId, taskId, updateTaskDTO, jwtToken);
             return ResponseEntity.ok(updatedTask);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to update task: " + e.getMessage()));
@@ -121,6 +131,9 @@ public class BoardController {
         try {
             boardService.deleteTask(boardId, taskId, jwtToken);
             return ResponseEntity.ok().build();
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to delete task: " + e.getMessage()));
