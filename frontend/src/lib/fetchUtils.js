@@ -84,7 +84,7 @@ const postData = async (url, boardId, data) => {
 const putData = async (url, boardId, data) => {
   try {
     const token = getToken()
-    validateBoardId(boardId) // Ensure boardId is valid
+    validateBoardId(boardId) 
     const fullUrl = buildUrl(url, boardId)
     const response = await fetch(fullUrl, {
       method: 'PUT',

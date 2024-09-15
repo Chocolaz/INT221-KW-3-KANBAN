@@ -35,4 +35,6 @@ public interface TaskV3Repository extends JpaRepository<TaskV3, Integer> {
     List<TaskV3> findByBoardIdAndStatusIdStatusNameIn(Board board, List<String> statusNames);
 
     Optional<Object> findByTaskIdAndBoardId(Integer taskId, Board board);
+
+
 }

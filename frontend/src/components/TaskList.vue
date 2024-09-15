@@ -144,23 +144,27 @@ const filteredTasks = computed(() => {
 })
 
 const openModal = async (taskId) => {
-  if (!taskId) {
-    console.error('Task ID is invalid or missing.')
+  // Ensure that both boardId and taskId are valid
+  if (!taskId || !boardId) {
+    console.error('Task ID or Board ID is invalid or missing.')
     return
   }
   try {
-    const data = await FetchUtils.fetchData(`tasks/${taskId}`)
+    // Fetch the task data with the boardId and taskId
+    const data = await FetchUtils.fetchData(`tasks`, boardId, taskId)
     if (data) {
       selectedTask.value = data
     }
   } catch (error) {
     console.error('Error fetching task details:', error)
     if (error.status === 404) {
+      alert('Task not found.')
     } else {
-      alert('The Request Task does not exist')
+      alert('Error fetching task.')
     }
   }
 }
+
 const handleTaskClick = (taskId) => {
   if (taskId) {
     openModal(taskId)

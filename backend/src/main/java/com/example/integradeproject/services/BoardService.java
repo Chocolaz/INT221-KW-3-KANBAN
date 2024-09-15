@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -118,6 +119,27 @@ public class BoardService {
         return tasks.stream()
                 .map(this::convertToTaskDTO)
                 .collect(Collectors.toList());
+    }
+    public Task2IdDTO getTaskById(String boardId, Integer taskId, String token) {
+        String ownerOid = jwtTokenUtil.getUidFromToken(token);
+        Board board = boardRepository.findByIdAndOwnerOid(boardId, ownerOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
+
+        TaskV3 task = (TaskV3) taskRepository.findByTaskIdAndBoardId(taskId, board)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+
+        return convertToTask2IdDTO(task);
+    }
+
+    private Task2IdDTO convertToTask2IdDTO(TaskV3 task) {
+        Task2IdDTO dto = new Task2IdDTO();
+        dto.setTitle(task.getTitle());
+        dto.setDescription(task.getDescription());
+        dto.setAssignees(task.getAssignees());
+        dto.setStatusName(task.getStatusId().getStatusName());
+        dto.setCreatedOn((Timestamp) task.getCreatedOn());
+        dto.setUpdatedOn((Timestamp) task.getUpdatedOn());
+        return dto;
     }
 
     public NewTask2DTO createTask(String boardId, NewTask2DTO newTaskDTO, String token) {
