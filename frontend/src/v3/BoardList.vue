@@ -7,15 +7,15 @@
       <button
         @click="showModal = true"
         class="bg-rose-600 text-white py-2 px-4 rounded-lg shadow hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-300"
-        :disabled="boards.length >= 4"
+        :disabled="boards.length >= 1"
       >
         Create Board
       </button>
     </div>
 
     <!-- Message when the board limit is reached -->
-    <p v-if="boards.length >= 4" class="text-red-500 text-center">
-      You can only create up to 4 boards.
+    <p v-if="boards.length >= 1" class="text-red-500 text-center">
+      You can only create up to 1 boards.
     </p>
 
     <div class="table-container">
@@ -74,16 +74,18 @@ const router = useRouter()
 
 const fetchBoards = async () => {
   try {
-    // Add debugging information
     console.log('Fetching boards...')
     const response = await fetchUtils.getBoards()
     console.log('Fetched boards response:', response)
 
-    // Ensure response is an array
     boards.value = Array.isArray(response) ? response : []
+
+    // Redirect to the first board if there's at least one board
+    if (boards.value.length > 0) {
+      router.push({ name: 'taskView', params: { boardId: boards.value[0].id } })
+    }
   } catch (error) {
     console.error('Error fetching boards:', error.message)
-    // Optional: show user-friendly error message
   }
 }
 
@@ -119,8 +121,8 @@ tbody tr:hover {
   box-shadow: 0 8px 32px 0 rgba(255, 107, 107, 0.2);
   overflow: hidden;
   display: flex;
-  justify-content: center; /* Center horizontally */
-  align-items: center; /* Center vertically */
+  justify-content: center;
+  align-items: center;
 }
 
 .table-container {

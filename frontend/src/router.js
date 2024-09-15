@@ -7,7 +7,6 @@ import Login from './v3/Login.vue'
 import BoardAdd from './v3/BoardAdd.vue'
 import BoardList from './v3/BoardList.vue'
 
-// Improved utility function to check token validity
 const isTokenValid = (token) => {
   if (!token) return false
 
@@ -38,7 +37,7 @@ const routes = [
       boardId: route.params.boardId,
       taskId: route.params.taskId
     })
-  },
+  }, 
   {
     path: '/boards/:boardId/status',
     name: 'statusView',

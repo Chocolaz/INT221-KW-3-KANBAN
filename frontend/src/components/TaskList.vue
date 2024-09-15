@@ -25,6 +25,8 @@ const taskIndexToDelete = ref(null)
 const selectedStatuses = ref(statuses.value.map((status) => status.statusName))
 
 const sortOrder = ref(0)
+const showFilterModal = ref(false)
+const boardName = ref('')
 
 const route = useRoute()
 const router = useRouter()
@@ -42,14 +44,10 @@ const timezone = computed(
 
 const fetchTasks = async () => {
   try {
-    const boardId = route.params.boardId
-
-    // Ensure boardId is present
     if (!boardId) {
       throw new Error('Board ID is undefined')
     }
 
-    // Fetch tasks using boardId
     const data = await FetchUtils.fetchData('tasks', boardId)
     console.log('Fetched tasks:', data)
     tasks.value = data
@@ -65,12 +63,10 @@ const fetchTasks = async () => {
 
 const fetchStatuses = async () => {
   try {
-    // Ensure boardId is present
     if (!boardId) {
       throw new Error('Board ID is undefined')
     }
 
-    // Fetch statuses using boardId
     const data = await FetchUtils.fetchData('statuses', boardId)
     console.log('Fetched statuses:', data)
     statuses.value = data
@@ -80,11 +76,8 @@ const fetchStatuses = async () => {
 }
 
 const getStatusLabel = (statusName, statuses) => {
-  const status = statuses.find((s) => {
-    return s.name === statusName
-  })
-  const result = status ? status.name : 'No Status'
-  return result
+  const status = statuses.find((s) => s.name === statusName)
+  return status ? status.name : 'No Status'
 }
 
 const statusStyle = (status) => {
@@ -149,8 +142,7 @@ const openModal = async (taskId) => {
     return
   }
   try {
-    // Fetch the task data with the boardId and taskId
-    const data = await FetchUtils.fetchData(`tasks`, boardId, taskId)
+    const data = await FetchUtils.fetchData('tasks', boardId, taskId)
     if (data) {
       selectedTask.value = data
     }
@@ -217,7 +209,7 @@ const handleShowStatusModal = (status) => {
 }
 const openEditModal = async (taskId) => {
   try {
-    const data = await FetchUtils.fetchData('tasks', boardId, taskId) // Pass boardId and taskId
+    const data = await FetchUtils.fetchData('tasks', boardId, taskId)
     taskToEdit.value = data
     if (taskToEdit.value) {
       operationType.value = 'edit'
@@ -255,8 +247,6 @@ const sortTasksByStatus = () => {
   sortOrder.value = (sortOrder.value + 1) % 3
 }
 
-const showFilterModal = ref(false)
-
 const openFilterModal = () => {
   showFilterModal.value = true
   console.log('Opening filter modal...')
@@ -272,20 +262,39 @@ const applyFilter = (selectedStatusesValue) => {
   closeFilterModal()
 }
 
-onMounted(() => {
-  fetchTasks()
-  fetchStatuses()
-})
-onMounted(() => {
-  const taskId = route.params.taskId
-  if (taskId) {
-    openModal(taskId)
+const getBoardNameById = async (boardId) => {
+  try {
+    const boardData = await FetchUtils.getBoards(boardId)
+    const boardName = boardData.data.name
+    console.log(boardData.data.name)
+    return boardName
+  } catch (error) {
+    console.error('Error retrieving board name:', error)
+    throw error
+  }
+}
+
+onMounted(async () => {
+  try {
+    await fetchTasks()
+    await fetchStatuses()
+    const taskId = route.params.taskId
+    if (taskId) {
+      await openModal(taskId)
+    }
+    boardName.value = await getBoardNameById(boardId)
+  } catch (error) {
+    console.error('Error during onMounted:', error)
   }
 })
 </script>
 
 <template>
   <div>
+    <h1 class="text-lg font-medium text-red-600 mt-4 text-center">
+      {{ boardName }}
+    </h1>
+
     <div id="app">
       <div class="table-container">
         <table class="table header-table">
@@ -567,22 +576,11 @@ h3 {
   justify-content: center;
 }
 
-.heading {
-  text-align: center;
-  font-size: 20px;
-  font-weight: bold;
-  color: #353b41;
-  margin-bottom: 10px;
-  margin-top: 10px;
-  font-family: 'Montserrat', sans-serif;
-  text-shadow: 2px 2px 4px rgba(255, 107, 107, 0.2);
-}
-
 .table-container {
   margin: 0 auto;
-  width: 800px; /* Reduced width */
+  width: 800px;
   border-radius: 10px;
-  font-size: 16px; /* Reduced font size */
+  font-size: 16px;
   color: #343a40;
   background: #ffffff;
   border: 2px solid #ff6b6b;
@@ -596,7 +594,7 @@ h3 {
 }
 
 .body-container {
-  max-height: calc(70px * 10);
+  max-height: calc(35px * 10);
   overflow-y: auto;
 }
 
