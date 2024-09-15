@@ -1,53 +1,60 @@
 <template>
   <div class="p-6">
-    <h2 class="text-3xl font-semibold mb-4">Board List</h2>
+    <h2 class="text-3xl font-semibold mb-4 text-center">Board List</h2>
 
     <!-- Create Board Button -->
-    <button
-      @click="showModal = true"
-      class="bg-green-500 text-white py-2 px-4 rounded-lg shadow hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-500"
-      :disabled="boards.length >= 4"
-    >
-      Create Board
-    </button>
+    <div class="flex justify-center mb-4">
+      <button
+        @click="showModal = true"
+        class="bg-rose-600 text-white py-2 px-4 rounded-lg shadow hover:bg-rose-400 focus:outline-none focus:ring-2 focus:ring-rose-300"
+        :disabled="boards.length >= 4"
+      >
+        Create Board
+      </button>
+    </div>
 
     <!-- Message when the board limit is reached -->
-    <p v-if="boards.length >= 4" class="text-red-500 mt-2">
+     <p v-if="boards.length >= 4" class="text-red-500 text-center">
       You can only create up to 4 boards.
     </p>
 
-    <table class="w-full mt-4 border-collapse">
-      <thead>
-        <tr class="bg-gray-200 text-left">
-          <th class="border px-4 py-2">No</th>
-          <th class="border px-4 py-2">Name</th>
-        </tr>
-      </thead>
-      <tbody>
+    <div class="table-container">
+      <table class="table header-table">
+        <thead>
+          <tr>
+            <th>No </th>
+            <th>Name </th>
+          </tr>
+        </thead>
+        <tbody>
+
         <!-- Check if there are no boards -->
         <tr v-if="boards.length === 0">
-          <td colspan="2" class="text-gray-500 text-xl text-center py-6">
-            No personal board
-          </td>
-        </tr>
+            <td colspan="2" class="text-gray-500 text-xl text-center py-6">
+              No personal board
+            </td>
+          </tr>
         <!-- Render boards if available -->
         <tr
-          v-for="(board, index) in boards"
-          :key="board.id"
-          class="border-b hover:bg-gray-100"
-        >
-          <td class="border px-4 py-2">{{ index + 1 }}</td>
-          <td class="border px-4 py-2">
-            <a
-              @click.prevent="viewBoardTasks(board.id)"
-              class="text-blue-500 hover:underline cursor-pointer"
-            >
-              {{ board.name }}
-            </a>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+            v-for="(board, index) in boards"
+            :key="board.id"
+            class="border-b hover:bg-gray-100"
+          >
+            <td class="border px-6 py-4 text-center">{{ index + 1 }}</td>
+            <td class="border px-6 py-4 text-center">
+              <a
+                @click.prevent="viewBoardTasks(board.id)"
+                class="text-blue-500 hover:underline cursor-pointer"
+              >
+                {{ board.name }}
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    
 
     <!-- Modal for Add Board -->
     <AddBoard
@@ -83,3 +90,57 @@ const viewBoardTasks = (boardId) => {
 
 onMounted(fetchBoards)
 </script>
+
+<style scoped>
+tbody tr:nth-child(even) {
+  background-color: #ffe3e3;
+}
+
+tbody tr:nth-child(odd) {
+  background-color: #ffffff;
+}
+
+tbody tr:hover {
+  background-color: #ffccd5;
+  transition: background-color 0.3s ease;
+}
+
+.table-container {
+  margin: 0 auto;
+  width: 700px;
+  border-radius: 10px;
+  font-size: 16px;
+  color: #343a40;
+  background: #ffffff;
+  border: 2px solid #ff6b6b;
+  box-shadow: 0 8px 32px 0 rgba(255, 107, 107, 0.2);
+  overflow: hidden;
+  display: flex;
+  justify-content: center; /* Center horizontally */
+  align-items: center; /* Center vertically */
+}
+
+.table-container {
+  margin-top: 50px;
+}
+
+.table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  table-layout: fixed;
+  background-color: #ffffff;
+  overflow: hidden;
+}
+
+.table th, .table td {
+  text-align: center;
+}
+
+.table th {
+  background-color: #ff6b6b;
+  font-weight: bold;
+  color: #ffffff;
+  font-size: 17px;
+}
+</style>
