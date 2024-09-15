@@ -3,6 +3,7 @@ package com.example.integradeproject.controllers;
 import com.example.integradeproject.project_management.pm_dtos.BoardDTO;
 import com.example.integradeproject.project_management.pm_dtos.NewTask2DTO;
 import com.example.integradeproject.project_management.pm_dtos.Task2DTO;
+import com.example.integradeproject.project_management.pm_dtos.Task2IdDTO;
 import com.example.integradeproject.services.BoardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -85,6 +86,22 @@ public class BoardController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to retrieve tasks: " + e.getMessage()));
+        }
+    }
+    @GetMapping("/{boardId}/tasks/{taskId}")
+    public ResponseEntity<?> getTaskById(@PathVariable String boardId,
+                                         @PathVariable Integer taskId,
+                                         @RequestHeader("Authorization") String token) {
+        String jwtToken = token.substring(7);
+        try {
+            Task2IdDTO task = boardService.getTaskById(boardId, taskId, jwtToken);
+            return ResponseEntity.ok(task);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to retrieve task: " + e.getMessage()));
         }
     }
 
