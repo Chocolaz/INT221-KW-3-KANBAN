@@ -119,8 +119,10 @@ const defaultStatusName = computed(() => {
     v-if="isOpen"
     class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
   >
-    <div class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full">
-      <h2 class="text-lg font-semibold mb-4">Transfer and Delete</h2>
+    <div
+      class="bg-white rounded-lg shadow-lg p-6 max-w-sm w-full animate-fade-in-up"
+    >
+      <h2 class="text-lg font-semibold mb-4 text-red-600">Transfer and Delete</h2>
       <p class="text-left mb-4">
         There are tasks in
         <span class="font-semibold">{{ defaultStatusName }}</span> status. In
@@ -169,3 +171,19 @@ const defaultStatusName = computed(() => {
     @close="showToast = false"
   />
 </template>
+<style>
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+</style>

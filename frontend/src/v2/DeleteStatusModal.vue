@@ -89,21 +89,24 @@ const handleErrors = (message) => {
 </script>
 
 <template>
-  <div class="modal-mask" v-if="isOpen">
-    <div class="itbkk-message">
-      <h2 class="text-lg font-semibold mb-4">Delete Status</h2>
+  <div
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+    v-if="isOpen"
+  >
+    <div class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm animate-fade-in-up">
+      <h2 class="text-lg font-semibold mb-4 text-red-600">Delete Status</h2>
       <p class="text-left mb-4">Are you sure you want to delete the status?</p>
-      <div class="flex justify-end">
+      <div class="flex justify-end space-x-2">
         <button
           type="button"
-          class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md mr-2 itbkk-button-cancel"
+          class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400"
           @click="closeModal"
         >
           Cancel
         </button>
         <button
           type="button"
-          class="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded-md itbkk-button-confirm"
+          class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
           @click="deleteStatus"
         >
           Confirm
@@ -120,24 +123,18 @@ const handleErrors = (message) => {
 </template>
 
 <style scoped>
-.modal-mask {
-  position: fixed;
-  z-index: 9998;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
-.itbkk-message {
-  width: 300px;
-  padding: 20px 30px;
-  background-color: #fff;
-  border-radius: 2px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.33);
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
 }
 </style>

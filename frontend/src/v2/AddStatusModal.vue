@@ -69,8 +69,10 @@ const addStatus = async () => {
 <template>
   <div class="fixed inset-0 flex items-center justify-center" v-if="isAddOpen">
     <div class="fixed inset-0 bg-black opacity-50"></div>
-    <div class="bg-white rounded-lg p-6 max-w-md w-full relative z-10">
-      <h2 class="text-lg font-semibold mb-4">Add Status</h2>
+    <div
+      class="bg-white rounded-lg p-6 max-w-md w-full relative z-10 animate-fade-in-up"
+    >
+      <h2 class="text-lg font-semibold mb-4 text-red-600">Add Status</h2>
       <form @submit.prevent="addStatus" class="itbkk-modal-status">
         <div class="mb-4">
           <label for="statusName" class="block font-semibold mb-1 text-left"
@@ -82,6 +84,7 @@ const addStatus = async () => {
             v-model.trim="statusName"
             maxlength="50"
             class="w-full border rounded-md p-2 font-medium"
+            placeholder="Enter status name"
           />
           <small v-if="statusName.length > 50" class="text-red-500"
             >Name must be at most 50 characters long.</small
@@ -99,6 +102,7 @@ const addStatus = async () => {
             maxlength="200"
             class="w-full border rounded-md p-2 font-medium"
             rows="4"
+            placeholder="Enter status description"
           ></textarea>
           <small v-if="statusDescription.length > 200" class="text-red-500"
             >Description must be at most 200 characters long.</small
@@ -135,3 +139,19 @@ const addStatus = async () => {
     @close="showToast = false"
   />
 </template>
+<style>
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 20px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.3s ease-out;
+}
+</style>
