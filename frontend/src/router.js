@@ -1,9 +1,25 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import jwtDecode from 'vue-jwt-decode'
+
 import TaskList from './components/TaskList.vue'
 import StatusList from './v2/StatusList.vue'
 import Login from './v3/Login.vue'
 import BoardAdd from './v3/BoardAdd.vue'
 import BoardList from './v3/BoardList.vue'
+
+// Improved utility function to check token validity
+const isTokenValid = (token) => {
+  if (!token) return false
+
+  try {
+    const decodedToken = jwtDecode.decode(token)
+    const currentTime = Math.floor(Date.now() / 1000)
+    return decodedToken.exp > currentTime
+  } catch (error) {
+    console.error('Error decoding token:', error)
+    return false
+  }
+}
 
 const routes = [
   {
@@ -48,12 +64,14 @@ const routes = [
   {
     path: '/board',
     name: 'boardView',
-    component: BoardList
+    component: BoardList,
+    meta: { requiresAuth: true }
   },
   {
     path: '/board/add',
     name: 'boardAdd',
-    component: BoardAdd
+    component: BoardAdd,
+    meta: { requiresAuth: true }
   },
   {
     path: '/',
@@ -70,22 +88,19 @@ const router = createRouter({
   routes
 })
 
-// guard
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated')
+  const token = localStorage.getItem('token')
+  const isAuthenticated = isTokenValid(token)
 
-  if (to.name === 'loginView') {
-    if (isAuthenticated) {
-      next('/boards') // Redirect to a default path if authenticated
-    } else {
-      next()
-    }
-  } else if (to.meta.requiresAuth) {
-    if (isAuthenticated) {
-      next()
-    } else {
-      next('/login')
-    }
+  console.log('Navigating to:', to.fullPath)
+  console.log('Is Authenticated:', isAuthenticated)
+
+  if (to.meta.requiresAuth && !isAuthenticated) {
+    console.log('Redirecting to login')
+    next({ name: 'loginView', query: { redirect: to.fullPath } })
+  } else if (to.name === 'loginView' && isAuthenticated) {
+    console.log('Redirecting to boards')
+    next({ name: 'boardView' })
   } else {
     next()
   }
