@@ -1,5 +1,5 @@
 <script setup>
-import { ref, defineProps, defineEmits } from 'vue'
+import { ref, defineProps, defineEmits, watch } from 'vue'
 
 const props = defineProps({
   statuses: Array,
@@ -11,87 +11,95 @@ const emit = defineEmits(['applyFilter', 'close'])
 const showSelectedStatuses = ref([...props.selectedStatuses])
 const selectAll = ref(false)
 
+// Watch for changes to selectedStatuses and update selectAll
+watch(
+  () => props.selectedStatuses,
+  (newValue) => {
+    selectAll.value = newValue.length === props.statuses.length
+  },
+  { immediate: true }
+)
+
 const applyFilter = () => {
   emit('applyFilter', showSelectedStatuses.value)
 }
 
-// ถ้า click "Select All" จะ map check กับทุกตัวที่ show
 const selectAllChanged = () => {
   if (selectAll.value) {
-    showSelectedStatuses.value = props.statuses.map(
-      (status) => status.statusName
-    )
+    showSelectedStatuses.value = props.statuses.map((status) => status.name)
   } else {
     showSelectedStatuses.value = []
   }
 }
 
-// ถ้า array มีเท่า props จะ all checkbox
-const checkboxChanged = () => {
-  if (showSelectedStatuses.value.length === props.statuses.length) {
-    selectAll.value = true
-  } else {
-    selectAll.value = false
+// Watch for changes to showSelectedStatuses and update selectAll
+watch(
+  () => showSelectedStatuses.value,
+  () => {
+    selectAll.value =
+      showSelectedStatuses.value.length === props.statuses.length
   }
-}
+)
 </script>
 
 <template>
-  <div class="modal">
-    <div class="modal-content p-6 bg-white rounded-lg">
-      <h2 class="text-xl font-semibold mb-4">Select Statuses to Filter</h2>
-      <div class="status-checkboxes">
+  <div
+    class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"
+  >
+    <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+      <h2 class="text-2xl font-semibold mb-4">Select Statuses to Filter</h2>
+      <div class="space-y-4">
         <!-- Select All Checkbox -->
-        <div class="flex items-center mb-2">
+        <div class="flex items-center space-x-2">
           <input
             type="checkbox"
             v-model="selectAll"
             @change="selectAllChanged"
-            class="form-checkbox mr-2 h-4 w-4 text-indigo-600 transition duration-150 ease-in-out"
+            class="form-checkbox h-5 w-5 text-indigo-600 transition duration-150 ease-in-out"
           />
-          <label class="text-sm">All</label>
+          <label class="text-sm font-medium">Select All</label>
         </div>
-        <!-- statuses checkboxes -->
+        <!-- Statuses Checkboxes -->
         <div
           v-for="status in statuses"
-          :key="status.statusName"
-          class="flex items-center mb-2"
+          :key="status.name"
+          class="flex items-center space-x-2"
         >
           <input
             type="checkbox"
-            :value="status.statusName"
+            :value="status.name"
             v-model="showSelectedStatuses"
             @change="checkboxChanged"
-            class="form-checkbox mr-2 h-4 w-4 text-indigo-600 transition duration-150 ease-in-out"
+            class="form-checkbox h-5 w-5 text-indigo-600 transition duration-150 ease-in-out"
           />
-          <label class="text-sm">{{ status.statusName }}</label>
+          <label class="text-sm">{{ status.name }}</label>
         </div>
       </div>
-      
-      <!-- if no checkbox checked -->
+      <!-- Validation Message -->
       <div
         v-if="showSelectedStatuses.length === 0 && !selectAll"
-        class="text-red-600 mb-2"
+        class="text-red-600 mt-2 text-sm"
       >
         You must select at least one.
       </div>
-      <div class="modal-buttons flex justify-end mt-4">
+      <!-- Buttons -->
+      <div class="flex justify-end gap-4 mt-4">
         <button
           @click="applyFilter"
           :disabled="showSelectedStatuses.length === 0 && !selectAll"
           :class="{
             'bg-gray-400 cursor-not-allowed':
               showSelectedStatuses.length === 0 && !selectAll,
-            'bg-green-500 cursor-pointer':
+            'bg-green-500 hover:bg-green-600':
               showSelectedStatuses.length > 0 || selectAll
           }"
-          class="apply-button px-4 py-2 text-white rounded-md"
+          class="px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-green-500"
         >
           Apply Filter
         </button>
         <button
           @click="$emit('close')"
-          class="cancel-button px-4 py-2 bg-red-500 text-white rounded-md ml-2"
+          class="bg-red-500 hover:bg-red-600 px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
         >
           Close
         </button>
@@ -100,25 +108,4 @@ const checkboxChanged = () => {
   </div>
 </template>
 
-<style scoped>
-.modal {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  max-width: 400px;
-}
-
-.apply-button,
-.cancel-button {
-  cursor: pointer;
-}
-</style>
+<style scoped></style>
