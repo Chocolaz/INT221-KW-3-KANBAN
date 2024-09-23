@@ -15,8 +15,8 @@ public class BoardDTO {
     @NotBlank(message = "Board name cannot be empty")
     @Size(max = 120, message = "Board name cannot exceed 120 characters")
     private String name;
+    private String visibility ;
     private PMUserDTO owner;
-
     @Data
     public static class PMUserDTO {
         private String oid;

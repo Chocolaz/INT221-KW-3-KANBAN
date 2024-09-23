@@ -13,4 +13,8 @@ public interface BoardRepository extends JpaRepository<Board, String> {
     Optional<Board> findById(String boardId);
 
     Optional<Board> findByIdAndOwnerOid(String boardId, PMUser ownerOid);
+    List<Board> findByOwnerOid_Oid(String ownerOid);
+    List<Board> findByVisibility(Board.BoardVisibility visibility);
+
+    List<Board> findByOwnerOid(PMUser user);
 }

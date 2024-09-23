@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class BoardService {
@@ -37,6 +38,7 @@ public class BoardService {
 
     @Autowired
     private ModelMapper modelMapper;
+
 
     @Transactional
     public BoardDTO createBoard(String boardName, String token) {
@@ -85,23 +87,63 @@ public class BoardService {
         }
         return statuses;
     }
+    public BoardDTO updateBoardVisibility(String boardId, String visibility, String token) {
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        if (!board.getOwnerOid().getOid().equals(userOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the board owner can change visibility");
+        }
+
+        if (!visibility.equals("public") && !visibility.equals("private")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid visibility value");
+        }
+
+        board.setVisibility(Board.BoardVisibility.valueOf(visibility.toUpperCase()));
+        Board updatedBoard = boardRepository.save(board);
+        return convertToDTO(updatedBoard);
+    }
     public List<BoardDTO> getBoardsForUser(String token) {
-        String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        PMUser owner = pmUserRepository.findByOid(ownerOid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        if (token == null) {
+            // Return only public boards for unauthenticated users
+            return boardRepository.findByVisibility(Board.BoardVisibility.PUBLIC)
+                    .stream()
+                    .map(this::convertToDTO)
+                    .collect(Collectors.toList());
+        }
 
-        List<Board> boards = boardRepository.findAllByOwnerOid(owner);
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        PMUser user = pmUserRepository.findById(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        return boards.stream().map(this::convertToDTO).collect(Collectors.toList());
+        List<Board> userBoards = boardRepository.findByOwnerOid(user);
+        List<Board> publicBoards = boardRepository.findByVisibility(Board.BoardVisibility.PUBLIC);
+
+        return Stream.concat(userBoards.stream(), publicBoards.stream())
+                .distinct()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
     }
 
-    public Optional<BoardDTO> getBoardById(String boardId, String token) {
-        String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        PMUser owner = pmUserRepository.findByOid(ownerOid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+    public Optional<BoardDTO> getBoardById(String id, String token) {
+        Board board = boardRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        Optional<Board> boardOptional = boardRepository.findByIdAndOwnerOid(boardId, owner);
-        return boardOptional.map(this::convertToDTO);
+        if (board.getVisibility() == Board.BoardVisibility.PUBLIC) {
+            return Optional.of(convertToDTO(board));
+        }
+
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required for private boards");
+        }
+
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        if (!board.getOwnerOid().getOid().equals(userOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+        }
+
+        return Optional.of(convertToDTO(board));
     }
 
     public List<Task2DTO> getTasksForBoard(String boardId, String token, String sortBy, List<String> filterStatuses) {
@@ -214,9 +256,17 @@ public class BoardService {
     }
 
     private BoardDTO convertToDTO(Board board) {
-        BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
-        boardDTO.setOwner(modelMapper.map(board.getOwnerOid(), BoardDTO.PMUserDTO.class));
-        return boardDTO;
+        BoardDTO dto = new BoardDTO();
+        dto.setId(board.getId());
+        dto.setName(board.getName());
+        dto.setVisibility(board.getVisibility().toString().toLowerCase());
+
+        BoardDTO.PMUserDTO ownerDTO = new BoardDTO.PMUserDTO();
+        ownerDTO.setOid(board.getOwnerOid().getOid());
+        ownerDTO.setName(board.getOwnerOid().getName());
+        dto.setOwner(ownerDTO);
+
+        return dto;
     }
 
     private Task2DTO convertToTaskDTO(TaskV3 task) {

@@ -32,16 +32,28 @@ public class Board {
     @OneToMany(mappedBy = "boardId")
     private List<Task2> tasks;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false)
+    private BoardVisibility visibility = BoardVisibility.PRIVATE;
+
     @Column(name = "createdOn", updatable = false, insertable = false)
     private Date createdOn;
 
     @Column(name = "updatedOn", updatable = false, insertable = false)
     private Date updatedOn;
 
+
     @PrePersist
     private void prePersist() {
         if (this.id == null) {
             this.id = NanoId.generate(10);
         }
+        if (this.visibility == null) {
+            this.visibility = BoardVisibility.PRIVATE;
+        }
+    }
+
+    public enum BoardVisibility {
+        PRIVATE, PUBLIC
     }
 }

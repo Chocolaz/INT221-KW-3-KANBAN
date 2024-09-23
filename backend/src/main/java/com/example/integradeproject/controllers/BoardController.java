@@ -53,6 +53,7 @@ public class BoardController {
         }
     }
 
+
     @GetMapping("/{id}")
     public ResponseEntity<?> getBoardById(@PathVariable String id, @RequestHeader("Authorization") String token) {
         String jwtToken = token.substring(7); // Remove "Bearer " prefix
@@ -70,6 +71,26 @@ public class BoardController {
                     .body(Map.of("error", "Failed to retrieve board: " + e.getMessage()));
         }
     }
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> updateBoardVisibility(@PathVariable String id,
+                                                   @RequestBody Map<String, String> updateRequest,
+                                                   @RequestHeader("Authorization") String token) {
+        String jwtToken = token.substring(7);
+        String visibility = updateRequest.get("visibility");
+
+        try {
+            BoardDTO updatedBoard = boardService.updateBoardVisibility(id, visibility, jwtToken);
+            return ResponseEntity.ok(updatedBoard);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to update board visibility: " + e.getMessage()));
+        }
+    }
+
+
 
     @GetMapping("/{id}/tasks")
     public ResponseEntity<?> getTasksForBoard(@PathVariable String id,
@@ -156,7 +177,8 @@ public class BoardController {
                     .body(Map.of("error", "Failed to delete task: " + e.getMessage()));
         }
     }
-     //------------
+
+    //------------
 //     @GetMapping("/{id}/tasks")
 //     public ResponseEntity<?> getTasksForBoard(@PathVariable String id,
 //                                               @RequestHeader("Authorization") String token,
