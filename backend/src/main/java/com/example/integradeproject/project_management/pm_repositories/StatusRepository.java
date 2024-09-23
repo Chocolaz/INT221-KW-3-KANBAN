@@ -7,18 +7,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface StatusRepository extends JpaRepository  <Status , Integer>{
-    Optional<Status> findByStatusName(String statusName);
-
-    List<Status> findByStatusNameContains( String Name );
-    boolean existsByStatusName(String name);
-
-    List<Status> findAllByBoardId(Board board);
-
-    boolean existsByStatusNameAndBoardId(String statusName, Board boardId);
-    Status findByStatusNameAndBoardId(String statusName, Board boardId);
-
+public interface StatusRepository extends JpaRepository<Status, Integer> {
     List<Status> findByBoardId(Board board);
-
-    Optional<Object> findByStatusIdAndBoardId(Integer statusId, Board board);
+    Optional<Status> findByStatusIdAndBoardId(Integer statusId, Board board);
+    boolean existsByStatusNameAndBoardId(String statusName, Board board);
+    Status findByStatusNameAndBoardId(String statusName, Board board);
 }

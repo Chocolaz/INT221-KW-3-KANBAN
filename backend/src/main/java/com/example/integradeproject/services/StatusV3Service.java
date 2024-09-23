@@ -103,14 +103,14 @@ public class StatusV3Service {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        Status status = (Status) statusRepository.findByStatusIdAndBoardId(statusId, board)
+        Status status = statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
 
         if (status.getStatusName().equals("No Status") || status.getStatusName().equals("Done")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete 'No Status' or 'Done' status");
         }
 
-        if (taskV3Repository.existsByStatusId(status.getStatusId())) {
+        if (taskV3Repository.existsByStatusId(status)) {  // Changed from statusId to status
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete Status as it is currently in use");
         }
 

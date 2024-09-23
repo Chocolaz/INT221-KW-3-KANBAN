@@ -9,28 +9,17 @@ import lombok.Setter;
 @Getter
 @Setter
 @Data
-//public class BoardDTO {
-//    private String id;
-//    private String name;
-//    private OwnerDTO owner;
-//
-//    @Data
-//    public static class OwnerDTO {
-//        private String oid;
-//        private String name;
-//    }
-//}
+
 public class BoardDTO {
     private String id;  // This is now the uid
     @NotBlank(message = "Board name cannot be empty")
     @Size(max = 120, message = "Board name cannot exceed 120 characters")
     private String name;
-    private OwnerDTO owner;
+    private PMUserDTO owner;
 
     @Data
-    public static class OwnerDTO {
+    public static class PMUserDTO {
         private String oid;
         private String name;
-
     }
 }

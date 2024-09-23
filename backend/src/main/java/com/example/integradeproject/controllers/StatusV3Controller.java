@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
@@ -24,9 +25,8 @@ public class StatusV3Controller {
         try {
             List<StatusDTO> statuses = statusService.findAllStatusesByBoardId(boardId);
             return ResponseEntity.ok(statuses);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", e.getMessage()));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
 
@@ -35,8 +35,8 @@ public class StatusV3Controller {
         try {
             StatusDTO createdStatus = statusService.createNewStatus(status, boardId);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdStatus);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
 
@@ -45,9 +45,8 @@ public class StatusV3Controller {
         try {
             StatusDTO updatedStatus = statusService.updateStatus(boardId, statusId, status);
             return ResponseEntity.ok(updatedStatus);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", e.getMessage()));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
 
@@ -56,9 +55,8 @@ public class StatusV3Controller {
         try {
             statusService.deleteStatus(boardId, statusId);
             return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", e.getMessage()));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
 
@@ -69,8 +67,8 @@ public class StatusV3Controller {
         try {
             statusService.deleteStatusAndTransferTasks(boardId, statusId, newStatusId);
             return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
 }

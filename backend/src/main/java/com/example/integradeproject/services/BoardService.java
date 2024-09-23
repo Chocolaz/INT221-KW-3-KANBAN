@@ -23,6 +23,8 @@ public class BoardService {
 
     @Autowired
     private BoardRepository boardRepository;
+    @Autowired
+    private PMUserRepository pmUserRepository;
 
     @Autowired
     private TaskV3Repository taskRepository;
@@ -45,13 +47,15 @@ public class BoardService {
         if (boardName.length() > 120) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Board name cannot exceed 120 characters");
         }
-        String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        String ownerName = jwtTokenUtil.getNameFromToken(token);
 
+        String ownerOid = jwtTokenUtil.getUidFromToken(token);
+
+        PMUser owner = pmUserRepository.findByOid(ownerOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         Board board = new Board();
         board.setName(boardName);
-        board.setOwnerOid(ownerOid);
+        board.setOwnerOid(owner);
 
         Board savedBoard = boardRepository.save(board);
 
@@ -59,7 +63,7 @@ public class BoardService {
         List<Status> defaultStatuses = createDefaultStatuses(savedBoard);
         statusRepository.saveAll(defaultStatuses);
 
-        return convertToDTO(savedBoard, ownerName);
+        return convertToDTO(savedBoard);
     }
 
     private List<Status> createDefaultStatuses(Board board) {
@@ -83,38 +87,37 @@ public class BoardService {
     }
     public List<BoardDTO> getBoardsForUser(String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        String ownerName = jwtTokenUtil.getNameFromToken(token);
+        PMUser owner = pmUserRepository.findByOid(ownerOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        List<Board> boards = boardRepository.findAllByOwnerOid(owner);
 
-
-        List<Board> boards = boardRepository.findAllByOwnerOid(ownerOid);
-
-        return boards.stream().map(board -> convertToDTO(board, ownerName)).collect(Collectors.toList());
+        return boards.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
 
     public Optional<BoardDTO> getBoardById(String boardId, String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        String ownerName = jwtTokenUtil.getNameFromToken(token);
+        PMUser owner = pmUserRepository.findByOid(ownerOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
-        Optional<Board> boardOptional = boardRepository.findById(boardId);
-        if (boardOptional.isPresent() && boardOptional.get().getOwnerOid().equals(ownerOid)) {
-            return Optional.of(convertToDTO(boardOptional.get(), ownerName));
-        } else {
-            return Optional.empty();
-        }
+        Optional<Board> boardOptional = boardRepository.findByIdAndOwnerOid(boardId, owner);
+        return boardOptional.map(this::convertToDTO);
     }
 
     public List<Task2DTO> getTasksForBoard(String boardId, String token, String sortBy, List<String> filterStatuses) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        Optional<Board> boardOptional = boardRepository.findByIdAndOwnerOid(boardId, ownerOid);
+        Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
 
-        if (boardOptional.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access");
+        List<TaskV3> tasks;
+        if (filterStatuses != null && !filterStatuses.isEmpty()) {
+            tasks = taskRepository.findByBoardIdAndStatusId_StatusNameIn(board, filterStatuses);
+        } else {
+            tasks = taskRepository.findByBoardId(board);
         }
 
-        List<TaskV3> tasks = taskRepository.findByBoardId(boardOptional.get());
-
-        // Apply filtering and sorting logic here
+        // Apply sorting logic here if needed
 
         return tasks.stream()
                 .map(this::convertToTaskDTO)
@@ -122,10 +125,11 @@ public class BoardService {
     }
     public Task2IdDTO getTaskById(String boardId, Integer taskId, String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        Board board = boardRepository.findByIdAndOwnerOid(boardId, ownerOid)
+        Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
 
-        TaskV3 task = (TaskV3) taskRepository.findByTaskIdAndBoardId(taskId, board)
+        TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
         return convertToTask2IdDTO(task);
@@ -144,7 +148,8 @@ public class BoardService {
 
     public NewTask2DTO createTask(String boardId, NewTask2DTO newTaskDTO, String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        Board board = boardRepository.findByIdAndOwnerOid(boardId, ownerOid)
+        Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
 
         TaskV3 task = new TaskV3();
@@ -159,18 +164,25 @@ public class BoardService {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not found in this board");
             }
             task.setStatusId(status);
+        } else {
+            // Set default status if not provided
+            Status defaultStatus = statusRepository.findByStatusNameAndBoardId("No Status", board);
+            task.setStatusId(defaultStatus);
         }
+
 
         TaskV3 savedTask = taskRepository.save(task);
         return convertToNewTaskDTO(savedTask);
     }
+
     @Transactional
     public NewTask2DTO updateTask(String boardId, Integer taskId, NewTask2DTO updateTaskDTO, String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        Board board = boardRepository.findByIdAndOwnerOid(boardId, ownerOid)
+        Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
 
-        TaskV3 task = (TaskV3) taskRepository.findByTaskIdAndBoardId(taskId, board)
+        TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
         task.setTitle(updateTaskDTO.getTitle());
@@ -191,25 +203,19 @@ public class BoardService {
 
     public void deleteTask(String boardId, Integer taskId, String token) {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        Board board = boardRepository.findByIdAndOwnerOid(boardId, ownerOid)
+        Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
 
-        TaskV3 task = (TaskV3) taskRepository.findByTaskIdAndBoardId(taskId, board)
+        TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
         taskRepository.delete(task);
     }
 
-    private BoardDTO convertToDTO(Board board, String ownerName) {
-        BoardDTO boardDTO = new BoardDTO();
-        boardDTO.setId(board.getId());
-        boardDTO.setName(board.getName());
-
-        BoardDTO.OwnerDTO ownerDTO = new BoardDTO.OwnerDTO();
-        ownerDTO.setOid(board.getOwnerOid());
-        ownerDTO.setName(ownerName);
-
-        boardDTO.setOwner(ownerDTO);
+    private BoardDTO convertToDTO(Board board) {
+        BoardDTO boardDTO = modelMapper.map(board, BoardDTO.class);
+        boardDTO.setOwner(modelMapper.map(board.getOwnerOid(), BoardDTO.PMUserDTO.class));
         return boardDTO;
     }
 

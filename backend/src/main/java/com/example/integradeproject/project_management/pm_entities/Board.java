@@ -4,7 +4,6 @@ import io.viascom.nanoid.NanoId;
 import jakarta.persistence.*;
 import lombok.*;
 
-
 import java.util.Date;
 import java.util.List;
 
@@ -14,8 +13,6 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-
-
 @Table(name = "boards", schema = "project_management")
 public class Board {
     @Id
@@ -25,13 +22,22 @@ public class Board {
     @Column(name = "boardName", nullable = false)
     private String name;
 
-    @Column(name = "ownerOid", nullable = false)
-    private String ownerOid;
+    @ManyToOne
+    @JoinColumn(name = "ownerOid", nullable = false)
+    private PMUser ownerOid;
+
     @OneToMany(mappedBy = "boardId", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Status> statuses;
 
     @OneToMany(mappedBy = "boardId")
     private List<Task2> tasks;
+
+    @Column(name = "createdOn", updatable = false, insertable = false)
+    private Date createdOn;
+
+    @Column(name = "updatedOn", updatable = false, insertable = false)
+    private Date updatedOn;
+
     @PrePersist
     private void prePersist() {
         if (this.id == null) {
