@@ -23,14 +23,33 @@ USE kanban_DB;
 DROP TABLE IF EXISTS tasks;
 DROP TABLE IF EXISTS statuses;
 DROP TABLE IF EXISTS boards;
+DROP TABLE IF EXISTS users;
+
+
+
+CREATE TABLE users (
+  oid CHAR(36) NOT NULL, -- UUID for user identification
+  name VARCHAR(100) NOT NULL, -- Full name with a limit of 100 characters
+  username VARCHAR(50) NOT NULL, -- Username with a limit of 50 characters
+  email VARCHAR(50) NOT NULL, -- Email with a limit of 50 characters
+	createdOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updatedOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (oid),
+  UNIQUE (email),
+  UNIQUE (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Table structure for 'boards'
 CREATE TABLE boards (
   boardId VARCHAR(21) NOT NULL,
   boardName VARCHAR(120) NOT NULL,
   ownerOid VARCHAR(36),
-  PRIMARY KEY (boardId)
+  createdOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updatedOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (boardId),
+CONSTRAINT fk_boards_users FOREIGN KEY (ownerOid) REFERENCES users(oid) -- Foreign key constraint
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 
 -- Table structure for 'statuses'
 CREATE TABLE statuses (
