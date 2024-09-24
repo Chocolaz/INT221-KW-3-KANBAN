@@ -27,7 +27,6 @@ const selectedStatuses = ref(statuses.value.map((status) => status.statusName))
 
 const sortOrder = ref(0)
 const showFilterModal = ref(false)
-const boardName = ref('')
 
 const route = useRoute()
 const router = useRouter()
@@ -50,7 +49,6 @@ const fetchTasks = async () => {
     }
 
     const data = await FetchUtils.fetchData('tasks', boardId)
-    console.log('Fetched tasks:', data)
     tasks.value = data
 
     const taskId = route.params.taskId
@@ -69,7 +67,6 @@ const fetchStatuses = async () => {
     }
 
     const data = await FetchUtils.fetchData('statuses', boardId)
-    console.log('Fetched statuses:', data)
     statuses.value = data
   } catch (error) {
     console.error('Error fetching statuses:', error)
@@ -212,9 +209,6 @@ const handleEditSuccess = (status) => {
   statusCode.value = status
   showSuccessModal.value = true
 }
-const goToStatusManagement = () => {
-  router.push({ name: 'statusView', params: { boardId } })
-}
 
 const sortTasksByStatus = () => {
   sortOrder.value = (sortOrder.value + 1) % 3
@@ -222,7 +216,6 @@ const sortTasksByStatus = () => {
 
 const openFilterModal = () => {
   showFilterModal.value = true
-  console.log('Opening filter modal...')
 }
 
 const closeFilterModal = () => {
@@ -235,18 +228,6 @@ const applyFilter = (selectedStatusesValue) => {
   closeFilterModal()
 }
 
-const getBoardNameById = async (boardId) => {
-  try {
-    const boardData = await FetchUtils.getBoards(boardId)
-    const boardName = boardData.data.name
-    console.log(boardData.data.name)
-    return boardName
-  } catch (error) {
-    console.error('Error retrieving board name:', error)
-    throw error
-  }
-}
-
 onMounted(async () => {
   try {
     await fetchTasks()
@@ -255,7 +236,6 @@ onMounted(async () => {
     if (taskId) {
       await openModal(taskId)
     }
-    boardName.value = await getBoardNameById(boardId)
   } catch (error) {
     console.error('Error during onMounted:', error)
   }
@@ -264,10 +244,6 @@ onMounted(async () => {
 
 <template>
   <div>
-    <h1 class="text-lg font-medium text-red-600 mt-4 text-center">
-      {{ boardName }}
-    </h1>
-
     <div id="app">
       <div class="table-container">
         <table class="table header-table">
@@ -423,10 +399,6 @@ onMounted(async () => {
       @applyFilter="applyFilter"
       @close="closeFilterModal"
     ></filter-modal>
-
-    <div class="fab" @click="goToStatusManagement">
-      <i class="fas fa-cog"></i>
-    </div>
   </div>
 </template>
 
@@ -705,27 +677,6 @@ tbody tr:hover {
   100% {
     transform: translateX(0%);
   }
-}
-.fab {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(45deg, #ff6b6b, #f06543);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.fab:hover {
-  transform: scale(1.1) rotate(90deg);
 }
 
 ::-webkit-scrollbar {

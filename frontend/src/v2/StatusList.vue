@@ -50,17 +50,6 @@ async function fetchData() {
   }
 }
 
-// Navigation
-const backToHomePage = () => {
-  const boardId = route.params.boardId
-  if (boardId) {
-    router.push(`/boards/${boardId}/tasks`)
-  } else {
-    console.error('Board ID is not defined')
-    router.push({ name: 'taskView' })
-  }
-}
-
 // Modal handlers
 const openAddModal = () => (isAddOpen.value = true)
 const openEditModal = (status) => {
@@ -120,9 +109,6 @@ onMounted(fetchData)
 
 <template>
   <div id="app">
-    <h1 class="text-lg font-medium text-red-600 mt-4 text-center">
-      {{ boardName }}
-    </h1>
     <div class="table-container">
       <table class="table header-table">
         <thead>
@@ -212,9 +198,7 @@ onMounted(fetchData)
       :statusIdToTransfer="selectedStatusIdToTransfer"
     />
 
-    <div class="fab" @click="backToHomePage">
-      <i class="fa fa-home"></i>
-    </div>
+    
   </div>
 </template>
 
@@ -260,7 +244,7 @@ h3 {
 }
 
 .body-container {
-  max-height: calc(70px * 10);
+  max-height: calc(35px * 10);
   overflow-y: auto;
 }
 
@@ -449,28 +433,6 @@ tbody tr:hover {
   .icon-button {
     font-size: 1em;
   }
-}
-
-.fab {
-  position: fixed;
-  bottom: 30px;
-  right: 30px;
-  width: 60px;
-  height: 60px;
-  background: linear-gradient(45deg, #ff6b6b, #f06543);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.2);
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.fab:hover {
-  transform: scale(1.1) rotate(360deg);
 }
 
 @keyframes fadeInUp {

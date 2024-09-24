@@ -8,7 +8,6 @@ const router = useRouter()
 const handleResponse = async (response) => {
   if (!response.ok) {
     if (response.status === 401) {
-      // Reset authentication state and redirect to login page
       localStorage.removeItem('isAuthenticated')
       localStorage.removeItem('token')
       router.push('/login')
@@ -89,7 +88,7 @@ const postData = async (url, boardId, data) => {
 const putData = async (url, boardId, data) => {
   try {
     const token = getToken()
-    validateBoardId(boardId) // Ensure boardId is valid
+    validateBoardId(boardId)
     const fullUrl = buildUrl(url, boardId)
     const response = await fetch(fullUrl, {
       method: 'PUT',
