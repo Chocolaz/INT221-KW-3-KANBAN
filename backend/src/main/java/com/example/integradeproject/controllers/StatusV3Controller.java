@@ -21,24 +21,28 @@ public class StatusV3Controller {
     private StatusV3Service statusService;
 
     @GetMapping("")
-    public ResponseEntity<?> getAllStatuses(@PathVariable String boardId) {
+    public ResponseEntity<?> getAllStatuses(@PathVariable String boardId, @RequestHeader(value = "Authorization", required = false) String token) {
         try {
-            List<StatusDTO> statuses = statusService.findAllStatusesByBoardId(boardId);
+            String jwtToken = token != null ? token.substring(7) : null;
+            List<StatusDTO> statuses = statusService.findAllStatusesByBoardId(boardId, jwtToken);
             return ResponseEntity.ok(statuses);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
 
+
     @PostMapping("")
-    public ResponseEntity<?> createStatus(@PathVariable String boardId, @RequestBody Status status) {
+    public ResponseEntity<?> createStatus(@PathVariable String boardId, @RequestBody Status status, @RequestHeader("Authorization") String token) {
         try {
-            StatusDTO createdStatus = statusService.createNewStatus(status, boardId);
+            String jwtToken = token.substring(7);
+            StatusDTO createdStatus = statusService.createNewStatus(status, boardId, jwtToken);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdStatus);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
+
 
     @PutMapping("/{statusId}")
     public ResponseEntity<?> updateStatus(@PathVariable String boardId, @PathVariable Integer statusId, @RequestBody Status status) {
