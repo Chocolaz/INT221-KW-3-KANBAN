@@ -16,8 +16,70 @@ import java.util.Map;
 @Component
 public class JwtTokenUtil {
 
-    private SecretKey secretKey;
-    private final long expiration = 1800L; // 30 minutes in seconds
+//    private SecretKey secretKey;
+//    private final long expiration = 1800L; // 30 minutes in seconds
+//
+//    @PostConstruct
+//    public void init() {
+//        // Generate a secure key for HS256
+//        this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+//    }
+//
+//    public String generateToken(User user) {
+//        Map<String, Object> information = new HashMap<>();
+//        information.put("name", user.getName());
+//        information.put("oid", user.getOid());
+//        information.put("email", user.getEmail());
+//        information.put("role", user.getRole());
+//
+//        return Jwts.builder()
+//                .setHeaderParam("typ", "JWT")
+//                .setClaims(information)
+//                .setIssuer("https://intproj23.sit.kmutt.ac.th/kw3/")
+//                .setIssuedAt(new Date(System.currentTimeMillis()))
+//                .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
+//                .signWith(secretKey)
+//                .compact();
+//    }
+//
+//    public Claims getClaimsFromToken(String token) {
+//        return Jwts.parserBuilder()
+//                .setSigningKey(secretKey)
+//                .build()
+//                .parseClaimsJws(token)
+//                .getBody();
+//    }
+//
+//    public String getUsernameFromToken(String token) {
+//        Claims claims = getClaimsFromToken(token);
+//        return claims.get("email", String.class);
+//    }
+
+//    public boolean validateToken(String token) {
+//        try {
+//            Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
+//            return true;
+//        } catch (Exception e) {
+//            return false;
+//        }
+//    }
+//
+//    public User getUserFromToken(String token) {
+//        return null;
+//    }
+//
+//    public String getNameFromToken(String token) {
+//        Claims claims = getClaimsFromToken(token);
+//        return claims.get("name", String.class);
+//    }
+//
+//    public String getUidFromToken(String token) {
+//        Claims claims = getClaimsFromToken(token);
+//        return claims.get("oid", String.class);
+//    }
+private SecretKey secretKey;
+    private final long accessTokenExpiration = 1800L; // 30 minutes in seconds
+    private final long refreshTokenExpiration = 86400L; // 24 hours in seconds
 
     @PostConstruct
     public void init() {
@@ -25,16 +87,34 @@ public class JwtTokenUtil {
         this.secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
     }
 
-    public String generateToken(User user) {
-        Map<String, Object> information = new HashMap<>();
-        information.put("name", user.getName());
-        information.put("oid", user.getOid());
-        information.put("email", user.getEmail());
-        information.put("role", user.getRole());
+    public String generateAccessToken(User user) {
+        return generateToken(user, accessTokenExpiration);
+    }
+
+    public String generateRefreshToken(User user) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("oid", user.getOid());
 
         return Jwts.builder()
                 .setHeaderParam("typ", "JWT")
-                .setClaims(information)
+                .setClaims(claims)
+                .setIssuer("https://intproj23.sit.kmutt.ac.th/kw3/")
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + refreshTokenExpiration * 1000))
+                .signWith(secretKey)
+                .compact();
+    }
+
+    private String generateToken(User user, long expiration) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("name", user.getName());
+        claims.put("oid", user.getOid());
+        claims.put("email", user.getEmail());
+        claims.put("role", user.getRole());
+
+        return Jwts.builder()
+                .setHeaderParam("typ", "JWT")
+                .setClaims(claims)
                 .setIssuer("https://intproj23.sit.kmutt.ac.th/kw3/")
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiration * 1000))
@@ -50,11 +130,6 @@ public class JwtTokenUtil {
                 .getBody();
     }
 
-    public String getUsernameFromToken(String token) {
-        Claims claims = getClaimsFromToken(token);
-        return claims.get("email", String.class);
-    }
-
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder().setSigningKey(secretKey).build().parseClaimsJws(token);
@@ -64,13 +139,9 @@ public class JwtTokenUtil {
         }
     }
 
-    public User getUserFromToken(String token) {
-        return null;
-    }
-
-    public String getNameFromToken(String token) {
+    public String getUsernameFromToken(String token) {
         Claims claims = getClaimsFromToken(token);
-        return claims.get("name", String.class);
+        return claims.get("email", String.class);
     }
 
     public String getUidFromToken(String token) {

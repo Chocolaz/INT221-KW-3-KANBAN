@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @CrossOrigin(origins = {"http://ip23kw3.sit.kmutt.ac.th", "http://intproj23.sit.kmutt.ac.th", "http://localhost:5173"})
@@ -35,6 +34,26 @@ public class UserController {
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
 
+    @PostMapping("/token")
+    public ResponseEntity<?> refreshToken(@RequestHeader("Authorization") String refreshToken) {
+        if (refreshToken != null && refreshToken.startsWith("Bearer ")) {
+            refreshToken = refreshToken.substring(7);
+        } else {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Missing refresh_token in request header"));
+        }
+
+        if (jwtTokenUtil.validateToken(refreshToken)) {
+            String oid = jwtTokenUtil.getUidFromToken(refreshToken);
+            User user = userRepository.findByOid(oid);
+
+            if (user != null) {
+                String newAccessToken = jwtTokenUtil.generateAccessToken(user);
+                return ResponseEntity.ok(Map.of("access_token", newAccessToken));
+            }
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Token is invalid or expired"));
+    }
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody UserLoginDTO loginRequest) {
         List<String> errors = new ArrayList<>();
@@ -55,12 +74,16 @@ public class UserController {
                 pmUserRepository.save(pmUser);
             }
 
-            // Generate JWT token
-            String token = jwtTokenUtil.generateToken(user);
-            return ResponseEntity.ok(Map.of("access_token", token));
+            // Generate JWT tokens
+            String accessToken = jwtTokenUtil.generateAccessToken(user);
+            String refreshToken = jwtTokenUtil.generateRefreshToken(user);
+
+            return ResponseEntity.ok(Map.of(
+                    "access_token", accessToken,
+                    "refresh_token", refreshToken
+            ));
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "The username or password is incorrect."));
         }
-    }
-
+}
 }

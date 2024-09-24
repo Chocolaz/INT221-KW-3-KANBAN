@@ -9,6 +9,7 @@ import com.example.integradeproject.project_management.pm_entities.TaskV3;
 import com.example.integradeproject.project_management.pm_repositories.BoardRepository;
 import com.example.integradeproject.project_management.pm_repositories.StatusRepository;
 import com.example.integradeproject.project_management.pm_repositories.TaskV3Repository;
+import com.example.integradeproject.security.JwtTokenUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
@@ -33,19 +34,37 @@ public class StatusV3Service {
     ModelMapper mapper;
     @Autowired
     ListMapper listMapper;
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
     @PersistenceContext
     private EntityManager entityManager;
 
-    public List<StatusDTO> findAllStatusesByBoardId(String boardId) {
+    public List<StatusDTO> findAllStatusesByBoardId(String boardId, String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        if (board.getVisibility() == Board.BoardVisibility.PRIVATE) {
+            if (token == null) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+            }
+            String userOid = jwtTokenUtil.getUidFromToken(token);
+            if (!board.getOwnerOid().getOid().equals(userOid)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+            }
+        }
+
         List<Status> statuses = statusRepository.findByBoardId(board);
         return listMapper.mapList(statuses, StatusDTO.class);
     }
-
-    public StatusDTO createNewStatus(Status status, String boardId) {
+    public StatusDTO createNewStatus(Status status, String boardId, String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        if (!board.getOwnerOid().getOid().equals(userOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can create statuses");
+        }
+
 
         if (status.getStatusName() == null || status.getStatusName().trim().isEmpty()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name must not be null or empty");

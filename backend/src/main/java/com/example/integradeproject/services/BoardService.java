@@ -88,6 +88,10 @@ public class BoardService {
         return statuses;
     }
     public BoardDTO updateBoardVisibility(String boardId, String visibility, String token) {
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+
         String userOid = jwtTokenUtil.getUidFromToken(token);
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
@@ -126,16 +130,16 @@ public class BoardService {
                 .collect(Collectors.toList());
     }
 
-    public Optional<BoardDTO> getBoardById(String id, String token) {
+    public BoardDTO getBoardById(String id, String token) {
         Board board = boardRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
         if (board.getVisibility() == Board.BoardVisibility.PUBLIC) {
-            return Optional.of(convertToDTO(board));
+            return convertToDTO(board);
         }
 
         if (token == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required for private boards");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
         }
 
         String userOid = jwtTokenUtil.getUidFromToken(token);
@@ -143,14 +147,38 @@ public class BoardService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
         }
 
-        return Optional.of(convertToDTO(board));
+        return convertToDTO(board);
     }
 
+
+
+
+    public boolean isUserBoardOwner(String boardId, String userOid) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+        return board.getOwnerOid().getOid().equals(userOid);
+    }
+
+    public boolean isBoardPublic(String boardId) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+        return board.getVisibility() == Board.BoardVisibility.PUBLIC;
+    }
+
+
     public List<Task2DTO> getTasksForBoard(String boardId, String token, String sortBy, List<String> filterStatuses) {
-        String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        if (board.getVisibility() == Board.BoardVisibility.PRIVATE) {
+            if (token == null) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+            }
+            String userOid = jwtTokenUtil.getUidFromToken(token);
+            if (!board.getOwnerOid().getOid().equals(userOid)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+            }
+        }
 
         List<TaskV3> tasks;
         if (filterStatuses != null && !filterStatuses.isEmpty()) {

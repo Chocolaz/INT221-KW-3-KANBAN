@@ -4,6 +4,7 @@ import com.example.integradeproject.project_management.pm_dtos.BoardDTO;
 import com.example.integradeproject.project_management.pm_dtos.NewTask2DTO;
 import com.example.integradeproject.project_management.pm_dtos.Task2DTO;
 import com.example.integradeproject.project_management.pm_dtos.Task2IdDTO;
+import com.example.integradeproject.security.JwtTokenUtil;
 import com.example.integradeproject.services.BoardService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -13,7 +14,6 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/v3/boards")
@@ -22,6 +22,9 @@ public class BoardController {
 
     @Autowired
     private BoardService boardService;
+
+    @Autowired
+    private JwtTokenUtil jwtTokenUtil;
 
     @PostMapping("")
     public ResponseEntity<?> createBoard(@RequestBody Map<String, String> boardRequest, @RequestHeader("Authorization") String token) {
@@ -53,32 +56,14 @@ public class BoardController {
         }
     }
 
-
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getBoardById(@PathVariable String id, @RequestHeader("Authorization") String token) {
-        String jwtToken = token.substring(7); // Remove "Bearer " prefix
-
-        try {
-            Optional<BoardDTO> boardDTOOptional = boardService.getBoardById(id, jwtToken);
-            if (boardDTOOptional.isPresent()) {
-                return ResponseEntity.ok(boardDTOOptional.get());
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("error", "Board not found"));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to retrieve board: " + e.getMessage()));
-        }
-    }
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateBoardVisibility(@PathVariable String id,
                                                    @RequestBody Map<String, String> updateRequest,
-                                                   @RequestHeader("Authorization") String token) {
-        String jwtToken = token.substring(7);
+                                                   @RequestHeader(value = "Authorization", required = false) String token) {
         String visibility = updateRequest.get("visibility");
 
         try {
+            String jwtToken = token != null ? token.substring(7) : null;
             BoardDTO updatedBoard = boardService.updateBoardVisibility(id, visibility, jwtToken);
             return ResponseEntity.ok(updatedBoard);
         } catch (ResponseStatusException e) {
@@ -90,23 +75,30 @@ public class BoardController {
         }
     }
 
-
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getBoardById(@PathVariable String id, @RequestHeader(value = "Authorization", required = false) String token) {
+        try {
+            String jwtToken = token != null ? token.substring(7) : null;
+            BoardDTO boardDTO = boardService.getBoardById(id, jwtToken);
+            return ResponseEntity.ok(boardDTO);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
+        }
+    }
 
     @GetMapping("/{id}/tasks")
     public ResponseEntity<?> getTasksForBoard(@PathVariable String id,
-                                              @RequestHeader("Authorization") String token,
+                                              @RequestHeader(value = "Authorization", required = false) String token,
                                               @RequestParam(required = false) String sortBy,
                                               @RequestParam(required = false) List<String> filterStatuses) {
-        String jwtToken = token.substring(7);
         try {
+            String jwtToken = token != null ? token.substring(7) : null;
             List<Task2DTO> tasks = boardService.getTasksForBoard(id, jwtToken, sortBy, filterStatuses);
             return ResponseEntity.ok(tasks);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to retrieve tasks: " + e.getMessage()));
         }
     }
     @GetMapping("/{boardId}/tasks/{taskId}")
@@ -132,14 +124,15 @@ public class BoardController {
                                         @RequestHeader("Authorization") String token) {
         String jwtToken = token.substring(7);
         try {
+            if (!boardService.isUserBoardOwner(id, jwtTokenUtil.getUidFromToken(jwtToken))) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "Only board owner can create tasks"));
+            }
             NewTask2DTO createdTask = boardService.createTask(id, newTaskDTO, jwtToken);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to create task: " + e.getMessage()));
         }
     }
 
