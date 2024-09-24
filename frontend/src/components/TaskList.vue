@@ -8,6 +8,7 @@ import StatusModal from './StatusModal.vue'
 import EditModal from './EditModal.vue'
 import FilterModal from './FilterModal.vue'
 import FetchUtils from '../lib/fetchUtils'
+import { statusStyle } from '../lib/statusStyles'
 
 const tasks = ref([])
 const statuses = ref([])
@@ -78,34 +79,6 @@ const fetchStatuses = async () => {
 const getStatusLabel = (statusName, statuses) => {
   const status = statuses.find((s) => s.name === statusName)
   return status ? status.name : 'No Status'
-}
-
-const statusStyle = (status) => {
-  const statusUpperCase = status.toUpperCase()
-  switch (statusUpperCase) {
-    case 'TO DO':
-      return { background: 'linear-gradient(to right, #FF9A9E, #F67C5E)' }
-    case 'DOING':
-      return { background: 'linear-gradient(to right, #FFE066, #F6E05E)' }
-    case 'DONE':
-      return { background: 'linear-gradient(to right, #AAF6BE, #68D391)' }
-    case 'NO STATUS':
-      return {
-        backgroundColor: 'rgba(245, 245, 245, 0.8)',
-        color: '#888',
-        fontStyle: 'italic'
-      }
-    case 'WAITING':
-      return { background: 'linear-gradient(to right, #D9A3FF, #B473FF)' }
-    case 'IN PROGRESS':
-      return { background: 'linear-gradient(to right, #FFB347, #FFA733)' }
-    case 'REVIEWING':
-      return { background: 'linear-gradient(to right, #FFB6C1, #FF69B4)' }
-    case 'TESTING':
-      return { background: 'linear-gradient(to right, #ADD8E6, #87CEEB)' }
-    default:
-      return { background: 'linear-gradient(to right, #A0CED9, #6CBEE6)' }
-  }
 }
 
 const sortedTasks = computed(() => {
@@ -300,19 +273,6 @@ onMounted(async () => {
         <table class="table header-table">
           <thead>
             <tr>
-              <!-- <th class="itbkk-button-add" style="text-align: center">
-                <button
-                  @click="handleAddTask"
-                  style="border: none; background: none; padding: 0"
-                >
-                  <img
-                    src="../assets/add.png"
-                    alt="Add Icon"
-                    style="width: 30px; height: 30px"
-                  />
-                </button>
-              </th> -->
-
               <th class="itbkk-button-add" style="text-align: center">
                 <button @click="handleAddTask" class="icon-button add-button">
                   <i class="fas fa-plus-circle"></i>
@@ -320,14 +280,6 @@ onMounted(async () => {
               </th>
               <th>
                 Title
-                <!-- <button @click="openFilterModal" class="itbkk-filter-status">
-                  <img
-                    src="../assets/filter.png"
-                    alt="filter Icon"
-                    style="width: 20px; height: 20px"
-                  />
-                </button> -->
-
                 <button
                   @click="openFilterModal"
                   class="icon-button filter-button"
@@ -338,38 +290,6 @@ onMounted(async () => {
               <th>Assignees</th>
               <th style="position: relative">
                 Status
-                <!-- <button
-                  @click="sortTasksByStatus"
-                  class="itbkk-button-sort"
-                  style="
-                    position: absolute;
-                    right: 10px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    border: none;
-                    background: none;
-                    padding: 0;
-                    width: 30px;
-                    height: 30px;
-                  "
-                >
-                  <img
-                    v-if="sortOrder === 0"
-                    src="../assets/sort.png"
-                    alt="Sort Icon"
-                  />
-                  <img
-                    v-else-if="sortOrder === 1"
-                    src="../assets/aesc.png"
-                    alt="Sort Ascending Icon"
-                  />
-                  <img
-                    v-else
-                    src="../assets/desc.png"
-                    alt="Sort Descending Icon"
-                  />
-                </button> -->
-
                 <button
                   @click="sortTasksByStatus"
                   class="icon-button sort-button"
@@ -386,19 +306,6 @@ onMounted(async () => {
                   ></i>
                 </button>
               </th>
-              <!-- <th style="width: 100px">
-                <img
-                  src="../assets/menu-bar.png"
-                  alt="Action Icon"
-                  style="
-                    width: 25px;
-                    height: 25px;
-                    display: block;
-                    margin: 0 auto;
-                  "
-                />
-              </th> -->
-
               <th style="width: 100px">
                 <i
                   class="fas fa-ellipsis-h"
@@ -447,35 +354,6 @@ onMounted(async () => {
                 <td class="border px-4 py-2" style="width: 100px">
                   <div class="action-buttons">
                     <button class="itbkk-button-action">
-                      <!--<button
-                        @click="openEditModal(task.taskId)"
-                        style="
-                          border: none;
-                          background: none;
-                          padding: 0;
-                          margin-right: 10px;
-                        "
-                        class="itbkk-button-edit"
-                      >
-                        <img
-                          src="../assets/edit.png"
-                          alt="Edit Icon"
-                          style="width: 30px; height: 30px"
-                        />
-                      </button>
-                      <button
-                        @click="openDeleteModal(task.taskId)"
-                        style="border: none; background: none; padding: 0"
-                        class="itbkk-button-delete"
-                      >
-                        <img
-                          src="../assets/delete2.png"
-                          alt="Delete Icon"
-                          style="width: 30px; height: 30px"
-                        />
-                      </button>
-                    -->
-
                       <button
                         @click="openEditModal(task.taskId)"
                         class="icon-button edit-button"

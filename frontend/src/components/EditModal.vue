@@ -9,6 +9,7 @@ import {
 } from 'vue'
 import { useRoute } from 'vue-router'
 import FetchUtils from '../lib/fetchUtils'
+import { statusStyle } from '../lib/statusStyles'
 
 const route = useRoute()
 const boardId = route.params.boardId
@@ -84,51 +85,6 @@ const fetchStatuses = async () => {
   } catch (error) {
     console.error('Error fetching statuses:', error)
   }
-}
-
-const statusStyle = (status) => {
-  const statusUpperCase = status?.toUpperCase() || 'NO STATUS'
-  const styles = {
-    'TO DO': {
-      background: 'linear-gradient(to right, #FF9A9E, #F67C5E)',
-      color: '#fff'
-    },
-    DOING: {
-      background: 'linear-gradient(to right, #FFE066, #F6E05E)',
-      color: '#fff'
-    },
-    DONE: {
-      background: 'linear-gradient(to right, #AAF6BE, #68D391)',
-      color: '#fff'
-    },
-    'NO STATUS': {
-      backgroundColor: 'rgba(245, 245, 245, 0.8)',
-      color: '#888',
-      fontStyle: 'italic'
-    },
-    WAITING: {
-      background: 'linear-gradient(to right, #D9A3FF, #B473FF)',
-      color: '#fff'
-    },
-    'IN PROGRESS': {
-      background: 'linear-gradient(to right, #FFB347, #FFA733)',
-      color: '#fff'
-    },
-    REVIEWING: {
-      background: 'linear-gradient(to right, #FFB6C1, #FF69B4)',
-      color: '#fff'
-    },
-    TESTING: {
-      background: 'linear-gradient(to right, #ADD8E6, #87CEEB)',
-      color: '#fff'
-    }
-  }
-  return (
-    styles[statusUpperCase] || {
-      background: 'linear-gradient(to right, #A0CED9, #6CBEE6)',
-      color: '#fff'
-    }
-  )
 }
 
 const toggleDropdown = () => {

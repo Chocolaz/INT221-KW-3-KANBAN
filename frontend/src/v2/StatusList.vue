@@ -6,6 +6,7 @@ import AddStatusModal from '../v2/AddStatusModal.vue'
 import EditStatusModal from '../v2/EditStatusModal.vue'
 import DeleteStatusModal from '../v2/DeleteStatusModal.vue'
 import TransferStatusModal from '../v2/TransferStatusModal.vue'
+import { statusStyle } from '../lib/statusStyles'
 
 // State management
 const statuses = ref([])
@@ -115,36 +116,13 @@ const checkTasksBeforeDelete = (status) => {
 
 // Fetch data on mount
 onMounted(fetchData)
-
-// Status Style function
-const statusStyle = (statusName) => {
-  const statusUpperCase = statusName.toUpperCase()
-  const styles = {
-    'TO DO': { background: 'linear-gradient(to right, #FF9A9E, #F67C5E)' },
-    DOING: { background: 'linear-gradient(to right, #FFE066, #F6E05E)' },
-    DONE: { background: 'linear-gradient(to right, #AAF6BE, #68D391)' },
-    'NO STATUS': {
-      backgroundColor: 'rgba(245, 245, 245, 0.8)',
-      color: '#888',
-      fontStyle: 'italic'
-    },
-    WAITING: { background: 'linear-gradient(to right, #D9A3FF, #B473FF)' },
-    'IN PROGRESS': {
-      background: 'linear-gradient(to right, #FFB347, #FFA733)'
-    },
-    REVIEWING: { background: 'linear-gradient(to right, #FFB6C1, #FF69B4)' },
-    TESTING: { background: 'linear-gradient(to right, #ADD8E6, #87CEEB)' }
-  }
-  return (
-    styles[statusUpperCase] || {
-      background: 'linear-gradient(to right, #A0CED9, #6CBEE6)'
-    }
-  )
-}
 </script>
 
 <template>
   <div id="app">
+    <h1 class="text-lg font-medium text-red-600 mt-4 text-center">
+      {{ boardName }}
+    </h1>
     <div class="table-container">
       <table class="table header-table">
         <thead>
@@ -257,7 +235,7 @@ h3 {
 }
 
 #app {
-  max-width: 1000px;
+  max-width: 900px;
   margin: 0 auto;
   margin-top: 15px;
   display: flex;
@@ -266,7 +244,7 @@ h3 {
 
 .table-container {
   margin: 0 auto;
-  width: 1000px;
+  width: 900px;
   border-radius: 10px;
   font-size: 16px;
   color: #343a40;
