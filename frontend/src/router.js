@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import jwtDecode from 'vue-jwt-decode'
 
-import TaskList from './components/TaskList.vue'
+import TaskList from './v1/TaskList.vue'
 import StatusList from './v2/StatusList.vue'
 import Login from './v3/Login.vue'
 import BoardAdd from './v3/BoardAdd.vue'
