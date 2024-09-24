@@ -21,14 +21,12 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useRouteChecks } from '../lib/utils'
 
+const { isTaskList, isStatusList } = useRouteChecks()
 const route = useRoute()
 const router = useRouter()
-
-const isTaskList = computed(() => route.name === 'taskView')
-const isStatusList = computed(() => route.name === 'statusView')
 
 const backToHomePage = () => {
   const boardId = route.params.boardId

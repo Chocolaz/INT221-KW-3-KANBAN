@@ -1,13 +1,15 @@
 <template>
   <Navbar v-if="showNavbar" />
 
-  <BoardName />
+  <BoardName v-if="isTaskList || isStatusList" />
 
   <div id="app">
     <RouterView />
   </div>
 
   <NavigationFAB />
+
+  <ToggleButton v-if="isTaskList || isStatusList" />
 </template>
 
 <script setup>
@@ -16,7 +18,10 @@ import { useRoute } from 'vue-router'
 import Navbar from './v3/navbar.vue'
 import BoardName from './component/BoardName.vue'
 import NavigationFAB from './component/NavigationFAB.vue'
+import ToggleButton from './component/ToggleButton.vue'
+import { useRouteChecks } from './lib/utils'
 
+const { isTaskList, isStatusList } = useRouteChecks()
 const route = useRoute()
 
 const showNavbar = computed(() => route.name !== 'loginView')
