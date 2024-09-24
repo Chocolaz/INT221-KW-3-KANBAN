@@ -120,7 +120,7 @@ onMounted(fetchData)
             </th>
             <th>Name</th>
             <th>Description</th>
-            <th style="width: 100px">
+            <th style="width: 100px; text-align: center">
               <i class="fas fa-ellipsis-h"></i>
             </th>
           </tr>
@@ -197,8 +197,6 @@ onMounted(fetchData)
       @statusTransfered="handleTransfer"
       :statusIdToTransfer="selectedStatusIdToTransfer"
     />
-
-    
   </div>
 </template>
 

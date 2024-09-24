@@ -2,7 +2,9 @@
   <Navbar v-if="showNavbar" />
 
   <div v-if="isTaskList || isStatusList">
-    <h1 class="text-lg font-semibold text-red-600 mt-3 text-center">
+    <h1
+      class="itbkk-board-name text-lg font-semibold text-red-600 mt-3 text-center"
+    >
       {{ boardName }}
     </h1>
   </div>

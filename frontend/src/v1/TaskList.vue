@@ -282,7 +282,7 @@ onMounted(async () => {
                   ></i>
                 </button>
               </th>
-              <th style="width: 100px">
+              <th style="width: 100px; text-align: center">
                 <i
                   class="fas fa-ellipsis-h"
                   style="
@@ -428,7 +428,7 @@ h3 {
 
 .table-container {
   margin: 0 auto;
-  width: 800px;
+  width: 900px;
   border-radius: 10px;
   font-size: 16px;
   color: #343a40;
