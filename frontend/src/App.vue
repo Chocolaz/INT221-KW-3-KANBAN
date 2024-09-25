@@ -9,7 +9,7 @@
 
   <NavigationFAB />
 
-  <ToggleButton v-if="isTaskList || isStatusList" />
+  <ToggleVisible v-if="isTaskList || isStatusList" />
 </template>
 
 <script setup>
@@ -18,8 +18,8 @@ import { useRoute } from 'vue-router'
 import Navbar from './v3/navbar.vue'
 import BoardName from './component/BoardName.vue'
 import NavigationFAB from './component/NavigationFAB.vue'
-import ToggleButton from './component/ToggleButton.vue'
 import { useRouteChecks } from './lib/utils'
+import ToggleVisible from './component/ToggleVisible.vue'
 
 const { isTaskList, isStatusList } = useRouteChecks()
 const route = useRoute()

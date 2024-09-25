@@ -109,16 +109,13 @@ const handleDeleteResponse = async (response) => {
   try {
     const text = await response.text()
     if (text.trim() === '') {
-      // No content
       return { success: true, data: null, statusCode: response.status }
     }
 
-    // Try to parse the response as JSON
     try {
       const responseData = JSON.parse(text)
       return { success: true, data: responseData, statusCode: response.status }
     } catch (parseError) {
-      // If JSON parsing fails, return the raw text as data
       console.warn('Warning: Response is not valid JSON. Raw text:', text)
       return { success: true, data: text, statusCode: response.status }
     }
@@ -223,6 +220,38 @@ const getAllBoards = async () => {
   }
 }
 
+const visibilityBoard = async (boardId, visibility) => {
+  try {
+    const token = getToken()
+    validateBoardId(boardId)
+    const fullUrl = `${baseUrl3}/boards/${boardId}`
+
+    const requestBody = { visibility }
+    console.log('Request Body:', requestBody)
+
+    const response = await fetch(fullUrl, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(requestBody)
+    })
+
+    const responseData = await handleResponse(response)
+    return responseData
+  } catch (error) {
+    if (error.message.includes('403')) {
+      alert('You do not have permission to change board visibility mode.')
+    } else {
+      alert('There is a problem. Please try again later.')
+    }
+
+    console.error('Error updating board visibility:', error)
+    throw error
+  }
+}
+
 export default {
   fetchData,
   postData,
@@ -231,5 +260,6 @@ export default {
   deleteAndTransferData,
   getBoards,
   addBoard,
-  getAllBoards
+  getAllBoards,
+  visibilityBoard
 }
