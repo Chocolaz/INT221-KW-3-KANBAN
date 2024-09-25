@@ -54,6 +54,7 @@ const fetchData = async (url, boardId, taskId = null) => {
       }
     })
     const responseData = await handleResponse(response)
+    console.log('Fetch status code:', responseData.statusCode)
     if (taskId) {
       responseData.data.taskId = taskId
     }
@@ -77,7 +78,7 @@ const postData = async (url, boardId, data) => {
       body: JSON.stringify(data)
     })
     const responseData = await handleResponse(response)
-    console.log('Data posted successfully. Status code:', response.status)
+    console.log('Post status code:', responseData.statusCode)
     return responseData
   } catch (error) {
     console.error('Error posting data:', error)
@@ -98,7 +99,9 @@ const putData = async (url, boardId, data) => {
       },
       body: JSON.stringify(data)
     })
-    return await handleResponse(response)
+    const responseData = await handleResponse(response)
+    console.log('Put status code:', responseData.statusCode)
+    return responseData
   } catch (error) {
     console.error('Error updating data:', error)
     throw error
@@ -136,12 +139,15 @@ const deleteAndTransferData = async (url, newId, boardId) => {
         Authorization: `Bearer ${token}`
       }
     })
-    return await handleDeleteResponse(response)
+    const responseData = await handleDeleteResponse(response)
+    console.log('Delete and transfer status code:', responseData.statusCode)
+    return responseData
   } catch (error) {
     console.error('Error deleting and transferring data:', error.message)
     throw error
   }
 }
+
 const deleteData = async (url, boardId) => {
   try {
     const token = getToken()
@@ -152,8 +158,9 @@ const deleteData = async (url, boardId) => {
         Authorization: `Bearer ${token}`
       }
     })
-    console.log('Raw response:', response)
-    return await handleDeleteResponse(response)
+    const responseData = await handleDeleteResponse(response)
+    console.log('Delete status code:', responseData.statusCode)
+    return responseData
   } catch (error) {
     console.error('Error deleting data:', error.message)
     throw error
@@ -170,9 +177,7 @@ const getBoards = async (boardId = null) => {
       }
     })
     const responseData = await handleResponse(response)
-    console.log(
-      `Boards retrieved successfully. Status code: ${response.status}`
-    )
+    console.log('Get boards status code:', responseData.statusCode)
     return boardId ? responseData : responseData.data
   } catch (error) {
     console.error('Error retrieving boards:', error)
@@ -192,7 +197,7 @@ const addBoard = async (boardData) => {
       body: JSON.stringify(boardData)
     })
     const responseData = await handleResponse(response)
-    console.log('Board added successfully. Status code:', response.status)
+    console.log('Add board status code:', responseData.statusCode)
     return responseData
   } catch (error) {
     console.error('Error adding board:', error)
@@ -209,10 +214,7 @@ const getAllBoards = async () => {
       }
     })
     const responseData = await handleResponse(response)
-    console.log(
-      'All boards retrieved successfully. Status code:',
-      response.status
-    )
+    console.log('Get all boards status code:', responseData.statusCode)
     return responseData.data
   } catch (error) {
     console.error('Error retrieving all boards:', error)
@@ -239,6 +241,7 @@ const visibilityBoard = async (boardId, visibility) => {
     })
 
     const responseData = await handleResponse(response)
+    console.log('Visibility status code:', responseData.statusCode)
     return responseData
   } catch (error) {
     if (error.message.includes('403')) {

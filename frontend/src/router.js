@@ -6,6 +6,7 @@ import StatusList from './v2/StatusList.vue'
 import Login from './v3/Login.vue'
 import BoardAdd from './v3/BoardAdd.vue'
 import BoardList from './v3/BoardList.vue'
+import NotFound from './component/NotFound.vue'
 
 const isTokenValid = (token) => {
   if (!token) return false
@@ -22,7 +23,7 @@ const isTokenValid = (token) => {
 
 const routes = [
   {
-    path: '/boards/:boardId/tasks',
+    path: '/boards/:boardId',
     name: 'taskView',
     component: TaskList,
     meta: { requiresAuth: true },
@@ -37,7 +38,7 @@ const routes = [
       boardId: route.params.boardId,
       taskId: route.params.taskId
     })
-  }, 
+  },
   {
     path: '/boards/:boardId/status',
     name: 'statusView',
@@ -60,6 +61,7 @@ const routes = [
     name: 'loginView',
     component: Login
   },
+  { path: '/notfound', name: 'notFound', component: NotFound },
   {
     path: '/board',
     name: 'boardView',
