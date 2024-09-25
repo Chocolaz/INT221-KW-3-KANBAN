@@ -3,7 +3,9 @@
     class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
     @click.self="closeModal"
   >
-    <div class="bg-white p-6 rounded-lg w-80 max-w-md text-center shadow-lg">
+    <div
+      class="itbkk-modal-new bg-white p-6 rounded-lg w-80 max-w-md text-center shadow-lg"
+    >
       <h2 class="text-2xl font-semibold mb-4">Add New Board</h2>
       <form @submit.prevent="submitBoard">
         <input
@@ -19,13 +21,13 @@
         <div class="flex justify-between">
           <button
             type="submit"
-            class="bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="itbkk-button-ok bg-red-500 text-white py-2 px-4 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <i class="fas fa-plus-circle"></i>
             Add Board
           </button>
           <button
-            class="bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
+            class="itbkk-button-cancel bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-red-500"
             @click="closeModal"
           >
             Close

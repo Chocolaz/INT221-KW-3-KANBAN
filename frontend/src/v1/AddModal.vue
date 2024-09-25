@@ -132,7 +132,7 @@ onUnmounted(() => {
     @click.self="cancelModal"
   >
     <div
-      class="bg-white shadow-lg rounded-lg w-full max-w-lg mt-14 animate-fade-in-up"
+      class="itbkk-modal-task bg-white shadow-lg rounded-lg w-full max-w-lg mt-14 animate-fade-in-up"
     >
       <div class="p-6">
         <div class="flex justify-between items-center mb-4">

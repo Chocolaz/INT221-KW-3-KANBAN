@@ -80,7 +80,6 @@ const fetchBoards = async () => {
 
     boards.value = Array.isArray(response) ? response : []
 
-    // Redirect to the first board if there's at least one board
     if (boards.value.length > 0) {
       router.push({ name: 'taskView', params: { boardId: boards.value[0].id } })
     }
