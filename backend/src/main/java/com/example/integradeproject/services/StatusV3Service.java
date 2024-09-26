@@ -89,12 +89,17 @@ public class StatusV3Service {
     }
 
     @Transactional
-    public StatusDTO updateStatus(String boardId, Integer statusId, Status updatedStatus) {
+    public StatusDTO updateStatus(String boardId, Integer statusId, Status updatedStatus, String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        if (!board.getOwnerOid().getOid().equals(userOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can update statuses");
+        }
 
         Status existingStatus = (Status) statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
+
 
         if (!existingStatus.getStatusName().equals(updatedStatus.getStatusName())) {
             boolean exists = statusRepository.existsByStatusNameAndBoardId(updatedStatus.getStatusName(), board);
@@ -118,9 +123,13 @@ public class StatusV3Service {
     }
 
     @Transactional
-    public void deleteStatus(String boardId, Integer statusId) {
+    public void deleteStatus(String boardId, Integer statusId , String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        if (!board.getOwnerOid().getOid().equals(userOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can delete statuses");
+        }
 
         Status status = statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
@@ -137,9 +146,13 @@ public class StatusV3Service {
     }
 
     @Transactional
-    public void deleteStatusAndTransferTasks(String boardId, Integer statusId, Integer newStatusId) {
+    public void deleteStatusAndTransferTasks(String boardId, Integer statusId, Integer newStatusId,String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        if (!board.getOwnerOid().getOid().equals(userOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can delete statuses and transfer tasks");
+        }
 
         Status currentStatus = (Status) statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Current status not found in this board"));
