@@ -74,9 +74,8 @@ const router = useRouter()
 
 const fetchBoards = async () => {
   try {
-    console.log('Fetching boards...')
     const response = await fetchUtils.getBoards()
-    console.log('Fetched boards response:', response)
+    console.log('Fetched boards response:', response.value)
 
     boards.value = Array.isArray(response) ? response : []
 

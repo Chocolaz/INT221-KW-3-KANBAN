@@ -6,7 +6,11 @@ const baseUrl3 = import.meta.env.VITE_API_URL3
 const router = useRouter()
 
 const handleResponse = async (response) => {
+  const errorBody = await response.text()
+
   if (!response.ok) {
+    console.error(`HTTP error! Status: ${response.status}`, errorBody)
+
     if (response.status === 401) {
       localStorage.removeItem('isAuthenticated')
       localStorage.removeItem('token')
@@ -14,10 +18,15 @@ const handleResponse = async (response) => {
     }
     throw new Error(`HTTP error! Status: ${response.status}`)
   }
-  const text = await response.text()
-  if (text) {
-    const responseData = JSON.parse(text)
-    return { success: true, data: responseData, statusCode: response.status }
+
+  if (errorBody) {
+    try {
+      const responseData = JSON.parse(errorBody)
+      return { success: true, data: responseData, statusCode: response.status }
+    } catch (e) {
+      console.warn('Response is not valid JSON. Raw text:', errorBody)
+      return { success: true, data: errorBody, statusCode: response.status }
+    }
   } else {
     return { success: true, data: {}, statusCode: response.status }
   }
@@ -43,18 +52,21 @@ const buildUrl = (url, boardId, taskId = null) => {
     : `${baseUrl3}/boards/${boardId}/${url}`
 }
 
+const fetchWithAuth = async (url, options = {}) => {
+  const token = getToken()
+  const headers = {
+    ...options.headers,
+    Authorization: `Bearer ${token}`
+  }
+  const response = await fetch(url, { ...options, headers })
+  return handleResponse(response)
+}
+
 const fetchData = async (url, boardId, taskId = null) => {
   try {
-    const token = getToken()
     validateBoardId(boardId)
     const fullUrl = buildUrl(url, boardId, taskId)
-    const response = await fetch(fullUrl, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    const responseData = await handleResponse(response)
-    console.log('Fetch status code:', responseData.statusCode)
+    const responseData = await fetchWithAuth(fullUrl)
     if (taskId) {
       responseData.data.taskId = taskId
     }
@@ -67,17 +79,13 @@ const fetchData = async (url, boardId, taskId = null) => {
 
 const postData = async (url, boardId, data) => {
   try {
-    const token = getToken()
     validateBoardId(boardId)
-    const response = await fetch(buildUrl(url, boardId), {
+    const fullUrl = buildUrl(url, boardId)
+    const responseData = await fetchWithAuth(fullUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     })
-    const responseData = await handleResponse(response)
     console.log('Post status code:', responseData.statusCode)
     return responseData
   } catch (error) {
@@ -88,18 +96,13 @@ const postData = async (url, boardId, data) => {
 
 const putData = async (url, boardId, data) => {
   try {
-    const token = getToken()
     validateBoardId(boardId)
     const fullUrl = buildUrl(url, boardId)
-    const response = await fetch(fullUrl, {
+    const responseData = await fetchWithAuth(fullUrl, {
       method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     })
-    const responseData = await handleResponse(response)
     console.log('Put status code:', responseData.statusCode)
     return responseData
   } catch (error) {
@@ -108,76 +111,31 @@ const putData = async (url, boardId, data) => {
   }
 }
 
-const handleDeleteResponse = async (response) => {
+const deleteData = async (url, boardId, newId = null) => {
   try {
-    const text = await response.text()
-    if (text.trim() === '') {
-      return { success: true, data: null, statusCode: response.status }
-    }
-
-    try {
-      const responseData = JSON.parse(text)
-      return { success: true, data: responseData, statusCode: response.status }
-    } catch (parseError) {
-      console.warn('Warning: Response is not valid JSON. Raw text:', text)
-      return { success: true, data: text, statusCode: response.status }
-    }
-  } catch (error) {
-    console.error('Error handling delete response:', error)
-    throw new Error(`Error handling delete response: ${error.message}`)
-  }
-}
-
-const deleteAndTransferData = async (url, newId, boardId) => {
-  try {
-    const token = getToken()
     validateBoardId(boardId)
-    const fullUrl = `${baseUrl3}/boards/${boardId}/${url}/${newId}`
-    const response = await fetch(fullUrl, {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    const responseData = await handleDeleteResponse(response)
-    console.log('Delete and transfer status code:', responseData.statusCode)
+    const fullUrl = newId
+      ? `${baseUrl3}/boards/${boardId}/${url}/${newId}`
+      : buildUrl(url, boardId)
+    const responseData = await fetchWithAuth(fullUrl, { method: 'DELETE' })
+    console.log(
+      `Delete${newId ? ' and transfer' : ''} status code:`,
+      responseData.statusCode
+    )
     return responseData
   } catch (error) {
-    console.error('Error deleting and transferring data:', error.message)
-    throw error
-  }
-}
-
-const deleteData = async (url, boardId) => {
-  try {
-    const token = getToken()
-    validateBoardId(boardId)
-    const response = await fetch(buildUrl(url, boardId), {
-      method: 'DELETE',
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    const responseData = await handleDeleteResponse(response)
-    console.log('Delete status code:', responseData.statusCode)
-    return responseData
-  } catch (error) {
-    console.error('Error deleting data:', error.message)
+    console.error(
+      `Error ${newId ? 'deleting and transferring' : 'deleting'} data:`,
+      error.message
+    )
     throw error
   }
 }
 
 const getBoards = async (boardId = null) => {
   try {
-    const token = getToken()
     const url = boardId ? `${baseUrl3}/boards/${boardId}` : `${baseUrl3}/boards`
-    const response = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    const responseData = await handleResponse(response)
-    console.log('Get boards status code:', responseData.statusCode)
+    const responseData = await fetchWithAuth(url)
     return boardId ? responseData : responseData.data
   } catch (error) {
     console.error('Error retrieving boards:', error)
@@ -187,16 +145,11 @@ const getBoards = async (boardId = null) => {
 
 const addBoard = async (boardData) => {
   try {
-    const token = getToken()
-    const response = await fetch(`${baseUrl3}/boards`, {
+    const responseData = await fetchWithAuth(`${baseUrl3}/boards`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(boardData)
     })
-    const responseData = await handleResponse(response)
     console.log('Add board status code:', responseData.statusCode)
     return responseData
   } catch (error) {
@@ -205,42 +158,17 @@ const addBoard = async (boardData) => {
   }
 }
 
-const getAllBoards = async () => {
-  try {
-    const token = getToken()
-    const response = await fetch(`${baseUrl3}/boards`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
-    })
-    const responseData = await handleResponse(response)
-    console.log('Get all boards status code:', responseData.statusCode)
-    return responseData.data
-  } catch (error) {
-    console.error('Error retrieving all boards:', error)
-    throw error
-  }
-}
-
 const visibilityBoard = async (boardId, visibility) => {
   try {
-    const token = getToken()
     validateBoardId(boardId)
     const fullUrl = `${baseUrl3}/boards/${boardId}`
-
     const requestBody = { visibility }
     console.log('Request Body:', requestBody)
-
-    const response = await fetch(fullUrl, {
+    const responseData = await fetchWithAuth(fullUrl, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     })
-
-    const responseData = await handleResponse(response)
     console.log('Visibility status code:', responseData.statusCode)
     return responseData
   } catch (error) {
@@ -249,7 +177,6 @@ const visibilityBoard = async (boardId, visibility) => {
     } else {
       alert('There is a problem. Please try again later.')
     }
-
     console.error('Error updating board visibility:', error)
     throw error
   }
@@ -260,9 +187,8 @@ export default {
   postData,
   putData,
   deleteData,
-  deleteAndTransferData,
   getBoards,
   addBoard,
-  getAllBoards,
+  getAllBoards: getBoards,
   visibilityBoard
 }

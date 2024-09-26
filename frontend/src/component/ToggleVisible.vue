@@ -37,7 +37,6 @@ const fetchBoardData = async () => {
     const boardData = await fetchUtils.getBoards(boardId)
     isPublic.value = boardData.data.visibility === 'public'
     isPrivate.value = boardData.data.visibility === 'private'
-    console.log('Board visibility is currently:', boardData.data.visibility)
     console.log('isPublic:', isPublic.value, 'isPrivate:', isPrivate.value)
   } catch (error) {
     console.error('Error fetching board data:', error)

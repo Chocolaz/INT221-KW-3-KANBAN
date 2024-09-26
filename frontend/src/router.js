@@ -24,27 +24,30 @@ const isTokenValid = (token) => {
 
 const checkBoardAccess = async (boardId) => {
   try {
-    const boardData = await fetchUtils.getBoards(boardId)
+    const response = await fetchUtils.getBoards(boardId)
 
+    if (response.statusCode === 403) {
+      return { hasAccess: false, notFound: false }
+    }
+
+    if (response.statusCode === 404) {
+      return { hasAccess: false, notFound: true }
+    }
+
+    const boardData = response.data
     const currentUser = localStorage.getItem('username')
 
-    console.log('Fetched Board Data:', boardData)
-    console.log('Current User:', currentUser)
+    const boardOwner = boardData.owner.username || boardData.owner.name
 
-    const boardOwner =
-      boardData.data.owner.username || boardData.data.owner.name
-    console.log('Board Owner:', boardOwner)
-
-    if (boardData.data.visibility === 'public' || boardOwner === currentUser) {
-      console.log('Access granted to user:', currentUser)
-      return true
+    if (boardData.visibility === 'public' || boardOwner === currentUser) {
+      return { hasAccess: true, notFound: false }
     }
 
     console.log('Access denied to user:', currentUser)
-    return false
+    return { hasAccess: false, notFound: false }
   } catch (error) {
     console.error('Error fetching board data:', error)
-    return false
+    return { hasAccess: false, notFound: error.message.includes('404') }
   }
 }
 
@@ -126,23 +129,29 @@ router.beforeEach(async (to, from, next) => {
   const isAuthenticated = isTokenValid(token)
 
   console.log('Navigating to:', to.fullPath)
-  console.log('Is Authenticated:', isAuthenticated)
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    console.log('Redirecting to login')
     next({ name: 'loginView', query: { redirect: to.fullPath } })
-  }
-  else if (to.name === 'loginView' && isAuthenticated) {
-    console.log('Redirecting to boards')
+  } else if (to.name === 'loginView' && isAuthenticated) {
     next({ name: 'boardView' })
-  }
-  else if (to.params.boardId) {
-    const hasAccess = await checkBoardAccess(to.params.boardId)
-    if (!hasAccess) {
-      console.log('Access denied, redirecting to AccessDenied page')
-      next({ name: 'accessDenied' })
-    } else {
-      next()
+  } else if (to.params.boardId) {
+    try {
+      const { hasAccess, notFound } = await checkBoardAccess(to.params.boardId)
+
+      console.log('Check Board Access Result:', { hasAccess, notFound })
+
+      if (notFound) {
+        console.log('Board not found, redirecting to NotFound page')
+        next({ name: 'notFound' })
+      } else if (!hasAccess) {
+        console.log('Access denied, redirecting to AccessDenied page')
+        next({ name: 'accessDenied' })
+      } else {
+        next()
+      }
+    } catch (error) {
+      console.error('Error in router guard:', error)
+      next({ name: 'notFound' })
     }
   } else {
     next()
