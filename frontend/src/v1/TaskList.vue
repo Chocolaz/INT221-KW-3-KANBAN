@@ -10,6 +10,7 @@ import FilterModal from './FilterModal.vue'
 import FetchUtils from '../lib/fetchUtils'
 import { statusStyle } from '../lib/statusStyles'
 import { checkOwnership } from '../lib/utils'
+import Tooltips from '../component/Tooltips.vue'
 
 const tasks = ref([])
 const statuses = ref([])
@@ -36,9 +37,11 @@ const boardId = route.params.boardId
 const boardData = ref(null)
 const currentUser = ref(localStorage.getItem('username'))
 const canOperation = ref(false)
+const tooltipVisible = ref(false)
 
 const checkBoardOwnership = () => {
   canOperation.value = checkOwnership(boardData.value, currentUser.value)
+  console.log(canOperation.value)
 }
 
 const fetchBoardDetails = async () => {
@@ -266,8 +269,9 @@ onMounted(async () => {
             <tr>
               <th class="itbkk-button-add" style="text-align: center">
                 <button
-                  v-if="canOperation"
-                  @click="handleAddTask"
+                  @click="canOperation ? handleAddTask() : null"
+                  @mouseover="!canOperation && (tooltipVisible = true)"
+                  @mouseleave="tooltipVisible = false"
                   class="icon-button add-button"
                 >
                   <i class="fas fa-plus-circle"></i>
@@ -360,16 +364,22 @@ onMounted(async () => {
                   <div class="action-buttons">
                     <button class="itbkk-button-action">
                       <button
-                        v-if="canOperation"
-                        @click="openEditModal(task.taskId)"
                         class="icon-button edit-button"
+                        @click="
+                          canOperation ? openEditModal(task.taskId) : null
+                        "
+                        @mouseover="canOperation || (tooltipVisible = true)"
+                        @mouseleave="tooltipVisible = false"
                       >
                         <i class="fas fa-edit"></i>
                       </button>
                       <button
-                        v-if="canOperation"
-                        @click="openDeleteModal(task.taskId)"
                         class="icon-button delete-button"
+                        @click="
+                          canOperation ? openDeleteModal(task.taskId) : null
+                        "
+                        @mouseover="canOperation || (tooltipVisible = true)"
+                        @mouseleave="tooltipVisible = false"
                       >
                         <i class="fas fa-trash-alt"></i>
                       </button>
@@ -382,6 +392,11 @@ onMounted(async () => {
         </div>
       </div>
     </div>
+
+    <Tooltips
+      :visible="!canOperation && tooltipVisible"
+      message="You need to be board owner to perform this action."
+    />
 
     <task-modal
       v-if="selectedTask"

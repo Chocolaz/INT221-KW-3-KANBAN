@@ -32,7 +32,6 @@ const canOperation = ref(false)
 
 const checkBoardOwnership = () => {
   canOperation.value = checkOwnership(boardData.value, currentUser.value)
-  console.log('canOperation:', canOperation.value)
 }
 
 const fetchBoardDetails = async () => {
@@ -136,7 +135,6 @@ onMounted(async () => {
           <tr>
             <th class="itbkk-button-add" style="text-align: center">
               <button
-                v-if="canOperation"
                 @click="openAddModal"
                 class="icon-button add-button"
               >
@@ -177,14 +175,12 @@ onMounted(async () => {
               <td class="border px-4 py-2" style="width: 100px">
                 <div class="action-buttons">
                   <button
-                    v-if="canOperation"
                     class="icon-button edit-button"
                     @click="openEditModal(status)"
                   >
                     <i class="fas fa-edit"></i>
                   </button>
                   <button
-                    v-if="canOperation"
                     class="icon-button delete-button"
                     @click="checkTasksBeforeDelete(status)"
                   >
