@@ -10,7 +10,6 @@ import FilterModal from './FilterModal.vue'
 import FetchUtils from '../lib/fetchUtils'
 import { statusStyle } from '../lib/statusStyles'
 import { checkOwnership } from '../lib/utils'
-import Tooltips from '../component/Tooltips.vue'
 
 const tasks = ref([])
 const statuses = ref([])
@@ -37,7 +36,6 @@ const boardId = route.params.boardId
 const boardData = ref(null)
 const currentUser = ref(localStorage.getItem('username'))
 const canOperation = ref(false)
-const tooltipVisible = ref(false)
 
 const checkBoardOwnership = () => {
   canOperation.value = checkOwnership(boardData.value, currentUser.value)
@@ -268,14 +266,20 @@ onMounted(async () => {
           <thead>
             <tr>
               <th class="itbkk-button-add" style="text-align: center">
-                <button
-                  @click="canOperation ? handleAddTask() : null"
-                  @mouseover="!canOperation && (tooltipVisible = true)"
-                  @mouseleave="tooltipVisible = false"
-                  class="icon-button add-button"
-                >
-                  <i class="fas fa-plus-circle"></i>
-                </button>
+                <div class="relative inline-block z-10 tooltip">
+                  <button
+                    @click="canOperation ? handleAddTask() : null"
+                    class="icon-button add-button"
+                    :disabled="!canOperation"
+                  >
+                    <i class="fas fa-plus-circle"></i>
+                  </button>
+                  <span
+                    v-if="!canOperation"
+                    class="tooltiptext invisible w-48 bg-red-500 text-white text-center rounded-md absolute bottom-[80%] left-1/2 text-[8px] ml-[-90px] opacity-0 transition-opacity duration-500"
+                    >You need to be board owner to perform this action</span
+                  >
+                </div>
               </th>
               <th>
                 Title
@@ -363,26 +367,39 @@ onMounted(async () => {
                 <td class="border px-4 py-2" style="width: 100px">
                   <div class="action-buttons">
                     <button class="itbkk-button-action">
-                      <button
-                        class="icon-button edit-button"
-                        @click="
-                          canOperation ? openEditModal(task.taskId) : null
-                        "
-                        @mouseover="canOperation || (tooltipVisible = true)"
-                        @mouseleave="tooltipVisible = false"
-                      >
-                        <i class="fas fa-edit"></i>
-                      </button>
-                      <button
-                        class="icon-button delete-button"
-                        @click="
-                          canOperation ? openDeleteModal(task.taskId) : null
-                        "
-                        @mouseover="canOperation || (tooltipVisible = true)"
-                        @mouseleave="tooltipVisible = false"
-                      >
-                        <i class="fas fa-trash-alt"></i>
-                      </button>
+                      <div class="relative inline-block z-10 tooltip">
+                        <button
+                          class="icon-button edit-button"
+                          @click="
+                            canOperation ? openEditModal(task.taskId) : null
+                          "
+                        >
+                          <i class="fas fa-edit"></i>
+                        </button>
+                        <span
+                          v-if="!canOperation"
+                          class="tooltiptext invisible w-[103px] bg-red-500 text-white text-center rounded-md absolute bottom-[30%] left-1/2 text-[8px] ml-[-125px] opacity-0 transition-opacity duration-500"
+                        >
+                          You need to be board owner to perform this action
+                        </span>
+                      </div>
+
+                      <div class="relative inline-block z-10 tooltip">
+                        <button
+                          class="icon-button delete-button"
+                          @click="
+                            canOperation ? openDeleteModal(task.taskId) : null
+                          "
+                        >
+                          <i class="fas fa-trash-alt"></i>
+                        </button>
+                        <span
+                          v-if="!canOperation"
+                          class="tooltiptext invisible w-[103px] bg-red-500 text-white text-center rounded-md absolute bottom-[-10%] left-1/2 text-[8px] ml-[-120px] opacity-0 transition-opacity duration-500"
+                        >
+                          You need to be board owner to perform this action
+                        </span>
+                      </div>
                     </button>
                   </div>
                 </td>
@@ -392,11 +409,6 @@ onMounted(async () => {
         </div>
       </div>
     </div>
-
-    <Tooltips
-      :visible="!canOperation && tooltipVisible"
-      message="You need to be board owner to perform this action."
-    />
 
     <task-modal
       v-if="selectedTask"
@@ -450,6 +462,11 @@ onMounted(async () => {
 
 <style scoped>
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&family=Montserrat:wght@700&display=swap');
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
 
 body {
   font-family: 'Poppins', sans-serif;

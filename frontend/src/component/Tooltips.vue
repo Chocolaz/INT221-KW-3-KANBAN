@@ -1,15 +1,17 @@
 <template>
   <div
     v-if="visible"
-    class="tooltip"
+    class="tooltip flex items-center space-x-2 p-2 bg-black bg-opacity-70 text-white rounded shadow-lg"
     :style="{ top: position.top + 'px', left: position.left + 'px' }"
   >
-    {{ message }}
+    <LucideIcon class="w-4 h-4" />
+    <span>{{ message }}</span>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { Info } from 'lucide-vue-next' // Import your desired icon
 
 const props = defineProps({
   visible: {
@@ -18,7 +20,7 @@ const props = defineProps({
   },
   message: {
     type: String,
-    default: 'You need to be board owner to perform this action.'
+    default: 'You need to be the board owner to perform this action.'
   }
 })
 
@@ -28,7 +30,7 @@ onMounted(() => {
   const tooltipElement = document.querySelector('.tooltip')
   if (tooltipElement) {
     const { top, left } = tooltipElement.getBoundingClientRect()
-    position.value = { top, left }
+    position.value = { top: top + window.scrollY, left: left + window.scrollX }
   }
 })
 </script>
@@ -36,10 +38,6 @@ onMounted(() => {
 <style scoped>
 .tooltip {
   position: absolute;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: #fff;
-  padding: 8px;
-  border-radius: 4px;
   z-index: 1000;
 }
 </style>

@@ -87,7 +87,7 @@ export default {
   methods: {
     startCloseTimer() {
       this.clearCloseTimer()
-      this.timer = setTimeout(this.closeModal, 3000)
+      this.timer = setTimeout(this.closeModal, 1000)
     },
     clearCloseTimer() {
       if (this.timer) {
@@ -150,7 +150,6 @@ export default {
   transform: translateY(-20px);
 }
 
-/* Toast colors based on operation type */
 .toast-add {
   background-color: #d4edda;
   border-left: 4px solid #28a745;
