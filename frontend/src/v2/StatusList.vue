@@ -7,6 +7,7 @@ import EditStatusModal from '../v2/EditStatusModal.vue'
 import DeleteStatusModal from '../v2/DeleteStatusModal.vue'
 import TransferStatusModal from '../v2/TransferStatusModal.vue'
 import { statusStyle } from '../lib/statusStyles'
+import { checkOwnership } from '@/lib/utils'
 
 // State management
 const statuses = ref([])
@@ -24,10 +25,28 @@ const selectedStatusIdToTransfer = ref(null)
 const route = useRoute()
 const router = useRouter()
 
+const boardId = route.params.boardId
+const boardData = ref(null)
+const currentUser = ref(localStorage.getItem('username'))
+const canOperation = ref(false)
+
+const checkBoardOwnership = () => {
+  canOperation.value = checkOwnership(boardData.value, currentUser.value)
+  console.log('canOperation:', canOperation.value)
+}
+
+const fetchBoardDetails = async () => {
+  try {
+    boardData.value = await fetchUtils.getBoards(boardId)
+    checkBoardOwnership()
+  } catch (error) {
+    console.error('Error fetching board details:', error)
+  }
+}
+
 // Fetch data
 async function fetchData() {
   try {
-    const boardId = route.params.boardId
     if (!boardId) throw new Error('Board ID is not available')
 
     statuses.value = await fetchUtils.fetchData('statuses', boardId)
@@ -95,7 +114,6 @@ const handleStatusEdited = () => fetchData()
 const handleDelete = () => fetchData()
 const handleTransfer = () => fetchData()
 
-// Check if status is in use
 const checkTasksBeforeDelete = (status) => {
   const statusInUse = tasks.value.some(
     (task) => task.statusName === status.name
@@ -104,7 +122,10 @@ const checkTasksBeforeDelete = (status) => {
 }
 
 // Fetch data on mount
-onMounted(fetchData)
+onMounted(async () => {
+  await fetchData()
+  await fetchBoardDetails()
+})
 </script>
 
 <template>
@@ -114,7 +135,11 @@ onMounted(fetchData)
         <thead>
           <tr>
             <th class="itbkk-button-add" style="text-align: center">
-              <button @click="openAddModal" class="icon-button add-button">
+              <button
+                v-if="canOperation"
+                @click="openAddModal"
+                class="icon-button add-button"
+              >
                 <i class="fas fa-plus-circle"></i>
               </button>
             </th>
@@ -152,12 +177,14 @@ onMounted(fetchData)
               <td class="border px-4 py-2" style="width: 100px">
                 <div class="action-buttons">
                   <button
+                    v-if="canOperation"
                     class="icon-button edit-button"
                     @click="openEditModal(status)"
                   >
                     <i class="fas fa-edit"></i>
                   </button>
                   <button
+                    v-if="canOperation"
                     class="icon-button delete-button"
                     @click="checkTasksBeforeDelete(status)"
                   >

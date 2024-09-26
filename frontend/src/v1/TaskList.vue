@@ -9,6 +9,7 @@ import EditModal from './EditModal.vue'
 import FilterModal from './FilterModal.vue'
 import FetchUtils from '../lib/fetchUtils'
 import { statusStyle } from '../lib/statusStyles'
+import { checkOwnership } from '../lib/utils'
 
 const tasks = ref([])
 const statuses = ref([])
@@ -32,15 +33,28 @@ const route = useRoute()
 const router = useRouter()
 
 const boardId = route.params.boardId
+const boardData = ref(null)
+const currentUser = ref(localStorage.getItem('username'))
+const canOperation = ref(false)
+
+const checkBoardOwnership = () => {
+  canOperation.value = checkOwnership(boardData.value, currentUser.value)
+  console.log('canOperation:', canOperation.value)
+}
+
+const fetchBoardDetails = async () => {
+  try {
+    boardData.value = await FetchUtils.getBoards(boardId)
+    checkBoardOwnership()
+  } catch (error) {
+    console.error('Error fetching board details:', error)
+  }
+}
 
 const formatLocalDate = (dateString) => {
   const date = new Date(dateString)
   return date.toLocaleString('en-GB')
 }
-
-const timezone = computed(
-  () => Intl.DateTimeFormat().resolvedOptions().timeZone
-)
 
 const fetchTasks = async () => {
   try {
@@ -228,8 +242,10 @@ const applyFilter = (selectedStatusesValue) => {
   closeFilterModal()
 }
 
+// Fetch board details and tasks on mount
 onMounted(async () => {
   try {
+    await fetchBoardDetails() // Fetch board to get permissions
     await fetchTasks()
     await fetchStatuses()
     const taskId = route.params.taskId
@@ -245,12 +261,16 @@ onMounted(async () => {
 <template>
   <div>
     <div id="app">
-      <div class="table-container">
+      <div class="table-container relative">
         <table class="table header-table">
           <thead>
             <tr>
               <th class="itbkk-button-add" style="text-align: center">
-                <button @click="handleAddTask" class="icon-button add-button">
+                <button
+                  v-if="canOperation"
+                  @click="handleAddTask"
+                  class="icon-button add-button"
+                >
                   <i class="fas fa-plus-circle"></i>
                 </button>
               </th>
@@ -297,9 +317,19 @@ onMounted(async () => {
             </tr>
           </thead>
         </table>
-        <div class="body-container">
-          <table class="table body-table">
+        <div class="body-container relative">
+          <table class="table body-table w-full">
             <tbody>
+              <!-- Conditional rendering for tasks -->
+              <tr v-if="filteredTasks.length === 0" class="h-full">
+                <td colspan="5" class="relative">
+                  <div
+                    class="absolute inset-0 flex items-center justify-center text-xl italic text-gray-500 py-4 bg-gray-100 border border-gray-300 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105"
+                  >
+                    No Task Provided
+                  </div>
+                </td>
+              </tr>
               <tr
                 v-for="(task, index) in filteredTasks"
                 :key="task.taskId"
@@ -331,12 +361,14 @@ onMounted(async () => {
                   <div class="action-buttons">
                     <button class="itbkk-button-action">
                       <button
+                        v-if="canOperation"
                         @click="openEditModal(task.taskId)"
                         class="icon-button edit-button"
                       >
                         <i class="fas fa-edit"></i>
                       </button>
                       <button
+                        v-if="canOperation"
                         @click="openDeleteModal(task.taskId)"
                         class="icon-button delete-button"
                       >

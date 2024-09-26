@@ -63,6 +63,7 @@ const confirmAction = async () => {
     closeModal()
   } catch (error) {
     console.error('Error updating board visibility:', error)
+    closeModal()
   }
 }
 
