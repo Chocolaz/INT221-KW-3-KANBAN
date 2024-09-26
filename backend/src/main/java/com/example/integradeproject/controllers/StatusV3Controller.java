@@ -45,9 +45,10 @@ public class StatusV3Controller {
 
 
     @PutMapping("/{statusId}")
-    public ResponseEntity<?> updateStatus(@PathVariable String boardId, @PathVariable Integer statusId, @RequestBody Status status) {
+    public ResponseEntity<?> updateStatus(@PathVariable String boardId, @PathVariable Integer statusId, @RequestBody Status status, @RequestHeader("Authorization") String token) {
         try {
-            StatusDTO updatedStatus = statusService.updateStatus(boardId, statusId, status);
+            String jwtToken = token.substring(7);
+            StatusDTO updatedStatus = statusService.updateStatus(boardId, statusId, status, jwtToken);
             return ResponseEntity.ok(updatedStatus);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
@@ -55,9 +56,10 @@ public class StatusV3Controller {
     }
 
     @DeleteMapping("/{statusId}")
-    public ResponseEntity<?> deleteStatus(@PathVariable String boardId, @PathVariable Integer statusId) {
+    public ResponseEntity<?> deleteStatus(@PathVariable String boardId, @PathVariable Integer statusId, @RequestHeader("Authorization") String token) {
         try {
-            statusService.deleteStatus(boardId, statusId);
+            String jwtToken = token.substring(7);
+            statusService.deleteStatus(boardId, statusId, jwtToken);
             return ResponseEntity.ok().build();
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
@@ -67,9 +69,11 @@ public class StatusV3Controller {
     @DeleteMapping("/{statusId}/{newStatusId}")
     public ResponseEntity<?> deleteStatusAndTransferTasks(@PathVariable String boardId,
                                                           @PathVariable Integer statusId,
-                                                          @PathVariable Integer newStatusId) {
+                                                          @PathVariable Integer newStatusId,
+                                                          @RequestHeader("Authorization") String token) {
         try {
-            statusService.deleteStatusAndTransferTasks(boardId, statusId, newStatusId);
+            String jwtToken = token.substring(7);
+            statusService.deleteStatusAndTransferTasks(boardId, statusId, newStatusId, jwtToken);
             return ResponseEntity.ok().build();
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
