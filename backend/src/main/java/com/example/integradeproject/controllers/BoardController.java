@@ -27,13 +27,21 @@ public class BoardController {
     private JwtTokenUtil jwtTokenUtil;
 
     @PostMapping("")
-    public ResponseEntity<?> createBoard(@RequestBody Map<String, String> boardRequest, @RequestHeader("Authorization") String token) {
-        String boardName = boardRequest.get("boardName");
+    public ResponseEntity<?> createBoard(@RequestBody(required = false) Map<String, String> boardRequest, @RequestHeader("Authorization") String token) {
+        if (boardRequest == null || !boardRequest.containsKey("name")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Board name is required"));
+        }
+
+        String boardName = boardRequest.get("name");
 
         try {
             String jwtToken = token.substring(7); // Remove "Bearer " prefix
             BoardDTO boardDTO = boardService.createBoard(boardName, jwtToken);
             return ResponseEntity.status(HttpStatus.CREATED).body(boardDTO);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("error", "Failed to create board: " + e.getMessage()));
