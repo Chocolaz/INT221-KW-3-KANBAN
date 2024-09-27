@@ -1,6 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import jwtDecode from 'vue-jwt-decode'
-
 import TaskList from './v1/TaskList.vue'
 import StatusList from './v2/StatusList.vue'
 import Login from './v3/Login.vue'
@@ -8,50 +6,14 @@ import BoardAdd from './v3/BoardAdd.vue'
 import BoardList from './v3/BoardList.vue'
 import NotFound from './component/NotFound.vue'
 import AccessDenied from './component/AccessDenied.vue'
-import fetchUtils from '@/lib/fetchUtils'
+
 import {
-  getAccessToken,
   refreshAccessToken,
-  removeTokens
+  removeTokens,
+  getRefreshToken,
+  checkBoardAccess,
+  checkTokenValidity
 } from './lib/authService'
-
-const isTokenValid = (token) => {
-  if (!token) return false
-  try {
-    const decodedToken = jwtDecode.decode(token)
-    const currentTime = Math.floor(Date.now() / 1000)
-    return decodedToken.exp > currentTime
-  } catch (error) {
-    console.error('Error decoding token:', error)
-    return false
-  }
-}
-
-const checkBoardAccess = async (boardId) => {
-  try {
-    const response = await fetchUtils.getBoards(boardId)
-    if (response.statusCode === 403) {
-      return { hasAccess: false, notFound: false }
-    }
-    if (response.statusCode === 404) {
-      return { hasAccess: false, notFound: true }
-    }
-
-    const boardData = response.data
-    const currentUser = localStorage.getItem('username')
-    const boardOwner = boardData.owner.username || boardData.owner.name
-
-    if (boardData.visibility === 'public' || boardOwner === currentUser) {
-      return { hasAccess: true, notFound: false }
-    }
-
-    console.log('Access denied to user:', currentUser)
-    return { hasAccess: false, notFound: false }
-  } catch (error) {
-    console.error('Error fetching board data:', error)
-    return { hasAccess: false, notFound: error.message.includes('404') }
-  }
-}
 
 const routes = [
   {
@@ -127,21 +89,24 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  const accessToken = localStorage.getItem('access_token')
-  let isAuthenticated = isTokenValid(accessToken)
+  const { isAccessTokenValid, isRefreshTokenValid } = checkTokenValidity()
+
+  let isAuthenticated = isAccessTokenValid
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    try {
-      const refreshResponse = await refreshAccessToken()
-      if (refreshResponse.access_token) {
-        localStorage.setItem('access_token', refreshResponse.access_token)
+    const refreshToken = getRefreshToken()
+
+    if (refreshToken && isRefreshTokenValid) {
+      try {
+        await refreshAccessToken()
         isAuthenticated = true
-      } else {
+        console.log('Access token refreshed successfully')
+      } catch (error) {
+        console.error('Error refreshing token:', error)
         removeTokens()
         return next({ name: 'loginView', query: { redirect: to.fullPath } })
       }
-    } catch (error) {
-      console.error('Error refreshing token:', error)
+    } else {
       removeTokens()
       return next({ name: 'loginView', query: { redirect: to.fullPath } })
     }

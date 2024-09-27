@@ -39,7 +39,6 @@ const canOperation = ref(false)
 
 const checkBoardOwnership = () => {
   canOperation.value = checkOwnership(boardData.value, currentUser.value)
-  console.log(canOperation.value)
 }
 
 const fetchBoardDetails = async () => {
