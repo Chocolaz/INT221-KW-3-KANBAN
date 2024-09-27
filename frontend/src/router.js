@@ -130,33 +130,27 @@ router.beforeEach(async (to, from, next) => {
   const accessToken = localStorage.getItem('access_token')
   let isAuthenticated = isTokenValid(accessToken)
 
-  // Check if authentication is required and user is not authenticated
   if (to.meta.requiresAuth && !isAuthenticated) {
-    // User is not authenticated, attempt to refresh token
     try {
       const refreshResponse = await refreshAccessToken()
       if (refreshResponse.access_token) {
         localStorage.setItem('access_token', refreshResponse.access_token)
-        isAuthenticated = true // User is now authenticated
+        isAuthenticated = true
       } else {
-        // No access token received, remove tokens and redirect to login
         removeTokens()
         return next({ name: 'loginView', query: { redirect: to.fullPath } })
       }
     } catch (error) {
-      // Error refreshing token; remove tokens and redirect to login
       console.error('Error refreshing token:', error)
       removeTokens()
       return next({ name: 'loginView', query: { redirect: to.fullPath } })
     }
   }
 
-  // If already authenticated and trying to access the login page, redirect to the board view
   if (to.name === 'loginView' && isAuthenticated) {
     return next({ name: 'boardView' })
   }
 
-  // Check board access if boardId is present in the route
   if (to.params.boardId) {
     try {
       const { hasAccess, notFound } = await checkBoardAccess(to.params.boardId)

@@ -33,7 +33,9 @@
             <button @click="navigate" class="dropdown-item">
               {{ isManageStatus ? 'Task List' : 'Manage Status' }}
             </button>
-            <button @click="logout" class="dropdown-item logout">Logout</button>
+            <button @click="logout" class="dropdown-item logout itbkk-sign-out">
+              Logout
+            </button>
           </div>
         </transition>
       </div>
@@ -67,7 +69,6 @@ const navigate = () => {
 }
 
 const logout = () => {
-  console.log('Logging out...')
   localStorage.clear()
   showDropdown.value = false
   router.push({ name: 'loginView' })
