@@ -53,6 +53,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { storeTokens } from '../lib/authService'
 import VueJwtDecode from 'vue-jwt-decode'
 
 const baseUrl = import.meta.env.VITE_API_URL2
@@ -80,31 +81,21 @@ const login = async () => {
       })
     })
 
-    if (response.status === 200) {
+    if (response.ok) {
       const data = await response.json()
-      console.log('Login successful')
-      showError.value = false
       console.log('Login successful, response data:', data)
-      localStorage.setItem('isAuthenticated', 'true')
+      showError.value = false
 
-      if (data.access_token) {
-        decodeAndLogToken(data.access_token)
-        localStorage.setItem('token', data.access_token)
-        console.log(
-          'Token stored in localStorage:',
-          localStorage.getItem('token')
-        )
-      }
+      // Store tokens using the auth service
+      storeTokens(data.access_token, data.refresh_token)
 
+      // Decode token and store username
+      decodeAndLogToken(data.access_token)
+
+      // Navigate to the board route
       router.push('/board')
-    } else if (response.status === 401 || response.status === 400) {
-      console.log('Login failed: Unauthorized')
-      showError.value = true
-      errorMessage.value = 'Username or Password is incorrect.'
     } else {
-      console.log('Login failed: Other error', response.status)
-      showError.value = true
-      errorMessage.value = 'There is a problem. Please try again later.'
+      handleLoginError(response)
     }
   } catch (error) {
     console.error('Error during login:', error)
@@ -119,6 +110,16 @@ const login = async () => {
   }
 }
 
+const handleLoginError = (response) => {
+  console.log('Login failed:', response.status)
+  showError.value = true
+  if (response.status === 401 || response.status === 400) {
+    errorMessage.value = 'Username or Password is incorrect.'
+  } else {
+    errorMessage.value = 'There is a problem. Please try again later.'
+  }
+}
+
 const decodeAndLogToken = (token) => {
   try {
     const decodedToken = VueJwtDecode.decode(token)
@@ -127,22 +128,6 @@ const decodeAndLogToken = (token) => {
   } catch (error) {
     console.error('Error decoding token:', error)
   }
-}
-
-const requestWithToken = async (url, options = {}) => {
-  const token = localStorage.getItem('token')
-  const headers = {
-    ...options.headers,
-    Authorization: `Bearer ${token}`,
-    'Content-Type': 'application/json'
-  }
-
-  const response = await fetch(url, {
-    ...options,
-    headers
-  })
-
-  return response
 }
 </script>
 

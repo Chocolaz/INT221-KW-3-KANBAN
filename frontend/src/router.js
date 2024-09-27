@@ -9,6 +9,11 @@ import BoardList from './v3/BoardList.vue'
 import NotFound from './component/NotFound.vue'
 import AccessDenied from './component/AccessDenied.vue'
 import fetchUtils from '@/lib/fetchUtils'
+import {
+  getAccessToken,
+  refreshAccessToken,
+  removeTokens
+} from './lib/authService'
 
 const isTokenValid = (token) => {
   if (!token) return false
@@ -25,18 +30,15 @@ const isTokenValid = (token) => {
 const checkBoardAccess = async (boardId) => {
   try {
     const response = await fetchUtils.getBoards(boardId)
-
     if (response.statusCode === 403) {
       return { hasAccess: false, notFound: false }
     }
-
     if (response.statusCode === 404) {
       return { hasAccess: false, notFound: true }
     }
 
     const boardData = response.data
     const currentUser = localStorage.getItem('username')
-
     const boardOwner = boardData.owner.username || boardData.owner.name
 
     if (boardData.visibility === 'public' || boardOwner === currentUser) {
@@ -125,37 +127,53 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
-  const token = localStorage.getItem('token')
-  const isAuthenticated = isTokenValid(token)
+  const accessToken = localStorage.getItem('access_token')
+  let isAuthenticated = isTokenValid(accessToken)
 
-  console.log('Navigating to:', to.fullPath)
-
+  // Check if authentication is required and user is not authenticated
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next({ name: 'loginView', query: { redirect: to.fullPath } })
-  } else if (to.name === 'loginView' && isAuthenticated) {
-    next({ name: 'boardView' })
-  } else if (to.params.boardId) {
+    // User is not authenticated, attempt to refresh token
     try {
-      const { hasAccess, notFound } = await checkBoardAccess(to.params.boardId)
-
-      console.log('Check Board Access Result:', { hasAccess, notFound })
-
-      if (notFound) {
-        console.log('Board not found, redirecting to NotFound page')
-        next({ name: 'notFound' })
-      } else if (!hasAccess) {
-        console.log('Access denied, redirecting to AccessDenied page')
-        next({ name: 'accessDenied' })
+      const refreshResponse = await refreshAccessToken()
+      if (refreshResponse.access_token) {
+        localStorage.setItem('access_token', refreshResponse.access_token)
+        isAuthenticated = true // User is now authenticated
       } else {
-        next()
+        // No access token received, remove tokens and redirect to login
+        removeTokens()
+        return next({ name: 'loginView', query: { redirect: to.fullPath } })
       }
     } catch (error) {
-      console.error('Error in router guard:', error)
-      next({ name: 'notFound' })
+      // Error refreshing token; remove tokens and redirect to login
+      console.error('Error refreshing token:', error)
+      removeTokens()
+      return next({ name: 'loginView', query: { redirect: to.fullPath } })
     }
-  } else {
-    next()
   }
+
+  // If already authenticated and trying to access the login page, redirect to the board view
+  if (to.name === 'loginView' && isAuthenticated) {
+    return next({ name: 'boardView' })
+  }
+
+  // Check board access if boardId is present in the route
+  if (to.params.boardId) {
+    try {
+      const { hasAccess, notFound } = await checkBoardAccess(to.params.boardId)
+      if (notFound) {
+        console.log('Board not found, redirecting to NotFound page')
+        return next({ name: 'notFound' })
+      } else if (!hasAccess) {
+        console.log('Access denied, redirecting to AccessDenied page')
+        return next({ name: 'accessDenied' })
+      }
+    } catch (error) {
+      console.error('Error checking board access:', error)
+      return next({ name: 'notFound' })
+    }
+  }
+
+  next()
 })
 
 export default router

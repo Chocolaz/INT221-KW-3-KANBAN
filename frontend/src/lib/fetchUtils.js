@@ -33,8 +33,9 @@ const handleResponse = async (response) => {
 }
 
 const getToken = () => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('access_token')
   if (!token) {
+    router.push('/login')
     throw new Error('No authentication token found')
   }
   return token
