@@ -44,11 +44,7 @@ public class StatusV3Service {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
         if (board.getVisibility() == Board.BoardVisibility.PRIVATE) {
-            if (token == null) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
-            }
-            String userOid = jwtTokenUtil.getUidFromToken(token);
-            if (!board.getOwnerOid().getOid().equals(userOid)) {
+            if (token == null || !isUserAuthorized(token, board)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
             }
         }
@@ -56,65 +52,47 @@ public class StatusV3Service {
         List<Status> statuses = statusRepository.findByBoardId(board);
         return listMapper.mapList(statuses, StatusDTO.class);
     }
+
+    public StatusDTO getStatusById(String boardId, Integer statusId, String token) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        if (board.getVisibility() == Board.BoardVisibility.PRIVATE && (token == null || !isUserAuthorized(token, board))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+        }
+
+        return statusRepository.findByStatusIdAndBoardId(statusId, board)
+                .map(status -> mapper.map(status, StatusDTO.class))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
+    }
+
     public StatusDTO createNewStatus(Status status, String boardId, String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        String userOid = jwtTokenUtil.getUidFromToken(token);
-        if (!board.getOwnerOid().getOid().equals(userOid)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can create statuses");
+        if (token == null || !isUserAuthorized(token, board)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or missing token");
         }
 
-
-        if (status.getStatusName() == null || status.getStatusName().trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name must not be null or empty");
-        }
-
-        boolean exists = statusRepository.existsByStatusNameAndBoardId(status.getStatusName(), board);
-        if (exists) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name must be unique within the board");
-        }
-
-        if (status.getStatusName().length() > 50) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name size must be between 1 and 50");
-        }
-
-        if (status.getStatusDescription() != null && status.getStatusDescription().length() > 200) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description size must be between 0 and 200");
-        }
+        validateStatus(status, board);
 
         status.setBoardId(board);
         Status savedStatus = statusRepository.save(status);
         return mapper.map(savedStatus, StatusDTO.class);
     }
 
-    @Transactional
     public StatusDTO updateStatus(String boardId, Integer statusId, Status updatedStatus, String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
-        String userOid = jwtTokenUtil.getUidFromToken(token);
-        if (!board.getOwnerOid().getOid().equals(userOid)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can update statuses");
+
+        if (token == null || !isUserAuthorized(token, board)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or missing token");
         }
 
-        Status existingStatus = (Status) statusRepository.findByStatusIdAndBoardId(statusId, board)
+        Status existingStatus = statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
 
-
-        if (!existingStatus.getStatusName().equals(updatedStatus.getStatusName())) {
-            boolean exists = statusRepository.existsByStatusNameAndBoardId(updatedStatus.getStatusName(), board);
-            if (exists) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name must be unique within the board");
-            }
-        }
-
-        if (updatedStatus.getStatusName().length() > 50) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name size must be between 1 and 50");
-        }
-
-        if (updatedStatus.getStatusDescription() != null && updatedStatus.getStatusDescription().length() > 200) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description size must be between 0 and 200");
-        }
+        validateStatus(updatedStatus, board);
 
         existingStatus.setStatusName(updatedStatus.getStatusName());
         existingStatus.setStatusDescription(updatedStatus.getStatusDescription());
@@ -122,10 +100,16 @@ public class StatusV3Service {
         return mapper.map(savedStatus, StatusDTO.class);
     }
 
+
     @Transactional
-    public void deleteStatus(String boardId, Integer statusId , String token) {
+    public void deleteStatus(String boardId, Integer statusId, String token) {
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
         String userOid = jwtTokenUtil.getUidFromToken(token);
         if (!board.getOwnerOid().getOid().equals(userOid)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can delete statuses");
@@ -138,7 +122,7 @@ public class StatusV3Service {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete 'No Status' or 'Done' status");
         }
 
-        if (taskV3Repository.existsByStatusId(status)) {  // Changed from statusId to status
+        if (taskV3Repository.existsByStatusId(status)) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete Status as it is currently in use");
         }
 
@@ -146,9 +130,14 @@ public class StatusV3Service {
     }
 
     @Transactional
-    public void deleteStatusAndTransferTasks(String boardId, Integer statusId, Integer newStatusId,String token) {
+    public void deleteStatusAndTransferTasks(String boardId, Integer statusId, Integer newStatusId, String token) {
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+        }
+
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
         String userOid = jwtTokenUtil.getUidFromToken(token);
         if (!board.getOwnerOid().getOid().equals(userOid)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can delete statuses and transfer tasks");
@@ -168,14 +157,39 @@ public class StatusV3Service {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot delete 'No Status' or 'Done' status");
         }
 
-        // Transfer tasks to the new status
         List<TaskV3> tasksWithCurrentStatus = taskV3Repository.findByStatusId(currentStatus);
         for (TaskV3 task : tasksWithCurrentStatus) {
             task.setStatusId(newStatus);
         }
         taskV3Repository.saveAll(tasksWithCurrentStatus);
 
-        // Delete the old status
         statusRepository.delete(currentStatus);
+    }
+    private boolean isUserAuthorized(String token, Board board) {
+        try {
+            String userOid = jwtTokenUtil.getUidFromToken(token);
+            return board.getOwnerOid().getOid().equals(userOid);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void validateStatus(Status status, Board board) {
+        if (status.getStatusName() == null || status.getStatusName().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name must not be null or empty");
+        }
+
+        if (status.getStatusName().length() > 50) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name size must be between 1 and 50");
+        }
+
+        if (status.getStatusDescription() != null && status.getStatusDescription().length() > 200) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description size must be between 0 and 200");
+        }
+
+        boolean exists = statusRepository.existsByStatusNameAndBoardId(status.getStatusName(), board);
+        if (exists) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name must be unique within the board");
+        }
     }
 }
