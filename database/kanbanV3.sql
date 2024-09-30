@@ -39,7 +39,7 @@ CREATE TABLE users (
 
 -- Table structure for 'boards'
 CREATE TABLE boards (
-  boardId VARCHAR(21) NOT NULL,
+  boardId VARCHAR(10) NOT NULL,
   boardName VARCHAR(120) NOT NULL,
   ownerOid VARCHAR(36),
   visibility ENUM('PRIVATE','PUBLIC') NOT NULL DEFAULT 'PRIVATE',
@@ -55,7 +55,7 @@ CREATE TABLE statuses (
   statusId INT NOT NULL AUTO_INCREMENT,
   statusName VARCHAR(50) NOT NULL,
   statusDescription VARCHAR(200),
-  boardId VARCHAR(21),  -- Foreign key column
+  boardId VARCHAR(10),  -- Foreign key column
   PRIMARY KEY (statusId),
   CONSTRAINT fk_statuses_boards FOREIGN KEY (boardId) REFERENCES boards(boardId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -69,7 +69,7 @@ CREATE TABLE tasks (
   createdOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updatedOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   statusId INT NOT NULL,
-  boardId VARCHAR(21),
+  boardId VARCHAR(10),
   PRIMARY KEY (taskId),
   UNIQUE KEY id_UNIQUE (taskId),
   CONSTRAINT fk_tasks_statuses FOREIGN KEY (statusId) REFERENCES statuses(statusId),

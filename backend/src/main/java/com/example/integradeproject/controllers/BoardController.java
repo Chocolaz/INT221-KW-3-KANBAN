@@ -48,6 +48,8 @@ public class BoardController {
         }
     }
 
+
+
     @GetMapping("")
     public ResponseEntity<?> getBoards(@RequestHeader("Authorization") String token) {
         String jwtToken = token.substring(7); // Remove "Bearer " prefix
@@ -66,8 +68,13 @@ public class BoardController {
 
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateBoardVisibility(@PathVariable String id,
-                                                   @RequestBody Map<String, String> updateRequest,
+                                                   @RequestBody(required = false) Map<String, String> updateRequest,
                                                    @RequestHeader(value = "Authorization", required = false) String token) {
+        if (updateRequest == null || !updateRequest.containsKey("visibility")) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Visibility is required"));
+        }
+
         String visibility = updateRequest.get("visibility");
 
         try {
@@ -85,6 +92,7 @@ public class BoardController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getBoardById(@PathVariable String id, @RequestHeader(value = "Authorization", required = false) String token) {
+        
         try {
             String jwtToken = token != null ? token.substring(7) : null;
             BoardDTO boardDTO = boardService.getBoardById(id, jwtToken);
@@ -112,11 +120,16 @@ public class BoardController {
 
     @PostMapping("/{id}/tasks")
     public ResponseEntity<?> createTask(@PathVariable String id,
-                                        @RequestBody NewTask2DTO newTaskDTO,
-                                        @RequestHeader("Authorization") String token) {
-        String jwtToken = token.substring(7);
+                                        @RequestBody(required = false) NewTask2DTO newTaskDTO,
+                                        @RequestHeader(value = "Authorization", required = false) String token) {
+        if (newTaskDTO == null || newTaskDTO.getTitle() == null || newTaskDTO.getTitle().trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Task title is required"));
+        }
+
+        String jwtToken = token != null ? token.substring(7) : null;
         try {
-            if (!boardService.isUserBoardOwner(id, jwtTokenUtil.getUidFromToken(jwtToken))) {
+            if (jwtToken == null || !boardService.isUserBoardOwner(id, jwtTokenUtil.getUidFromToken(jwtToken))) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("error", "Only board owner can create tasks"));
             }
@@ -127,6 +140,7 @@ public class BoardController {
                     .body(Map.of("error", e.getReason()));
         }
     }
+
     @GetMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<?> getTaskById(@PathVariable String boardId,
                                          @PathVariable Integer taskId,
@@ -149,9 +163,14 @@ public class BoardController {
     @PutMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<?> updateTask(@PathVariable String boardId,
                                         @PathVariable Integer taskId,
-                                        @RequestBody NewTask2DTO updateTaskDTO,
-                                        @RequestHeader("Authorization") String token) {
-        String jwtToken = token.substring(7);
+                                        @RequestBody(required = false) NewTask2DTO updateTaskDTO,
+                                        @RequestHeader(value = "Authorization", required = false) String token) {
+        if (updateTaskDTO == null || updateTaskDTO.getTitle() == null || updateTaskDTO.getTitle().trim().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("error", "Task title is required"));
+        }
+
+        String jwtToken = token != null ? token.substring(7) : null;
         try {
             NewTask2DTO updatedTask = boardService.updateTask(boardId, taskId, updateTaskDTO, jwtToken);
             return ResponseEntity.ok(updatedTask);
