@@ -60,7 +60,7 @@ const submitBoard = async () => {
 
   try {
     isValidName.value = true
-    const boardData = { boardName: newBoardName.value }
+    const boardData = { name: newBoardName.value }
     const response = await fetchUtils.addBoard(boardData)
     console.log('Board added:', response)
     emit('board-added')
