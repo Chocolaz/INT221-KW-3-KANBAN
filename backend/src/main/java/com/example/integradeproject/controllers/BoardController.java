@@ -77,8 +77,13 @@ public class BoardController {
 
         String visibility = updateRequest.get("visibility");
 
+        if (token == null) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Authentication required"));
+        }
+
         try {
-            String jwtToken = token != null ? token.substring(7) : null;
+            String jwtToken = token.substring(7);
             BoardDTO updatedBoard = boardService.updateBoardVisibility(id, visibility, jwtToken);
             return ResponseEntity.ok(updatedBoard);
         } catch (ResponseStatusException e) {
@@ -92,7 +97,7 @@ public class BoardController {
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getBoardById(@PathVariable String id, @RequestHeader(value = "Authorization", required = false) String token) {
-        
+
         try {
             String jwtToken = token != null ? token.substring(7) : null;
             BoardDTO boardDTO = boardService.getBoardById(id, jwtToken);
@@ -142,21 +147,19 @@ public class BoardController {
     }
 
     @GetMapping("/{boardId}/tasks/{taskId}")
-    public ResponseEntity<?> getTaskById(@PathVariable String boardId,
-                                         @PathVariable Integer taskId,
-                                         @RequestHeader("Authorization") String token) {
-        String jwtToken = token.substring(7);
+    public ResponseEntity<?> getTaskById(@PathVariable String boardId, @PathVariable Integer taskId,
+                                         @RequestHeader(value = "Authorization", required = false) String token) {
         try {
-            Task2IdDTO task = boardService.getTaskById(boardId, taskId, jwtToken);
-            return ResponseEntity.ok(task);
+            String jwtToken = token != null ? token.substring(7) : null;
+            Task2IdDTO taskDTO = boardService.getTaskById(boardId, taskId, jwtToken);
+            return ResponseEntity.ok(taskDTO);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to retrieve task: " + e.getMessage()));
         }
     }
+
+
 
 
 

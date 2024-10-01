@@ -51,18 +51,14 @@ public class StatusV3Controller {
             @RequestBody(required = false) Status status,
             @RequestHeader(value = "Authorization", required = false) String token) {
         if (status == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Request body cannot be empty"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Request body cannot be empty"));
         }
         try {
             String jwtToken = token != null ? token.substring(7) : null;
             StatusDTO createdStatus = statusService.createNewStatus(status, boardId, jwtToken);
             return ResponseEntity.ok(createdStatus);
         } catch (ResponseStatusException e) {
-            HttpStatus statusCode = (HttpStatus) e.getStatusCode();
-            if (statusCode == HttpStatus.NOT_FOUND) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getReason()));
-            }
-            return ResponseEntity.status(statusCode).body(Map.of("error", e.getReason()));
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
 
@@ -73,21 +69,16 @@ public class StatusV3Controller {
             @RequestBody(required = false) Status updatedStatus,
             @RequestHeader(value = "Authorization", required = false) String token) {
         if (updatedStatus == null) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", "Request body cannot be empty"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Request body cannot be empty"));
         }
         try {
             String jwtToken = token != null ? token.substring(7) : null;
             StatusDTO updatedStatusDTO = statusService.updateStatus(boardId, statusId, updatedStatus, jwtToken);
             return ResponseEntity.ok(updatedStatusDTO);
         } catch (ResponseStatusException e) {
-            HttpStatus statusCode = (HttpStatus) e.getStatusCode();
-            if (statusCode == HttpStatus.NOT_FOUND) {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("error", e.getReason()));
-            }
-            return ResponseEntity.status(statusCode).body(Map.of("error", e.getReason()));
+            return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
-
     @DeleteMapping("/{statusId}")
     public ResponseEntity<?> deleteStatus(@PathVariable String boardId, @PathVariable Integer statusId, @RequestHeader("Authorization") String token) {
         try {
@@ -113,3 +104,4 @@ public class StatusV3Controller {
         }
     }
 }
+

@@ -43,10 +43,9 @@ public class StatusV3Service {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        if (board.getVisibility() == Board.BoardVisibility.PRIVATE) {
-            if (token == null || !isUserAuthorized(token, board)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
-            }
+
+        if (board.getVisibility() == Board.BoardVisibility.PRIVATE && (token == null || !isUserAuthorized(token, board))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
         }
 
         List<Status> statuses = statusRepository.findByBoardId(board);
@@ -61,6 +60,7 @@ public class StatusV3Service {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
         }
 
+
         return statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .map(status -> mapper.map(status, StatusDTO.class))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
@@ -70,12 +70,12 @@ public class StatusV3Service {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
+        // Return 403 if token is missing or invalid
         if (token == null || !isUserAuthorized(token, board)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or missing token");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
         }
 
         validateStatus(status, board);
-
         status.setBoardId(board);
         Status savedStatus = statusRepository.save(status);
         return mapper.map(savedStatus, StatusDTO.class);
@@ -85,21 +85,20 @@ public class StatusV3Service {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        if (token == null || !isUserAuthorized(token, board)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid or missing token");
+        // Return 403 if token is missing or invalid
+        if (board.getVisibility() == Board.BoardVisibility.PRIVATE && (token == null || !isUserAuthorized(token, board))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
         }
 
         Status existingStatus = statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
 
         validateStatus(updatedStatus, board);
-
         existingStatus.setStatusName(updatedStatus.getStatusName());
         existingStatus.setStatusDescription(updatedStatus.getStatusDescription());
         Status savedStatus = statusRepository.save(existingStatus);
         return mapper.map(savedStatus, StatusDTO.class);
     }
-
 
     @Transactional
     public void deleteStatus(String boardId, Integer statusId, String token) {
@@ -192,4 +191,5 @@ public class StatusV3Service {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name must be unique within the board");
         }
     }
+
 }

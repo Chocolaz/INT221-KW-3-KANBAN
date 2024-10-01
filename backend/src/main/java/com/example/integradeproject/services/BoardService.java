@@ -89,12 +89,17 @@ public class BoardService {
     }
     public BoardDTO updateBoardVisibility(String boardId, String visibility, String token) {
         if (token == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
         }
 
-        String userOid = jwtTokenUtil.getUidFromToken(token);
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+
+        if (!isUserAuthorized(token, board)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+        }
 
         if (!board.getOwnerOid().getOid().equals(userOid)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the board owner can change visibility");
@@ -108,6 +113,7 @@ public class BoardService {
         Board updatedBoard = boardRepository.save(board);
         return convertToDTO(updatedBoard);
     }
+
     public List<BoardDTO> getBoardsForUser(String token) {
 
 
@@ -143,6 +149,9 @@ public class BoardService {
         if (board.getVisibility() == Board.BoardVisibility.PUBLIC) {
             return convertToDTO(board);
         }
+        if (board.getVisibility() == Board.BoardVisibility.PRIVATE && (token == null || !isUserAuthorized(token, board))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+        }
 
         // Private boards require authentication
         if (token == null) {
@@ -168,11 +177,23 @@ public class BoardService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
         return board.getVisibility() == Board.BoardVisibility.PUBLIC;
     }
+    private boolean isUserAuthorized(String token, Board board) {
+        try {
+            String userOid = jwtTokenUtil.getUidFromToken(token);
+            return board.getOwnerOid().getOid().equals(userOid);
+        } catch (Exception e) {
+            return false;
+        }
+    }
 
 
     public List<Task2DTO> getTasksForBoard(String boardId, String token, String sortBy, List<String> filterStatuses) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        if (board.getVisibility() == Board.BoardVisibility.PRIVATE && (token == null || !isUserAuthorized(token, board))) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+        }
 
         // Allow access to public boards
         if (board.getVisibility() == Board.BoardVisibility.PUBLIC) {
@@ -206,14 +227,12 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        // Check visibility and access
         if (board.getVisibility() == Board.BoardVisibility.PRIVATE) {
             if (token == null) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
             }
-            String ownerOid = jwtTokenUtil.getUidFromToken(token);
-            if (!board.getOwnerOid().getOid().equals(ownerOid)) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+            if (!isUserAuthorized(token, board)) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "User not authorized to access this board");
             }
         }
 
@@ -222,7 +241,6 @@ public class BoardService {
 
         return convertToTask2IdDTO(task);
     }
-
     private Task2IdDTO convertToTask2IdDTO(TaskV3 task) {
         Task2IdDTO dto = new Task2IdDTO();
         dto.setTitle(task.getTitle());
@@ -238,7 +256,7 @@ public class BoardService {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
         Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Board not found or you don't have access"));
 
         TaskV3 task = new TaskV3();
         task.setTitle(newTaskDTO.getTitle());
@@ -268,7 +286,7 @@ public class BoardService {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
         Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Board not found or you don't have access"));
 
         TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
@@ -293,7 +311,8 @@ public class BoardService {
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
         Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
                         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found or you don't have access"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Board not found or you don't have access"));
+
 
         TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
