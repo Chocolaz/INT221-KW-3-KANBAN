@@ -30,7 +30,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login","/token").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v3/boards/**").permitAll() // Allow GET requests to /api/boards/** without authentication
-
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

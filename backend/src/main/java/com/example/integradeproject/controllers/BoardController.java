@@ -151,9 +151,11 @@ public class BoardController {
                                          @RequestHeader(value = "Authorization", required = false) String token) {
         try {
             String jwtToken = token != null ? token.substring(7) : null;
+            // Fetch the task
             Task2IdDTO taskDTO = boardService.getTaskById(boardId, taskId, jwtToken);
             return ResponseEntity.ok(taskDTO);
         } catch (ResponseStatusException e) {
+            // Handle exceptions and return appropriate error status
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));
         }
@@ -190,14 +192,18 @@ public class BoardController {
     public ResponseEntity<?> deleteTask(@PathVariable String boardId,
                                         @PathVariable Integer taskId,
                                         @RequestHeader("Authorization") String token) {
+        // Extract the JWT token
         String jwtToken = token.substring(7);
         try {
+            // Attempt to delete the task
             boardService.deleteTask(boardId, taskId, jwtToken);
             return ResponseEntity.ok().build();
         } catch (ResponseStatusException e) {
+            // Handle specific exceptions (like board not found)
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));
         } catch (Exception e) {
+            // Handle any other exceptions
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to delete task: " + e.getMessage()));
         }

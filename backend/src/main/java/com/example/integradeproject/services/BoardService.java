@@ -105,11 +105,12 @@ public class BoardService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the board owner can change visibility");
         }
 
-        if (!visibility.equals("public") && !visibility.equals("private")) {
+        String normalizedVisibility = visibility.toLowerCase();
+        if (!normalizedVisibility.equals("public") && !normalizedVisibility.equals("private")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid visibility value");
         }
 
-        board.setVisibility(Board.BoardVisibility.valueOf(visibility.toUpperCase()));
+        board.setVisibility(Board.BoardVisibility.valueOf(normalizedVisibility.toUpperCase()));
         Board updatedBoard = boardRepository.save(board);
         return convertToDTO(updatedBoard);
     }
@@ -227,6 +228,7 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
+        // If the board is private, check if the user is authorized
         if (board.getVisibility() == Board.BoardVisibility.PRIVATE) {
             if (token == null) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
@@ -236,9 +238,11 @@ public class BoardService {
             }
         }
 
+        // Check if the task exists within the board
         TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
+        // Convert task to DTO and return
         return convertToTask2IdDTO(task);
     }
     private Task2IdDTO convertToTask2IdDTO(TaskV3 task) {
@@ -308,15 +312,20 @@ public class BoardService {
     }
 
     public void deleteTask(String boardId, Integer taskId, String token) {
+        // Extract the owner UID from the token
         String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
+
+        // Check if the board exists and belongs to the user
+        Board board = boardRepository.findByIdAndOwnerOid(boardId,
+                        pmUserRepository.findByOid(ownerOid)
+                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Board not found or you don't have access"));
 
-
+        // Check if the task exists within the board
         TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
+        // Delete the task
         taskRepository.delete(task);
     }
 
