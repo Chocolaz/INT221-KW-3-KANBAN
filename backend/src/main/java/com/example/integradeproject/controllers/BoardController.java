@@ -132,11 +132,12 @@ public class BoardController {
         }
 
         String jwtToken = token != null ? token.substring(7) : null;
+        if (jwtToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(Map.of("error", "Authentication required"));
+        }
+
         try {
-            if (jwtToken == null || !boardService.isUserBoardOwner(id, jwtTokenUtil.getUidFromToken(jwtToken))) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                        .body(Map.of("error", "Only board owner can create tasks"));
-            }
             NewTask2DTO createdTask = boardService.createTask(id, newTaskDTO, jwtToken);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
         } catch (ResponseStatusException e) {

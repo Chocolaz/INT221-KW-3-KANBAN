@@ -136,7 +136,10 @@ public class BoardService {
 
         return Stream.concat(
                         Stream.concat(userBoards.stream(), publicBoards.stream()),
-                        collaborations.stream().map(Collab::getBoard)
+                        collaborations.stream()
+                                .filter(collab -> collab.getAccess_right() == Collab.AccessRight.WRITE
+                                        || collab.getAccess_right() == Collab.AccessRight.READ)
+                                .map(Collab::getBoard)
                 )
                 .distinct()
                 .map(this::convertToDTO)
@@ -164,7 +167,9 @@ public class BoardService {
         }
 
         Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-        if (collaboration.isPresent() && collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
+        if (collaboration.isPresent() &&
+                (collaboration.get().getAccess_right() == Collab.AccessRight.READ ||
+                        collaboration.get().getAccess_right() == Collab.AccessRight.WRITE)) {
             return convertToDTO(board);
         }
 
@@ -214,7 +219,9 @@ public class BoardService {
         }
 
         Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-        if (collaboration.isPresent() && collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
+        if (collaboration.isPresent() &&
+                (collaboration.get().getAccess_right() == Collab.AccessRight.READ ||
+                        collaboration.get().getAccess_right() == Collab.AccessRight.WRITE)) {
             return getFilteredTasks(board, filterStatuses);
         }
 
@@ -251,7 +258,9 @@ public class BoardService {
         }
 
         Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-        if (collaboration.isPresent() && collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
+        if (collaboration.isPresent() &&
+                (collaboration.get().getAccess_right() == Collab.AccessRight.READ ||
+                        collaboration.get().getAccess_right() == Collab.AccessRight.WRITE)) {
             return findAndConvertTask(board, taskId);
         }
 
@@ -276,10 +285,26 @@ public class BoardService {
     }
 
     public NewTask2DTO createTask(String boardId, NewTask2DTO newTaskDTO, String token) {
-        String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Board not found or you don't have access"));
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        // Check if the user is the board owner or a collaborator with WRITE access
+        boolean isOwner = board.getOwnerOid().getOid().equals(userOid);
+        boolean isWriteCollaborator = false;
+
+        if (!isOwner) {
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+            isWriteCollaborator = collaboration.isPresent() &&
+                    collaboration.get().getAccess_right() == Collab.AccessRight.WRITE;
+        }
+
+        if (!isOwner && !isWriteCollaborator) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have permission to create tasks in this board");
+        }
 
         TaskV3 task = new TaskV3();
         task.setTitle(newTaskDTO.getTitle());
@@ -299,20 +324,28 @@ public class BoardService {
             task.setStatusId(defaultStatus);
         }
 
-
         TaskV3 savedTask = taskRepository.save(task);
         return convertToNewTaskDTO(savedTask);
     }
-
     @Transactional
     public NewTask2DTO updateTask(String boardId, Integer taskId, NewTask2DTO updateTaskDTO, String token) {
-        String ownerOid = jwtTokenUtil.getUidFromToken(token);
-        Board board = boardRepository.findByIdAndOwnerOid(boardId, pmUserRepository.findByOid(ownerOid)
-                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Board not found or you don't have access"));
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
         TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+
+        // Check if user is board owner or has WRITE access
+        if (!board.getOwnerOid().getOid().equals(userOid)) {
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+            if (collaboration.isEmpty() || collaboration.get().getAccess_right() != Collab.AccessRight.WRITE) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have permission to update tasks in this board");
+            }
+        }
 
         task.setTitle(updateTaskDTO.getTitle());
         task.setDescription(updateTaskDTO.getDescription());
@@ -331,21 +364,27 @@ public class BoardService {
     }
 
     public void deleteTask(String boardId, Integer taskId, String token) {
-        // Extract the owner UID from the token
-        String ownerOid = jwtTokenUtil.getUidFromToken(token);
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        // Check if the board exists and belongs to the user
-        Board board = boardRepository.findByIdAndOwnerOid(boardId,
-                        pmUserRepository.findByOid(ownerOid)
-                                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Board not found or you don't have access"));
-
-        // Check if the task exists within the board
         TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
-        // Delete the task
-        taskRepository.delete(task);
+        if (board.getOwnerOid().getOid().equals(userOid)) {
+            taskRepository.delete(task);
+            return;
+        }
+
+        Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")));
+
+        if (collaboration.isPresent() && collaboration.get().getAccess_right() == Collab.AccessRight.WRITE) {
+            taskRepository.delete(task);
+            return;
+        }
+
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have permission to delete tasks in this board");
     }
 
     private BoardDTO convertToDTO(Board board) {

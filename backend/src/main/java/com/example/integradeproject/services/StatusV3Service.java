@@ -30,7 +30,6 @@ public class StatusV3Service {
     private CollabRepository collabRepository;
     @Autowired
     private PMUserRepository pmUserRepository;
-
     @Autowired
     ModelMapper mapper;
     @Autowired
@@ -44,59 +43,29 @@ public class StatusV3Service {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        if (board.getVisibility() == Board.BoardVisibility.PUBLIC) {
+        if (board.getVisibility() == Board.BoardVisibility.PUBLIC || isUserAuthorized(token, board, Collab.AccessRight.READ)) {
             return getStatusesForBoard(board);
         }
 
-        if (token == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
-        }
-
-        String userOid = jwtTokenUtil.getUidFromToken(token);
-        if (board.getOwnerOid().getOid().equals(userOid)) {
-            return getStatusesForBoard(board);
-        }
-
-        Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, pmUserRepository.findByOid(userOid).orElseThrow());
-        if (collaboration.isPresent() && collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
-            return getStatusesForBoard(board);
-        }
-
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to board");
     }
 
     public StatusDTO getStatusById(String boardId, Integer statusId, String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        if (board.getVisibility() == Board.BoardVisibility.PUBLIC) {
+        if (board.getVisibility() == Board.BoardVisibility.PUBLIC || isUserAuthorized(token, board, Collab.AccessRight.READ)) {
             return findStatusInBoard(statusId, board);
         }
 
-        if (token == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
-        }
-
-        String userOid = jwtTokenUtil.getUidFromToken(token);
-        if (board.getOwnerOid().getOid().equals(userOid)) {
-            return findStatusInBoard(statusId, board);
-        }
-
-        Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, pmUserRepository.findByOid(userOid).orElseThrow());
-        if (collaboration.isPresent() && collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
-            return findStatusInBoard(statusId, board);
-        }
-
-        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to board");
     }
-
 
     public StatusDTO createNewStatus(Status status, String boardId, String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        // Return 403 if token is missing or invalid
-        if (token == null || !isUserAuthorized(token, board)) {
+        if (!isUserAuthorized(token, board, Collab.AccessRight.WRITE)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
         }
 
@@ -110,8 +79,8 @@ public class StatusV3Service {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        if (board.getVisibility() == Board.BoardVisibility.PRIVATE && (token == null || !isUserAuthorized(token, board))) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
+        if (!isUserAuthorized(token, board, Collab.AccessRight.WRITE)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
         }
 
         Status existingStatus = statusRepository.findByStatusIdAndBoardId(statusId, board)
@@ -126,16 +95,11 @@ public class StatusV3Service {
 
     @Transactional
     public void deleteStatus(String boardId, Integer statusId, String token) {
-        if (token == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
-        }
-
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        String userOid = jwtTokenUtil.getUidFromToken(token);
-        if (!board.getOwnerOid().getOid().equals(userOid)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can delete statuses");
+        if (!isUserAuthorized(token, board, Collab.AccessRight.WRITE)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
         }
 
         Status status = statusRepository.findByStatusIdAndBoardId(statusId, board)
@@ -154,22 +118,17 @@ public class StatusV3Service {
 
     @Transactional
     public void deleteStatusAndTransferTasks(String boardId, Integer statusId, Integer newStatusId, String token) {
-        if (token == null) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Authentication required");
-        }
-
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        String userOid = jwtTokenUtil.getUidFromToken(token);
-        if (!board.getOwnerOid().getOid().equals(userOid)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can delete statuses and transfer tasks");
+        if (!isUserAuthorized(token, board, Collab.AccessRight.WRITE)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
         }
 
-        Status currentStatus = (Status) statusRepository.findByStatusIdAndBoardId(statusId, board)
+        Status currentStatus = statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Current status not found in this board"));
 
-        Status newStatus = (Status) statusRepository.findByStatusIdAndBoardId(newStatusId, board)
+        Status newStatus = statusRepository.findByStatusIdAndBoardId(newStatusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "New status not found in this board"));
 
         if (statusId.equals(newStatusId)) {
@@ -188,13 +147,39 @@ public class StatusV3Service {
 
         statusRepository.delete(currentStatus);
     }
-    private boolean isUserAuthorized(String token, Board board) {
+
+    private boolean isUserAuthorized(String token, Board board, Collab.AccessRight requiredAccess) {
+        if (token == null) {
+            return false;
+        }
+
         try {
             String userOid = jwtTokenUtil.getUidFromToken(token);
-            return board.getOwnerOid().getOid().equals(userOid);
+            if (board.getOwnerOid().getOid().equals(userOid)) {
+                return true;
+            }
+
+            PMUser user = pmUserRepository.findByOid(userOid)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+            return collaboration.isPresent() &&
+                    (collaboration.get().getAccess_right() == Collab.AccessRight.WRITE ||
+                            (requiredAccess == Collab.AccessRight.READ && collaboration.get().getAccess_right() == Collab.AccessRight.READ));
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private List<StatusDTO> getStatusesForBoard(Board board) {
+        List<Status> statuses = statusRepository.findByBoardId(board);
+        return listMapper.mapList(statuses, StatusDTO.class);
+    }
+
+    private StatusDTO findStatusInBoard(Integer statusId, Board board) {
+        return statusRepository.findByStatusIdAndBoardId(statusId, board)
+                .map(status -> mapper.map(status, StatusDTO.class))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
     }
 
     private void validateStatus(Status status, Board board) {
@@ -214,16 +199,6 @@ public class StatusV3Service {
         if (exists) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name must be unique within the board");
         }
-    }
-    private List<StatusDTO> getStatusesForBoard(Board board) {
-        List<Status> statuses = statusRepository.findByBoardId(board);
-        return listMapper.mapList(statuses, StatusDTO.class);
-    }
-
-    private StatusDTO findStatusInBoard(Integer statusId, Board board) {
-        return statusRepository.findByStatusIdAndBoardId(statusId, board)
-                .map(status -> mapper.map(status, StatusDTO.class))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
     }
 
 
