@@ -77,4 +77,51 @@ public class CollabController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+    @PatchMapping("/{collabOid}")
+    public ResponseEntity<?> updateCollaborator(@PathVariable String boardId,
+                                                @PathVariable String collabOid,
+                                                @RequestBody Map<String, String> request,
+                                                @RequestHeader("Authorization") String token) {
+        String accessRightStr = request.get("access_right");
+
+        if (accessRightStr == null) {
+            return ResponseEntity.badRequest().body(Map.of("error", "access_right is required"));
+        }
+
+        Collab.AccessRight accessRight;
+        try {
+            accessRight = Collab.AccessRight.valueOf(accessRightStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Invalid access_right value"));
+        }
+
+        try {
+            String jwtToken = token.substring(7);
+            CollabDTO updatedCollab = collabService.updateCollaborator(boardId, collabOid, accessRight, jwtToken);
+            return ResponseEntity.ok(updatedCollab);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{collabOid}")
+    public ResponseEntity<?> removeCollaborator(@PathVariable String boardId,
+                                                @PathVariable String collabOid,
+                                                @RequestHeader("Authorization") String token) {
+        try {
+            String jwtToken = token.substring(7);
+            collabService.removeCollaborator(boardId, collabOid, jwtToken);
+            return ResponseEntity.ok().build();
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
 }

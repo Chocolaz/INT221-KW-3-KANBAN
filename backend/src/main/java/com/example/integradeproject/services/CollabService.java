@@ -111,4 +111,42 @@ public class CollabService {
         Collab savedCollab = collabRepository.save(collab);
         return modelMapper.map(savedCollab, CollabDTO.class);
     }
+
+    public CollabDTO updateCollaborator(String boardId, String collabOid, Collab.AccessRight accessRight, String token) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        if (!board.getOwnerOid().getOid().equals(userOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can update collaborators");
+        }
+
+        PMUser user = pmUserRepository.findByOid(collabOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Collab collab = collabRepository.findByBoardAndOid(board, user)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Collaborator not found"));
+
+        collab.setAccess_right(accessRight);
+        Collab updatedCollab = collabRepository.save(collab);
+        return modelMapper.map(updatedCollab, CollabDTO.class);
+    }
+
+    public void removeCollaborator(String boardId, String collabOid, String token) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        if (!board.getOwnerOid().getOid().equals(userOid) && !userOid.equals(collabOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner or the collaborator themselves can remove a collaborator");
+        }
+
+        PMUser user = pmUserRepository.findByOid(collabOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Collab collab = collabRepository.findByBoardAndOid(board, user)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Collaborator not found"));
+
+        collabRepository.delete(collab);
+    }
 }
