@@ -22,15 +22,17 @@ USE kanban_DB;
 -- Drop tables if they exist
 DROP TABLE IF EXISTS tasks;
 DROP TABLE IF EXISTS statuses;
+DROP TABLE IF EXISTS collabs; -- Junction table
 DROP TABLE IF EXISTS boards;
 DROP TABLE IF EXISTS users;
 
+-- Table structure for 'users'
 CREATE TABLE users (
   oid CHAR(36) NOT NULL, -- UUID for user identification
   name VARCHAR(100) NOT NULL, -- Full name with a limit of 100 characters
   username VARCHAR(50) NOT NULL, -- Username with a limit of 50 characters
   email VARCHAR(50) NOT NULL, -- Email with a limit of 50 characters
-	createdOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  createdOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updatedOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (oid),
   UNIQUE (email),
@@ -41,21 +43,33 @@ CREATE TABLE users (
 CREATE TABLE boards (
   boardId VARCHAR(10) NOT NULL,
   boardName VARCHAR(120) NOT NULL,
-  ownerOid VARCHAR(36),
+	ownerOid VARCHAR(36),
   visibility ENUM('PRIVATE','PUBLIC') NOT NULL DEFAULT 'PRIVATE',
   createdOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updatedOn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (boardId),
-CONSTRAINT fk_boards_users FOREIGN KEY (ownerOid) REFERENCES users(oid) -- Foreign key constraint
+  CONSTRAINT fk_boards_users FOREIGN KEY (ownerOid) REFERENCES users(oid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
+CREATE TABLE collabs (
+
+  boardId VARCHAR(10) NOT NULL,
+  userOid CHAR(36) NOT NULL,
+  email VARCHAR(50) NOT NULL,
+	name VARCHAR(100) NOT NULL,
+  access_right ENUM('READ', 'WRITE') NOT NULL DEFAULT 'READ', 
+  added_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (boardId, userOid),
+  CONSTRAINT fk_collaborators_board FOREIGN KEY (boardId) REFERENCES boards(boardId) ,
+  CONSTRAINT fk_collaborators_user FOREIGN KEY (userOid) REFERENCES users(oid)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Table structure for 'statuses'
 CREATE TABLE statuses (
   statusId INT NOT NULL AUTO_INCREMENT,
   statusName VARCHAR(50) NOT NULL,
   statusDescription VARCHAR(200),
-  boardId VARCHAR(10),  -- Foreign key column
+  boardId VARCHAR(10), 
   PRIMARY KEY (statusId),
   CONSTRAINT fk_statuses_boards FOREIGN KEY (boardId) REFERENCES boards(boardId)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
@@ -77,11 +91,20 @@ CREATE TABLE tasks (
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- Insert data into 'boards' table
-INSERT INTO boards (boardId, boardName, ownerOid)
+INSERT INTO boards (boardId, boardName)
 VALUES
-    ('nanoid1', 'Board 1', 'owner-uuid-1'),
-    ('nanoid2', 'Board 2', 'owner-uuid-2'),
-    ('nanoid3', 'Board 3', 'owner-uuid-3');
+    ('nanoid1', 'Board 1'),
+    ('nanoid2', 'Board 2'),
+    ('nanoid3', 'Board 3');
+
+-- Insert data into 'collaborators' table to represent board collaboration, with access rights
+INSERT INTO collabs (boardId, userOid, email, access_right)
+VALUES
+    ('nanoid1', 'owner-uuid-1', 'owner1@example.com', 'write'),
+    ('nanoid2', 'owner-uuid-2', 'owner2@example.com', 'write'),
+    ('nanoid3', 'owner-uuid-3', 'owner3@example.com', 'write'),
+    ('nanoid1', 'collaborator-uuid-1', 'collab1@example.com', 'read'),
+    ('nanoid2', 'collaborator-uuid-2', 'collab2@example.com', 'read');
 
 -- Insert data into 'statuses' table
 INSERT INTO statuses (statusName, statusDescription, boardId)
@@ -103,7 +126,6 @@ VALUES
     ('TD02', '', '', 2, 'nanoid2'),
     ('DO01', '', '', 7, 'nanoid3'),
     ('IP02', '', '', 3, 'nanoid3');
-
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
 /*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
 /*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
