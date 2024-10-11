@@ -51,10 +51,9 @@ public class BoardController {
 
 
     @GetMapping("")
-    public ResponseEntity<?> getBoards(@RequestHeader("Authorization") String token) {
-        String jwtToken = token.substring(7); // Remove "Bearer " prefix
-
+    public ResponseEntity<?> getBoards(@RequestHeader(value = "Authorization", required = false) String token) {
         try {
+            String jwtToken = token != null ? token.substring(7) : null;
             List<BoardDTO> boardDTOs = boardService.getBoardsForUser(jwtToken);
             if (boardDTOs.isEmpty()) {
                 return ResponseEntity.noContent().build();
@@ -65,6 +64,7 @@ public class BoardController {
                     .body(Map.of("error", "Unauthorized access"));
         }
     }
+
 
     @PatchMapping("/{id}")
     public ResponseEntity<?> updateBoardVisibility(@PathVariable String id,
@@ -122,7 +122,6 @@ public class BoardController {
                     .body(Map.of("error", e.getReason()));
         }
     }
-
     @PostMapping("/{id}/tasks")
     public ResponseEntity<?> createTask(@PathVariable String id,
                                         @RequestBody(required = false) NewTask2DTO newTaskDTO,
@@ -151,11 +150,9 @@ public class BoardController {
                                          @RequestHeader(value = "Authorization", required = false) String token) {
         try {
             String jwtToken = token != null ? token.substring(7) : null;
-            // Fetch the task
             Task2IdDTO taskDTO = boardService.getTaskById(boardId, taskId, jwtToken);
             return ResponseEntity.ok(taskDTO);
         } catch (ResponseStatusException e) {
-            // Handle exceptions and return appropriate error status
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));
         }
