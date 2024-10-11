@@ -108,6 +108,22 @@ public class BoardController {
         }
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteBoard(@PathVariable String id,
+                                         @RequestHeader("Authorization") String token) {
+        try {
+            String jwtToken = token.substring(7);
+            boardService.deleteBoard(id, jwtToken);
+            return ResponseEntity.noContent().build();
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to delete board: " + e.getMessage()));
+        }
+    }
+
     @GetMapping("/{id}/tasks")
     public ResponseEntity<?> getTasksForBoard(@PathVariable String id,
                                               @RequestHeader(value = "Authorization", required = false) String token,

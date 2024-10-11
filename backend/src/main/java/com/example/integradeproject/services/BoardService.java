@@ -176,6 +176,35 @@ public class BoardService {
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
     }
 
+    @Transactional
+    public void deleteBoard(String boardId, String token) {
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        if (!board.getOwnerOid().getOid().equals(userOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the board owner can delete the board");
+        }
+
+        // Delete all tasks associated with the board
+        List<TaskV3> tasks = taskRepository.findByBoardId(board);
+        taskRepository.deleteAll(tasks);
+
+        // Delete all collaborations associated with the board
+        List<Collab> collabs = collabRepository.findByBoard(board);
+        collabRepository.deleteAll(collabs);
+
+        // Delete all statuses associated with the board
+        List<Status> statuses = statusRepository.findByBoardId(board);
+        statusRepository.deleteAll(statuses);
+
+        // Finally, delete the board itself
+        boardRepository.delete(board);
+    }
+
 
     public boolean isUserBoardOwner(String boardId, String userOid) {
         Board board = boardRepository.findById(boardId)
