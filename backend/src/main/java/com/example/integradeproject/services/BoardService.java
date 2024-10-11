@@ -116,10 +116,6 @@ public class BoardService {
     }
 
     public List<BoardDTO> getBoardsForUser(String token) {
-
-
-
-
         if (token == null) {
             // Return only public boards for unauthenticated users
             return boardRepository.findByVisibility(Board.BoardVisibility.PUBLIC)

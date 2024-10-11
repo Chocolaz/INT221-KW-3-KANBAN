@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface PMUserRepository extends JpaRepository<PMUser, String> {
     Optional<PMUser> findByOid(String oid);
+    Optional<PMUser> findByEmail(String email);
 
 }

@@ -85,7 +85,6 @@ public class StatusV3Service {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        // Return 403 if token is missing or invalid
         if (board.getVisibility() == Board.BoardVisibility.PRIVATE && (token == null || !isUserAuthorized(token, board))) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
         }

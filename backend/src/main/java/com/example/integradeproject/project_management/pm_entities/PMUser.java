@@ -33,6 +33,9 @@ public class PMUser {
     @Column(name = "updatedOn", updatable = false, insertable = false)
     private Date updatedOn;
 
-    @OneToMany(mappedBy = "ownerOid", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Board> boards;
+    @OneToMany(mappedBy = "oid")
+    private List<Collab> collaborations;
+
+    @OneToMany(mappedBy = "ownerOid" , cascade = CascadeType.ALL , orphanRemoval = true)
+    private List<Board> boards ;
 }
