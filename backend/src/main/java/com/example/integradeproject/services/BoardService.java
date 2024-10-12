@@ -288,10 +288,12 @@ public class BoardService {
         }
 
         Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-        if (collaboration.isPresent() &&
-                (collaboration.get().getAccess_right() == Collab.AccessRight.READ ||
-                        collaboration.get().getAccess_right() == Collab.AccessRight.WRITE)) {
-            return findAndConvertTask(board, taskId);
+        if (collaboration.isPresent()) {
+            if (collaboration.get().getAccess_right() == Collab.AccessRight.WRITE) {
+                return findAndConvertTask(board, taskId);
+            } else if (collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found");
+            }
         }
 
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");

@@ -54,8 +54,12 @@ public class StatusV3Service {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        if (board.getVisibility() == Board.BoardVisibility.PUBLIC || isUserAuthorized(token, board, Collab.AccessRight.READ)) {
+        if (board.getVisibility() == Board.BoardVisibility.PUBLIC || isUserAuthorized(token, board, Collab.AccessRight.WRITE)) {
             return findStatusInBoard(statusId, board);
+        }
+
+        if (isUserAuthorized(token, board, Collab.AccessRight.READ)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found");
         }
 
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to board");
