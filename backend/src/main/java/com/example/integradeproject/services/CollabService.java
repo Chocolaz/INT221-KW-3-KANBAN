@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -45,7 +46,7 @@ public class CollabService {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required for private board");
             }
             String userOid = jwtTokenUtil.getUidFromToken(token);
-            if (!board.getOwnerOid().getOid().equals(userOid)) {
+            if (!hasAccessToBoard(board, userOid)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
             }
         }
@@ -65,7 +66,7 @@ public class CollabService {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required for private board");
             }
             String userOid = jwtTokenUtil.getUidFromToken(token);
-            if (!board.getOwnerOid().getOid().equals(userOid)) {
+            if (!hasAccessToBoard(board, userOid)) {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
             }
         }
@@ -95,9 +96,16 @@ public class CollabService {
         PMUser user = pmUserRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        // Check if the user is trying to add themselves
+        if (user.getOid().equals(userOid)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot add yourself as a collaborator");
+        }
+
+        // Check if the user is already a collaborator
         if (collabRepository.findByBoardAndOid(board, user).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User is already a collaborator");
         }
+
 
         Collab collab = new Collab();
         BoardCollaboratorsId id = new BoardCollaboratorsId(boardId, user.getOid());
@@ -148,5 +156,18 @@ public class CollabService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Collaborator not found"));
 
         collabRepository.delete(collab);
+    }
+    private boolean hasAccessToBoard(Board board, String userOid) {
+        if (board.getOwnerOid().getOid().equals(userOid)) {
+            return true;
+        }
+
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+        return collaboration.isPresent() &&
+                (collaboration.get().getAccess_right() == Collab.AccessRight.READ ||
+                        collaboration.get().getAccess_right() == Collab.AccessRight.WRITE);
     }
 }

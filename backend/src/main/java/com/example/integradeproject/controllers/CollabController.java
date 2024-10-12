@@ -68,7 +68,7 @@ public class CollabController {
         try {
             String jwtToken = token.substring(7);
             CollabDTO newCollab = collabService.addCollaborator(boardId, email, accessRight, jwtToken);
-            return ResponseEntity.status(HttpStatus.CREATED).body(newCollab);
+            return ResponseEntity.status(HttpStatus.OK).body(newCollab);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));

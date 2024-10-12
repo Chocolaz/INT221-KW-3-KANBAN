@@ -266,6 +266,7 @@ public class BoardService {
         }
         return tasks.stream().map(this::convertToTaskDTO).collect(Collectors.toList());
     }
+
     public Task2IdDTO getTaskById(String boardId, Integer taskId, String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));

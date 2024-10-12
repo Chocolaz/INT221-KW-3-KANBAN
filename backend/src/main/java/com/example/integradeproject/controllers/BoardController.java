@@ -56,7 +56,7 @@ public class BoardController {
             String jwtToken = token != null ? token.substring(7) : null;
             List<BoardDTO> boardDTOs = boardService.getBoardsForUser(jwtToken);
             if (boardDTOs.isEmpty()) {
-                return ResponseEntity.noContent().build();
+                return ResponseEntity.ok().build();
             }
             return ResponseEntity.ok(boardDTOs);
         } catch (Exception e) {
