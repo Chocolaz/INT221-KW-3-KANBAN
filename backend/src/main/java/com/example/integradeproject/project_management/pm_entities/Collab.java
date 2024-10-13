@@ -37,9 +37,14 @@ public class Collab {
     @Column(name = "access_right", nullable = false)
     private AccessRight access_right;
 
-    @Column(name = "added_on", updatable = false, insertable = false)
+    @Column(name = "added_on", nullable = false, updatable = false)
+    @Temporal(TemporalType.TIMESTAMP)
     private Date added_on;
 
+    @PrePersist
+    protected void onCreate() {
+        added_on = new Date();
+    }
     public enum AccessRight {
         READ, WRITE
     }
