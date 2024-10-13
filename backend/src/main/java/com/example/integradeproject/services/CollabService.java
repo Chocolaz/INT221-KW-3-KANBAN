@@ -145,17 +145,29 @@ public class CollabService {
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
         String userOid = jwtTokenUtil.getUidFromToken(token);
-        if (!board.getOwnerOid().getOid().equals(userOid) && !userOid.equals(collabOid)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner or the collaborator themselves can remove a collaborator");
+
+        // Check if the user is a collaborator
+        Collab collab = collabRepository.findByBoardAndOid(board, pmUserRepository.findByOid(userOid)
+                        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")))
+                .orElse(null);
+
+        // If the user is not the owner and not a collaborator, they can't perform this action
+        if (!board.getOwnerOid().getOid().equals(userOid) && collab == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non-collaborator cannot leave or remove collaborators from the board");
         }
 
-        PMUser user = pmUserRepository.findByOid(collabOid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        // If the user is a collaborator but trying to remove someone else
+        if (collab != null && !userOid.equals(collabOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Collaborators can only remove themselves from the board");
+        }
 
-        Collab collab = collabRepository.findByBoardAndOid(board, user)
+        PMUser userToRemove = pmUserRepository.findByOid(collabOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User to remove not found"));
+
+        Collab collabToRemove = collabRepository.findByBoardAndOid(board, userToRemove)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Collaborator not found"));
 
-        collabRepository.delete(collab);
+        collabRepository.delete(collabToRemove);
     }
     private boolean hasAccessToBoard(Board board, String userOid) {
         if (board.getOwnerOid().getOid().equals(userOid)) {
