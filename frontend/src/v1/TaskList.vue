@@ -38,12 +38,7 @@ const currentUser = ref(localStorage.getItem('username'))
 const canOperation = ref(false)
 
 const checkBoardOwnership = () => {
-  if (currentUser.value && currentUser.value.isAuthenticated) {
-    // Check if user is authenticated
-    canOperation.value = checkOwnership(boardData.value, currentUser.value)
-  } else {
-    canOperation.value = false // Set to false if user is not authenticated
-  }
+  canOperation.value = checkOwnership(boardData.value, currentUser.value)
 }
 
 const fetchBoardDetails = async () => {
