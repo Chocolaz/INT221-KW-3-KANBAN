@@ -31,7 +31,12 @@ const currentUser = ref(localStorage.getItem('username'))
 const canOperation = ref(false)
 
 const checkBoardOwnership = () => {
-  canOperation.value = checkOwnership(boardData.value, currentUser.value)
+  if (currentUser.value && currentUser.value.isAuthenticated) {
+    // Check if user is authenticated
+    canOperation.value = checkOwnership(boardData.value, currentUser.value)
+  } else {
+    canOperation.value = false // Set to false if user is not authenticated
+  }
 }
 
 const fetchBoardDetails = async () => {
@@ -134,10 +139,7 @@ onMounted(async () => {
         <thead>
           <tr>
             <th class="itbkk-button-add" style="text-align: center">
-              <button
-                @click="openAddModal"
-                class="icon-button add-button"
-              >
+              <button @click="openAddModal" class="icon-button add-button">
                 <i class="fas fa-plus-circle"></i>
               </button>
             </th>
