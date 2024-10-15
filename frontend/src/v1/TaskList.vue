@@ -45,6 +45,7 @@ const checkBoardOwnership = () => {
     canOperation.value = false // Set to false if user is not authenticated
   }
 }
+
 const fetchBoardDetails = async () => {
   try {
     boardData.value = await FetchUtils.getBoards(boardId)

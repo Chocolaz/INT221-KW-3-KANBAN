@@ -10,7 +10,7 @@
       <div class="user-actions">
         <div class="user-info">
           <i class="fa fa-user user-avatar" aria-hidden="true"></i>
-          <span class="username itbkk-fullname">{{ username }}</span>
+          <span class="username itbkk-fullname">{{ displayUsername }}</span>
         </div>
         <button @click="toggleDropdown" class="menu-btn" aria-label="User Menu">
           <svg
@@ -47,11 +47,16 @@
 import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 
-const username = localStorage.getItem('username')
 const showDropdown = ref(false)
-
 const router = useRouter()
 const route = useRoute()
+
+const username = localStorage.getItem('username')
+const isAuthenticated = !!username
+
+const displayUsername = computed(() => {
+  return isAuthenticated ? username : 'Guest'
+})
 
 const isManageStatus = computed(() => route.name === 'statusView')
 

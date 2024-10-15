@@ -20,7 +20,6 @@ const routes = [
     path: '/boards/:boardId',
     name: 'taskView',
     component: TaskList,
-    meta: { requiresAuth: true },
     props: (route) => ({ boardId: route.params.boardId })
   },
   {

@@ -103,7 +103,7 @@ export const checkTokenValidity = () => {
     ? getTokenExpirationTime(accessToken)
     : null
 
-  // Validate the refresh token and log expiration time 
+  // Validate the refresh token and log expiration time
   const isRefreshTokenValid = isTokenValid(refreshToken, 'refresh')
   const refreshTokenExpiration = refreshToken
     ? getTokenExpirationTime(refreshToken)
@@ -121,6 +121,7 @@ export const checkTokenValidity = () => {
 export async function checkBoardAccess(boardId) {
   try {
     const response = await fetchUtils.getBoards(boardId)
+
     if (response.statusCode === 403) {
       return { hasAccess: false, notFound: false }
     }
@@ -132,7 +133,13 @@ export async function checkBoardAccess(boardId) {
     const currentUser = localStorage.getItem('username')
     const boardOwner = boardData.owner.username || boardData.owner.name
 
-    if (boardData.visibility === 'public' || boardOwner === currentUser) {
+    // Allow access to public boards even if the user is not authenticated
+    if (boardData.visibility === 'public') {
+      return { hasAccess: true, notFound: false }
+    }
+
+    // If the board is not public, only allow the owner to access
+    if (boardOwner === currentUser) {
       return { hasAccess: true, notFound: false }
     }
 
