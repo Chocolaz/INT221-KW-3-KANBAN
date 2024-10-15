@@ -26,7 +26,6 @@ const routes = [
     path: '/boards/:boardId/tasks/:taskId',
     name: 'taskDetail',
     component: TaskList,
-    meta: { requiresAuth: true },
     props: (route) => ({
       boardId: route.params.boardId,
       taskId: route.params.taskId
@@ -36,14 +35,12 @@ const routes = [
     path: '/boards/:boardId/status',
     name: 'statusView',
     component: StatusList,
-    meta: { requiresAuth: true },
     props: (route) => ({ boardId: route.params.boardId })
   },
   {
     path: '/boards/:boardId/status/:statusId',
     name: 'statusDetail',
     component: StatusList,
-    meta: { requiresAuth: true },
     props: (route) => ({
       boardId: route.params.boardId,
       statusId: route.params.statusId
