@@ -10,6 +10,11 @@ export const useRouteChecks = () => {
 }
 
 export const checkOwnership = (boardData, currentUser) => {
+  if (!currentUser) {
+    console.log('User is not authenticated.')
+    return false // Return false for non-authenticated users
+  }
+
   if (boardData && boardData.data && boardData.data.owner) {
     const ownerName = boardData.data.owner.name.trim()
     const currentUserName = currentUser.trim()

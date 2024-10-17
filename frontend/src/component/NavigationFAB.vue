@@ -30,12 +30,7 @@ const router = useRouter()
 
 const backToHomePage = () => {
   const boardId = route.params.boardId
-  if (boardId) {
-    router.push(`/boards/${boardId}/tasks`)
-  } else {
-    console.error('Board ID is not defined')
-    router.push({ name: 'taskView' })
-  }
+  router.push({ name: 'taskView', params: { boardId } })
 }
 
 const goToStatusManagement = () => {

@@ -15,15 +15,15 @@
 
     <!-- Message when the board limit is reached -->
     <p v-if="boards.length >= 1" class="text-red-500 text-center">
-      You can only create up to 1 boards.
+      You can only create up to 1 board.
     </p>
 
-    <div class="table-container">
-      <table class="table header-table">
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border border-gray-200">
         <thead>
           <tr>
-            <th>No</th>
-            <th>Name</th>
+            <th class="border px-6 py-4 text-left text-gray-600">No</th>
+            <th class="border px-6 py-4 text-left text-gray-600">Name</th>
           </tr>
         </thead>
         <tbody>
@@ -75,12 +75,11 @@ const router = useRouter()
 const fetchBoards = async () => {
   try {
     const response = await fetchUtils.getBoards()
-
     boards.value = Array.isArray(response) ? response : []
 
-    if (boards.value.length > 0) {
-      router.push({ name: 'taskView', params: { boardId: boards.value[0].id } })
-    }
+    //if (boards.value.length > 0) {
+    //  router.push({ name: 'taskView', params: { boardId: boards.value[0].id } })
+    // }
   } catch (error) {
     console.error('Error fetching boards:', error.message)
   }
@@ -93,57 +92,4 @@ const viewBoardTasks = (boardId) => {
 onMounted(fetchBoards)
 </script>
 
-<style scoped>
-tbody tr:nth-child(even) {
-  background-color: #ffe3e3;
-}
-
-tbody tr:nth-child(odd) {
-  background-color: #ffffff;
-}
-
-tbody tr:hover {
-  background-color: #ffccd5;
-  transition: background-color 0.3s ease;
-}
-
-.table-container {
-  margin: 0 auto;
-  width: 700px;
-  border-radius: 10px;
-  font-size: 16px;
-  color: #343a40;
-  background: #ffffff;
-  border: 2px solid #ff6b6b;
-  box-shadow: 0 8px 32px 0 rgba(255, 107, 107, 0.2);
-  overflow: hidden;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.table-container {
-  margin-top: 50px;
-}
-
-.table {
-  border-collapse: separate;
-  border-spacing: 0;
-  width: 100%;
-  table-layout: fixed;
-  background-color: #ffffff;
-  overflow: hidden;
-}
-
-.table th,
-.table td {
-  text-align: center;
-}
-
-.table th {
-  background-color: #ff6b6b;
-  font-weight: bold;
-  color: #ffffff;
-  font-size: 17px;
-}
-</style>
+<style scoped></style>

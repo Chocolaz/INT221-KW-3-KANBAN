@@ -8,8 +8,6 @@ import ManageColl from './v3/ManageColl.vue';
 import BoardList from './v3/BoardList.vue';
 import NotFound from './component/NotFound.vue';
 import AccessDenied from './component/AccessDenied.vue';
-import CollaboratorModal from './v3/CollaboratorModal.vue';
-import BoardView from './v3/BoardView.vue';
 
 import {
   refreshAccessToken,
@@ -33,13 +31,11 @@ const routes = [
     name: 'manageColl',
     component: ManageColl,
     meta: { requiresAuth: true },
-    
   },
   {
     path: '/boards/:boardId/tasks/:taskId',
     name: 'taskDetail',
     component: TaskList,
-    meta: { requiresAuth: true },
     props: (route) => ({
       boardId: route.params.boardId,
       taskId: route.params.taskId,
@@ -56,7 +52,6 @@ const routes = [
     path: '/boards/:boardId/status/:statusId',
     name: 'statusDetail',
     component: StatusList,
-    meta: { requiresAuth: true },
     props: (route) => ({
       boardId: route.params.boardId,
       statusId: route.params.statusId,
@@ -94,20 +89,8 @@ const routes = [
     redirect: '/board',
   },
   //
-  {
-    path: '/boards/:boardId/collaborators',
-    name: 'collaboratorView',
-    component: CollaboratorModal,
-    meta: { requiresAuth: true },
-    props: true
-  },
-  {
-    path: '/board/:boardId',
-    name: 'boardDetail', 
-    component: BoardView,
-    meta: { requiresAuth: true },
-    props: true,
-  }
+
+
 
 
 

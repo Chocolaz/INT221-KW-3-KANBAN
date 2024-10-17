@@ -11,7 +11,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { Info } from 'lucide-vue-next' // Import your desired icon
+import { Info } from 'lucide-vue-next' 
 
 const props = defineProps({
   visible: {

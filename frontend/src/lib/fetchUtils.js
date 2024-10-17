@@ -33,12 +33,7 @@ const handleResponse = async (response) => {
 }
 
 const getToken = () => {
-  const token = localStorage.getItem('access_token')
-  if (!token) {
-    router.push('/login')
-    throw new Error('No authentication token found')
-  }
-  return token
+  return localStorage.getItem('access_token')
 }
 
 const validateBoardId = (boardId) => {
@@ -56,9 +51,13 @@ const buildUrl = (url, boardId, taskId = null) => {
 const fetchWithAuth = async (url, options = {}) => {
   const token = getToken()
   const headers = {
-    ...options.headers,
-    Authorization: `Bearer ${token}`
+    ...options.headers
   }
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
   const response = await fetch(url, { ...options, headers })
   return handleResponse(response)
 }
