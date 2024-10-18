@@ -184,6 +184,19 @@ const visibilityBoard = async (boardId, visibility) => {
   }
 }
 
+const getCollab = async (boardId) => {
+  try {
+    validateBoardId(boardId)
+    const fullUrl = `${baseUrl3}/boards/${boardId}/collabs`
+    const responseData = await fetchWithAuth(fullUrl)
+    console.log('Collab details fetched:', responseData.data)
+    return responseData.data || responseData
+  } catch (error) {
+    console.error('Error fetching collaboration details:', error)
+    throw error
+  }
+}
+
 export default {
   fetchData,
   postData,
@@ -192,5 +205,6 @@ export default {
   getBoards,
   addBoard,
   getAllBoards: getBoards,
-  visibilityBoard
+  visibilityBoard,
+  getCollab
 }
