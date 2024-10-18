@@ -6,6 +6,7 @@ import BoardAdd from './v3/BoardAdd.vue'
 import BoardList from './v3/BoardList.vue'
 import NotFound from './component/NotFound.vue'
 import AccessDenied from './component/AccessDenied.vue'
+import ManageCollab from './collab/ManageCollab.vue'
 
 import {
   refreshAccessToken,
@@ -45,6 +46,12 @@ const routes = [
       boardId: route.params.boardId,
       statusId: route.params.statusId
     })
+  },
+  {
+    path: '/boards/:boardId/collab',
+    name: 'manageCollab',
+    component: ManageCollab,
+    props: (route) => ({ boardId: route.params.boardId })
   },
   {
     path: '/login',

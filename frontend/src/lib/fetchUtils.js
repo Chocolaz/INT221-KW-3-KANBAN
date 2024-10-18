@@ -197,6 +197,23 @@ const getCollab = async (boardId) => {
   }
 }
 
+const addCollab = async (boardId, data) => {
+  try {
+    validateBoardId(boardId)
+    const fullUrl = `${baseUrl3}/boards/${boardId}/collabs`
+    const responseData = await fetchWithAuth(fullUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    console.log('Add collaboration status code:', responseData.statusCode)
+    return responseData
+  } catch (error) {
+    console.error('Error adding collaboration:', error)
+    throw error
+  }
+}
+
 export default {
   fetchData,
   postData,
@@ -206,5 +223,6 @@ export default {
   addBoard,
   getAllBoards: getBoards,
   visibilityBoard,
-  getCollab
+  getCollab,
+  addCollab
 }
