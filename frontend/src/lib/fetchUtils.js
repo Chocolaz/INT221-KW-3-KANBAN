@@ -136,7 +136,9 @@ const getBoards = async (boardId = null) => {
   try {
     const url = boardId ? `${baseUrl3}/boards/${boardId}` : `${baseUrl3}/boards`
     const responseData = await fetchWithAuth(url)
-    return boardId ? responseData : responseData.data
+    console.log('Boards fetched:', responseData)
+
+    return boardId ? responseData : responseData.data || responseData
   } catch (error) {
     console.error('Error retrieving boards:', error)
     throw error
