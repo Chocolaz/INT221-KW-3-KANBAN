@@ -110,7 +110,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import fetchUtils from '../lib/fetchUtils'
 import AddBoard from './AddBoard.vue'
@@ -139,8 +139,9 @@ const fetchBoards = async () => {
       try {
         const collabDetails = await fetchUtils.getCollab(board.id)
 
+        // Extract the relevant details from the API response
         if (collabDetails.length > 0) {
-          const { access_right, added_on } = collabDetails[0]
+          const { access_right, added_on } = collabDetails[0] // Assuming first item is relevant
           board.accessRight = access_right
           board.addedOn = new Date(added_on)
         }
@@ -162,6 +163,18 @@ const fetchBoards = async () => {
     console.error('Error fetching boards:', error.message)
   }
 }
+
+/*// Watch for changes in personalBoards and collabBoards
+watch(
+  () => [personalBoards.value.length, collabBoards.value.length],
+  ([personalCount, collabCount]) => {
+    // Redirect to the personal board if there is only one personal board and no collaboration boards
+    if (personalCount === 1 && collabCount === 0) {
+      const personalBoardId = personalBoards.value[0].id
+      router.push({ name: 'taskView', params: { boardId: personalBoardId } })
+    }
+  }
+)*/
 
 const viewBoardTasks = (boardId) => {
   router.push({ name: 'taskView', params: { boardId } })
