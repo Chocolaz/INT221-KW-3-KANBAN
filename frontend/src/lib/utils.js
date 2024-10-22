@@ -6,13 +6,15 @@ export const useRouteChecks = () => {
 
   const isTaskList = computed(() => route.name === 'taskView')
   const isStatusList = computed(() => route.name === 'statusView')
-  return { isTaskList, isStatusList }
+  const isManageCollab = computed(() => route.name === 'manageCollab')
+
+  return { isTaskList, isStatusList, isManageCollab }
 }
 
 export const checkOwnership = (boardData, currentUser) => {
   if (!currentUser) {
     console.log('User is not authenticated.')
-    return false // Return false for non-authenticated users
+    return false 
   }
 
   if (boardData && boardData.data && boardData.data.owner) {

@@ -2,7 +2,7 @@
   <div>
     <div v-if="isStatusList">
       <div
-        class="fab itbkk-manage-status fixed bottom-8 right-8 w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl cursor-pointer"
+        class="fab itbkk-manage-status fixed bottom-40 right-8 w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl cursor-pointer"
         @click="backToHomePage"
       >
         <i class="fa fa-home"></i>
@@ -11,7 +11,7 @@
 
     <div v-if="isTaskList">
       <div
-        class="fab fixed bottom-8 right-8 w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl cursor-pointer"
+        class="fab fixed bottom-40 right-8 w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl cursor-pointer"
         @click="goToStatusManagement"
       >
         <i class="fa fa-cog"></i>
