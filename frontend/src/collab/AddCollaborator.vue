@@ -9,7 +9,6 @@
         v-model="collabEmail"
         placeholder="Email"
         class="border border-gray-300 p-2 w-full mb-4"
-        @input="validateEmail"
       />
       <select
         v-model="accessRight"
@@ -24,33 +23,37 @@
         </button>
         <button
           @click="addCollaborator"
-          class="bg-blue-600 text-white py-2 px-4 rounded"
+          class="bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50"
           :disabled="!isEmailValid || collabEmail === ownerEmail"
         >
           Add
         </button>
       </div>
+      <ToastCollab
+        :status="toastStatus"
+        :message="toastMessage"
+        @hideComplete="resetToast"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, defineEmits, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import fetchUtils from '../lib/fetchUtils'
+import ToastCollab from './ToastCollab.vue'
 
-const emit = defineEmits()
+const emit = defineEmits(['close', 'collab-added'])
+const route = useRoute()
+const router = useRouter()
+
 const collabEmail = ref('')
 const accessRight = ref('READ')
-const ownerEmail = ref('')
-const boardId = ref('')
-
-const route = useRoute()
-
-onMounted(() => {
-  ownerEmail.value = localStorage.getItem('email') || ''
-  boardId.value = route.params.boardId
-})
+const ownerEmail = ref(localStorage.getItem('email') || '')
+const boardId = ref(route.params.boardId)
+const toastMessage = ref('')
+const toastStatus = ref(0)
 
 const isEmailValid = computed(() => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -61,8 +64,36 @@ const isEmailValid = computed(() => {
   )
 })
 
-const close = () => {
-  emit('close')
+const resetToast = () => {
+  toastStatus.value = 0
+  toastMessage.value = ''
+}
+
+const handleError = (status) => {
+  switch (status) {
+    case 401:
+      localStorage.clear()
+      toastMessage.value = 'Please login'
+      setTimeout(() => {
+        router.push({ name: 'loginView' })
+      }, 3000)
+      break
+    case 403:
+      toastMessage.value =
+        'You do not have permission to add board collaborator.'
+      setTimeout(() => emit('close'), 3000)
+      break
+    case 404:
+      toastMessage.value = 'The user does not exist.'
+      break
+    case 409:
+      toastMessage.value = 'The user is already the collaborator of this board.'
+      break
+    default:
+      toastMessage.value = 'There is a problem. Please try again later.'
+      setTimeout(() => emit('close'), 3000)
+  }
+  toastStatus.value = status
 }
 
 const addCollaborator = async () => {
@@ -72,11 +103,18 @@ const addCollaborator = async () => {
       access_right: accessRight.value
     })
     emit('collab-added')
-    close()
+    setTimeout(() => {
+      emit('close')
+    }, 3000)
   } catch (error) {
-    console.error('Error adding collaborator:', error.message)
+    console.error('Error adding collaborator:', error)
+    const statusMatch = error.message.match(/Status: (\d+)/)
+    const status = statusMatch ? parseInt(statusMatch[1]) : 500
+    handleError(status)
   }
 }
-</script>
 
-<style scoped></style>
+const close = () => {
+  emit('close')
+}
+</script>
