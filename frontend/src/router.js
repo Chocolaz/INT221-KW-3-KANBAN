@@ -1,13 +1,12 @@
-import { createRouter, createWebHistory } from 'vue-router';
-import TaskList from './v1/TaskList.vue';
-import StatusList from './v2/StatusList.vue';
-import Login from './v3/Login.vue';
-import BoardAdd from './v3/BoardAdd.vue';
-
-import ManageColl from './v3/ManageColl.vue';
-import BoardList from './v3/BoardList.vue';
-import NotFound from './component/NotFound.vue';
-import AccessDenied from './component/AccessDenied.vue';
+import { createRouter, createWebHistory } from 'vue-router'
+import TaskList from './v1/TaskList.vue'
+import StatusList from './v2/StatusList.vue'
+import Login from './v3/Login.vue'
+import BoardAdd from './v3/BoardAdd.vue'
+import BoardList from './v3/BoardList.vue'
+import NotFound from './component/NotFound.vue'
+import AccessDenied from './component/AccessDenied.vue'
+import ManageCollab from './collab/ManageCollab.vue'
 
 import {
   refreshAccessToken,
@@ -25,12 +24,6 @@ const routes = [
     component: TaskList,
     meta: { requiresAuth: true },
     props: (route) => ({ boardId: route.params.boardId }),
-  },
-  {
-    path: '/boards',
-    name: 'manageColl',
-    component: ManageColl,
-    meta: { requiresAuth: true },
   },
   {
     path: '/boards/:boardId/tasks/:taskId',
@@ -54,8 +47,14 @@ const routes = [
     component: StatusList,
     props: (route) => ({
       boardId: route.params.boardId,
-      statusId: route.params.statusId,
-    }),
+      statusId: route.params.statusId
+    })
+  },
+  {
+    path: '/boards/:boardId/collab',
+    name: 'manageCollab',
+    component: ManageCollab,
+    props: (route) => ({ boardId: route.params.boardId })
   },
   {
     path: '/login',

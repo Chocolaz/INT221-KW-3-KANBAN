@@ -10,6 +10,9 @@
   <NavigationFAB />
 
   <ToggleVisible v-if="isTaskList || isStatusList" />
+
+  <!-- Add CollabFAB when either on task list or status list -->
+  <CollabFAB v-if="isTaskList || isManageCollab || isStatusList" />
 </template>
 
 <script setup>
@@ -18,10 +21,12 @@ import { useRoute } from 'vue-router'
 import Navbar from './v3/navbar.vue'
 import BoardName from './component/BoardName.vue'
 import NavigationFAB from './component/NavigationFAB.vue'
-import { useRouteChecks } from './lib/utils'
 import ToggleVisible from './component/ToggleVisible.vue'
+import CollabFAB from './component/CollabFAB.vue'
 
-const { isTaskList, isStatusList } = useRouteChecks()
+import { useRouteChecks } from './lib/utils'
+
+const { isTaskList, isStatusList, isManageCollab } = useRouteChecks()
 const route = useRoute()
 
 const showNavbar = computed(() => route.name !== 'loginView')

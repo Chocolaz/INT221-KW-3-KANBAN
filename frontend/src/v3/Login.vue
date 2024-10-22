@@ -124,6 +124,7 @@ const decodeAndLogToken = (token) => {
   try {
     const decodedToken = VueJwtDecode.decode(token)
     localStorage.setItem('username', decodedToken.name)
+    localStorage.setItem('email', decodedToken.email)
     console.log('Decoded token:', decodedToken)
   } catch (error) {
     console.error('Error decoding token:', error)

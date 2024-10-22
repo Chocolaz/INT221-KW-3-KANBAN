@@ -136,7 +136,9 @@ const getBoards = async (boardId = null) => {
   try {
     const url = boardId ? `${baseUrl3}/boards/${boardId}` : `${baseUrl3}/boards`
     const responseData = await fetchWithAuth(url)
-    return boardId ? responseData : responseData.data
+    console.log('Boards fetched:', responseData)
+
+    return boardId ? responseData : responseData.data || responseData
   } catch (error) {
     console.error('Error retrieving boards:', error)
     throw error
@@ -182,6 +184,36 @@ const visibilityBoard = async (boardId, visibility) => {
   }
 }
 
+const getCollab = async (boardId) => {
+  try {
+    validateBoardId(boardId)
+    const fullUrl = `${baseUrl3}/boards/${boardId}/collabs`
+    const responseData = await fetchWithAuth(fullUrl)
+    console.log('Collab details fetched:', responseData.data)
+    return responseData.data || responseData
+  } catch (error) {
+    console.error('Error fetching collaboration details:', error)
+    throw error
+  }
+}
+
+const addCollab = async (boardId, data) => {
+  try {
+    validateBoardId(boardId)
+    const fullUrl = `${baseUrl3}/boards/${boardId}/collabs`
+    const responseData = await fetchWithAuth(fullUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+    console.log('Add collaboration status code:', responseData.statusCode)
+    return responseData
+  } catch (error) {
+    console.error('Error adding collaboration:', error)
+    throw error
+  }
+}
+
 export default {
   fetchData,
   postData,
@@ -190,5 +222,7 @@ export default {
   getBoards,
   addBoard,
   getAllBoards: getBoards,
-  visibilityBoard
+  visibilityBoard,
+  getCollab,
+  addCollab
 }
