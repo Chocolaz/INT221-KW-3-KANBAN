@@ -9,6 +9,8 @@ import com.example.integradeproject.project_management.pm_repositories.BoardRepo
 import com.example.integradeproject.project_management.pm_repositories.CollabRepository;
 import com.example.integradeproject.project_management.pm_repositories.PMUserRepository;
 import com.example.integradeproject.security.JwtTokenUtil;
+import com.example.integradeproject.user_account.ua_entities.User;
+import com.example.integradeproject.user_account.ua_repositories.UserRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -27,6 +29,8 @@ public class CollabService {
 
     @Autowired
     private BoardRepository boardRepository;
+    @Autowired
+    private UserRepository userRepository;
 
     @Autowired
     private PMUserRepository pmUserRepository;
@@ -93,33 +97,43 @@ public class CollabService {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only board owner can add collaborators");
         }
 
-        PMUser user = pmUserRepository.findByEmail(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        // First, verify user exists in user_account schema
+        User accountUser = (User) userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found in system"));
+
+        // Check if user exists in PM_User, if not create them
+        PMUser pmUser = pmUserRepository.findByEmail(email)
+                .orElseGet(() -> {
+                    PMUser newPMUser = new PMUser();
+                    newPMUser.setOid(accountUser.getOid());
+                    newPMUser.setName(accountUser.getName());
+                    newPMUser.setUsername(accountUser.getUsername());
+                    newPMUser.setEmail(accountUser.getEmail());
+                    return pmUserRepository.save(newPMUser);
+                });
 
         // Check if the user is trying to add themselves
-        if (user.getOid().equals(userOid)) {
+        if (pmUser.getOid().equals(userOid)) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Cannot add yourself as a collaborator");
         }
 
         // Check if the user is already a collaborator
-        if (collabRepository.findByBoardAndOid(board, user).isPresent()) {
+        if (collabRepository.findByBoardAndOid(board, pmUser).isPresent()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "User is already a collaborator");
         }
 
-
         Collab collab = new Collab();
-        BoardCollaboratorsId id = new BoardCollaboratorsId(boardId, user.getOid());
+        BoardCollaboratorsId id = new BoardCollaboratorsId(boardId, pmUser.getOid());
         collab.setId(id);
         collab.setBoard(board);
-        collab.setOid(user);
+        collab.setOid(pmUser);
         collab.setEmail(email);
         collab.setAccess_right(accessRight);
-        collab.setName(user.getName());
+        collab.setName(pmUser.getName());
 
         Collab savedCollab = collabRepository.save(collab);
         return modelMapper.map(savedCollab, CollabDTO.class);
     }
-
     public CollabDTO updateCollaborator(String boardId, String collabOid, Collab.AccessRight accessRight, String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));

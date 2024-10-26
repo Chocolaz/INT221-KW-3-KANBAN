@@ -425,10 +425,24 @@ public class BoardService {
         dto.setName(board.getName());
         dto.setVisibility(board.getVisibility().toString().toLowerCase());
 
+        // Set owner information
         BoardDTO.PMUserDTO ownerDTO = new BoardDTO.PMUserDTO();
         ownerDTO.setOid(board.getOwnerOid().getOid());
         ownerDTO.setName(board.getOwnerOid().getName());
         dto.setOwner(ownerDTO);
+
+        // Get and set collaborators
+        List<Collab> collaborators = collabRepository.findByBoard(board);
+        List<BoardDTO.CollaboratorDTO> collaboratorDTOs = collaborators.stream()
+                .map(collab -> {
+                    BoardDTO.CollaboratorDTO collabDTO = new BoardDTO.CollaboratorDTO();
+                    collabDTO.setOid(collab.getOid().getOid());
+                    collabDTO.setName(collab.getOid().getName());
+                    collabDTO.setAccess_right(collab.getAccess_right().toString());
+                    return collabDTO;
+                })
+                .collect(Collectors.toList());
+        dto.setCollaborators(collaboratorDTOs);
 
         return dto;
     }
@@ -442,4 +456,6 @@ public class BoardService {
         dto.setStatusName(task.getStatusId().getStatusName());
         return dto;
     }
+
+
 }
