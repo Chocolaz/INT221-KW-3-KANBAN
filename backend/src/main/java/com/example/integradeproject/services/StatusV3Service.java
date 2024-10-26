@@ -72,6 +72,8 @@ public class StatusV3Service {
         if (!isUserAuthorized(token, board, Collab.AccessRight.WRITE)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
         }
+        checkBoardAccess(board, token, true);
+
 
         validateStatus(status, board);
         status.setBoardId(board);
@@ -85,7 +87,11 @@ public class StatusV3Service {
 
         if (!isUserAuthorized(token, board, Collab.AccessRight.WRITE)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+
+
         }
+
+        checkBoardAccess(board, token, true);
 
         Status existingStatus = statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
@@ -205,5 +211,36 @@ public class StatusV3Service {
         }
     }
 
+    private void checkBoardAccess(Board board, String token, boolean requireWriteAccess) {
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
+        }
+
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // If write access is required, only owner and write collaborators can proceed
+        if (requireWriteAccess) {
+            if (board.getOwnerOid().getOid().equals(userOid)) {
+                return;
+            }
+
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+            if (collaboration.isEmpty() || collaboration.get().getAccess_right() != Collab.AccessRight.WRITE) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+            }
+        } else {
+            // For read access, check if user is owner or any type of collaborator
+            if (board.getOwnerOid().getOid().equals(userOid)) {
+                return;
+            }
+
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+            if (collaboration.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+            }
+        }
+    }
 
 }

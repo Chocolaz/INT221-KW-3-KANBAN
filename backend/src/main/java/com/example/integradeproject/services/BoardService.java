@@ -98,7 +98,18 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
+        // Check write access before proceeding
+        checkWriteAccess(board, token);
+        checkBoardAccess(board, token, true);
+
+        // Only owner can change visibility
         String userOid = jwtTokenUtil.getUidFromToken(token);
+        if (!board.getOwnerOid().getOid().equals(userOid)) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the board owner can change visibility");
+        }
+
+
+
 
         if (!isUserAuthorized(token, board)) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
@@ -324,6 +335,12 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
+
+        checkWriteAccess(board, token);
+        checkBoardAccess(board, token, true);
+
+
+
         // Check if the user is the board owner or a collaborator with WRITE access
         boolean isOwner = board.getOwnerOid().getOid().equals(userOid);
         boolean isWriteCollaborator = false;
@@ -365,6 +382,11 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
+        checkWriteAccess(board, token);
+        checkBoardAccess(board, token, true);
+
+
+
         PMUser user = pmUserRepository.findByOid(userOid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -399,6 +421,8 @@ public class BoardService {
         String userOid = jwtTokenUtil.getUidFromToken(token);
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+        checkWriteAccess(board, token);
+
 
         TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
@@ -457,5 +481,57 @@ public class BoardService {
         return dto;
     }
 
+    private void checkWriteAccess(Board board, String token) {
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
+        }
+
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // Check if user is board owner
+        if (board.getOwnerOid().getOid().equals(userOid)) {
+            return;
+        }
+
+        // Check collaboration access
+        Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+        if (collaboration.isEmpty() || collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have write permission for this board");
+        }
+    }
+// non-collab
+    private void checkBoardAccess(Board board, String token, boolean requireWriteAccess) {
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
+        }
+
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+        // If write access is required, only owner and write collaborators can proceed
+        if (requireWriteAccess) {
+            if (board.getOwnerOid().getOid().equals(userOid)) {
+                return;
+            }
+
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+            if (collaboration.isEmpty() || collaboration.get().getAccess_right() != Collab.AccessRight.WRITE) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+            }
+        } else {
+            // For read access, check if user is owner or any type of collaborator
+            if (board.getOwnerOid().getOid().equals(userOid)) {
+                return;
+            }
+
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+            if (collaboration.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+            }
+        }
+    }
 
 }
