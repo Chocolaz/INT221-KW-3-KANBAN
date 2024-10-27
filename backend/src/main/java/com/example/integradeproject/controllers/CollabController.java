@@ -51,53 +51,29 @@ public class CollabController {
     public ResponseEntity<?> addCollaborator(@PathVariable String boardId,
                                              @RequestBody Map<String, String> request,
                                              @RequestHeader("Authorization") String token) {
-        String email = request.get("email");
-        String accessRightStr = request.get("access_right");
-
-        if (email == null || accessRightStr == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Email and access_right are required"));
-        }
-
-        Collab.AccessRight accessRight;
-        try {
-            accessRight = Collab.AccessRight.valueOf(accessRightStr.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid access_right value"));
-        }
-
         try {
             String jwtToken = token.substring(7);
-            CollabDTO newCollab = collabService.addCollaborator(boardId, email, accessRight, jwtToken);
+            CollabDTO newCollab = collabService.addCollaborator(boardId,
+                    request.get("email"),
+                    request.get("access_right"),
+                    jwtToken);
             return ResponseEntity.status(HttpStatus.CREATED).body(newCollab);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", e.getMessage()));
         }
     }
+
     @PatchMapping("/{collabOid}")
     public ResponseEntity<?> updateCollaborator(@PathVariable String boardId,
                                                 @PathVariable String collabOid,
                                                 @RequestBody Map<String, String> request,
                                                 @RequestHeader("Authorization") String token) {
-        String accessRightStr = request.get("access_right");
-
-        if (accessRightStr == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "access_right is required"));
-        }
-
-        Collab.AccessRight accessRight;
-        try {
-            accessRight = Collab.AccessRight.valueOf(accessRightStr.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid access_right value"));
-        }
-
         try {
             String jwtToken = token.substring(7);
-            CollabDTO updatedCollab = collabService.updateCollaborator(boardId, collabOid, accessRight, jwtToken);
+            CollabDTO updatedCollab = collabService.updateCollaborator(boardId, collabOid,
+                    request.get("access_right"),
+                    jwtToken);
             return ResponseEntity.ok(updatedCollab);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())

@@ -12,10 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -90,35 +87,45 @@ public class BoardService {
         }
         return statuses;
     }
-    public BoardDTO updateBoardVisibility(String boardId, String visibility, String token) {
+    public BoardDTO updateBoardVisibility(String boardId, Map<String, String> updateRequest, String token) {
+        // Authorization check first (403)
         if (token == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
         }
 
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        // Check write access before proceeding
-        checkWriteAccess(board, token);
-        checkBoardAccess(board, token, true);
+        // Check permissions first - non-collaborator check
+        boolean isOwner = board.getOwnerOid().getOid().equals(userOid);
+        if (!isOwner) {
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
 
-        // Only owner can change visibility
-        String userOid = jwtTokenUtil.getUidFromToken(token);
-        if (!board.getOwnerOid().getOid().equals(userOid)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the board owner can change visibility");
+            if (collaboration.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+            }
+
+            // READ collaborator check
+            if (collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Read-only collaborators cannot change visibility");
+            }
+
+            // WRITE collaborator check
+            if (collaboration.get().getAccess_right() == Collab.AccessRight.WRITE) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the board owner can change visibility");
+            }
         }
 
-
-
-
-        if (!isUserAuthorized(token, board)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+        // Validation checks (400) only after all authorization checks pass
+        if (updateRequest == null || !updateRequest.containsKey("visibility")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Visibility is required");
         }
 
-        if (!board.getOwnerOid().getOid().equals(userOid)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Only the board owner can change visibility");
-        }
-
+        String visibility = updateRequest.get("visibility");
         String normalizedVisibility = visibility.toLowerCase();
         if (!normalizedVisibility.equals("public") && !normalizedVisibility.equals("private")) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid visibility value");
@@ -128,7 +135,6 @@ public class BoardService {
         Board updatedBoard = boardRepository.save(board);
         return convertToDTO(updatedBoard);
     }
-
     public List<BoardDTO> getBoardsForUser(String token) {
         if (token == null) {
             return boardRepository.findByVisibility(Board.BoardVisibility.PUBLIC)
@@ -326,8 +332,12 @@ public class BoardService {
         dto.setUpdatedOn((Timestamp) task.getUpdatedOn());
         return dto;
     }
-
     public NewTask2DTO createTask(String boardId, NewTask2DTO newTaskDTO, String token) {
+        // Authorization check first (403)
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
+        }
+
         String userOid = jwtTokenUtil.getUidFromToken(token);
         PMUser user = pmUserRepository.findByOid(userOid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
@@ -335,24 +345,35 @@ public class BoardService {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-
-        checkWriteAccess(board, token);
-        checkBoardAccess(board, token, true);
-
-
-
-        // Check if the user is the board owner or a collaborator with WRITE access
+        // Check permissions first - non-collaborator check
         boolean isOwner = board.getOwnerOid().getOid().equals(userOid);
-        boolean isWriteCollaborator = false;
-
         if (!isOwner) {
             Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-            isWriteCollaborator = collaboration.isPresent() &&
-                    collaboration.get().getAccess_right() == Collab.AccessRight.WRITE;
+
+            if (collaboration.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+            }
+
+            // READ collaborator check
+            if (collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Read-only collaborators cannot create tasks");
+            }
         }
 
-        if (!isOwner && !isWriteCollaborator) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have permission to create tasks in this board");
+        // Validation checks (400) only after all authorization checks pass
+        if (newTaskDTO == null || newTaskDTO.getTitle() == null || newTaskDTO.getTitle().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task title is required");
+        }
+
+        // Status validation
+        Status status;
+        if (newTaskDTO.getStatusName() != null) {
+            status = statusRepository.findByStatusNameAndBoardId(newTaskDTO.getStatusName(), board);
+            if (status == null) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not found in this board");
+            }
+        } else {
+            status = statusRepository.findByStatusNameAndBoardId("No Status", board);
         }
 
         TaskV3 task = new TaskV3();
@@ -360,51 +381,50 @@ public class BoardService {
         task.setDescription(newTaskDTO.getDescription());
         task.setAssignees(newTaskDTO.getAssignees());
         task.setBoardId(board);
-
-        if (newTaskDTO.getStatusName() != null) {
-            Status status = statusRepository.findByStatusNameAndBoardId(newTaskDTO.getStatusName(), board);
-            if (status == null) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status not found in this board");
-            }
-            task.setStatusId(status);
-        } else {
-            // Set default status if not provided
-            Status defaultStatus = statusRepository.findByStatusNameAndBoardId("No Status", board);
-            task.setStatusId(defaultStatus);
-        }
+        task.setStatusId(status);
 
         TaskV3 savedTask = taskRepository.save(task);
         return convertToNewTaskDTO(savedTask);
     }
+
     @Transactional
     public NewTask2DTO updateTask(String boardId, Integer taskId, NewTask2DTO updateTaskDTO, String token) {
+        // Authorization check first (403)
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
+        }
+
         String userOid = jwtTokenUtil.getUidFromToken(token);
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        checkWriteAccess(board, token);
-        checkBoardAccess(board, token, true);
+        // Check permissions first - non-collaborator check
+        boolean isOwner = board.getOwnerOid().getOid().equals(userOid);
+        if (!isOwner) {
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
 
+            if (collaboration.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+            }
 
+            // READ collaborator check
+            if (collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Read-only collaborators cannot update tasks");
+            }
+        }
 
-        PMUser user = pmUserRepository.findByOid(userOid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+        // Validation checks (400) only after all authorization checks pass
+        if (updateTaskDTO == null || updateTaskDTO.getTitle() == null || updateTaskDTO.getTitle().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Task title is required");
+        }
 
         TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
-        // Check if user is board owner or has WRITE access
-        if (!board.getOwnerOid().getOid().equals(userOid)) {
-            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-            if (collaboration.isEmpty() || collaboration.get().getAccess_right() != Collab.AccessRight.WRITE) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have permission to update tasks in this board");
-            }
-        }
-
-        task.setTitle(updateTaskDTO.getTitle());
-        task.setDescription(updateTaskDTO.getDescription());
-        task.setAssignees(updateTaskDTO.getAssignees());
-
+        // Status validation
         if (updateTaskDTO.getStatusName() != null) {
             Status status = statusRepository.findByStatusNameAndBoardId(updateTaskDTO.getStatusName(), board);
             if (status == null) {
@@ -412,6 +432,10 @@ public class BoardService {
             }
             task.setStatusId(status);
         }
+
+        task.setTitle(updateTaskDTO.getTitle());
+        task.setDescription(updateTaskDTO.getDescription());
+        task.setAssignees(updateTaskDTO.getAssignees());
 
         TaskV3 updatedTask = taskRepository.save(task);
         return convertToNewTaskDTO(updatedTask);

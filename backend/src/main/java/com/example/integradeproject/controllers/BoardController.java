@@ -70,21 +70,9 @@ public class BoardController {
     public ResponseEntity<?> updateBoardVisibility(@PathVariable String id,
                                                    @RequestBody(required = false) Map<String, String> updateRequest,
                                                    @RequestHeader(value = "Authorization", required = false) String token) {
-        if (updateRequest == null || !updateRequest.containsKey("visibility")) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Visibility is required"));
-        }
-
-        String visibility = updateRequest.get("visibility");
-
-        if (token == null) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Authentication required"));
-        }
-
         try {
-            String jwtToken = token.substring(7);
-            BoardDTO updatedBoard = boardService.updateBoardVisibility(id, visibility, jwtToken);
+            String jwtToken = token != null ? token.substring(7) : null;
+            BoardDTO updatedBoard = boardService.updateBoardVisibility(id, updateRequest, jwtToken);
             return ResponseEntity.ok(updatedBoard);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
@@ -94,6 +82,7 @@ public class BoardController {
                     .body(Map.of("error", "Failed to update board visibility: " + e.getMessage()));
         }
     }
+
 
     @GetMapping("/{id}")
     public ResponseEntity<?> getBoardById(@PathVariable String id, @RequestHeader(value = "Authorization", required = false) String token) {
@@ -142,23 +131,31 @@ public class BoardController {
     public ResponseEntity<?> createTask(@PathVariable String id,
                                         @RequestBody(required = false) NewTask2DTO newTaskDTO,
                                         @RequestHeader(value = "Authorization", required = false) String token) {
-        if (newTaskDTO == null || newTaskDTO.getTitle() == null || newTaskDTO.getTitle().trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Task title is required"));
-        }
-
-        String jwtToken = token != null ? token.substring(7) : null;
-        if (jwtToken == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", "Authentication required"));
-        }
-
         try {
+            String jwtToken = token != null ? token.substring(7) : null;
             NewTask2DTO createdTask = boardService.createTask(id, newTaskDTO, jwtToken);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));
+        }
+    }
+
+    @PutMapping("/{boardId}/tasks/{taskId}")
+    public ResponseEntity<?> updateTask(@PathVariable String boardId,
+                                        @PathVariable Integer taskId,
+                                        @RequestBody(required = false) NewTask2DTO updateTaskDTO,
+                                        @RequestHeader(value = "Authorization", required = false) String token) {
+        try {
+            String jwtToken = token != null ? token.substring(7) : null;
+            NewTask2DTO updatedTask = boardService.updateTask(boardId, taskId, updateTaskDTO, jwtToken);
+            return ResponseEntity.ok(updatedTask);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to update task: " + e.getMessage()));
         }
     }
 
@@ -179,28 +176,6 @@ public class BoardController {
 
 
 
-    @PutMapping("/{boardId}/tasks/{taskId}")
-    public ResponseEntity<?> updateTask(@PathVariable String boardId,
-                                        @PathVariable Integer taskId,
-                                        @RequestBody(required = false) NewTask2DTO updateTaskDTO,
-                                        @RequestHeader(value = "Authorization", required = false) String token) {
-        if (updateTaskDTO == null || updateTaskDTO.getTitle() == null || updateTaskDTO.getTitle().trim().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .body(Map.of("error", "Task title is required"));
-        }
-
-        String jwtToken = token != null ? token.substring(7) : null;
-        try {
-            NewTask2DTO updatedTask = boardService.updateTask(boardId, taskId, updateTaskDTO, jwtToken);
-            return ResponseEntity.ok(updatedTask);
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                    .body(Map.of("error", e.getReason()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to update task: " + e.getMessage()));
-        }
-    }
 
     @DeleteMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<?> deleteTask(@PathVariable String boardId,

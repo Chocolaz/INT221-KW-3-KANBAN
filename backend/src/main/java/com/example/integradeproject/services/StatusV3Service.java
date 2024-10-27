@@ -66,14 +66,51 @@ public class StatusV3Service {
     }
 
     public StatusDTO createNewStatus(Status status, String boardId, String token) {
+        // Check authorization first
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
+        }
+
+        // Find board first to avoid unnecessary processing
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        if (!isUserAuthorized(token, board, Collab.AccessRight.WRITE)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
-        }
-        checkBoardAccess(board, token, true);
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        // Check if user is owner
+        boolean isOwner = board.getOwnerOid().getOid().equals(userOid);
+
+        if (!isOwner) {
+            // Get collaboration status
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+
+            // First check: Non-collaborators on public board (403)
+            if (collaboration.isEmpty() && board.getVisibility() == Board.BoardVisibility.PUBLIC) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non-collaborators cannot create status");
+            }
+
+            // Second check: Non-collaborators on private board (403)
+            if (collaboration.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+            }
+
+            // Third check: READ collaborators (403)
+            if (collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Read-only collaborators cannot create status");
+            }
+
+            // Last check: WRITE collaborators (400)
+            if (collaboration.get().getAccess_right() == Collab.AccessRight.WRITE) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Collaborators cannot create status");
+            }
+        }
+
+        // Move validation checks after authorization
+        if (status == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be null");
+        }
 
         validateStatus(status, board);
         status.setBoardId(board);
@@ -82,16 +119,51 @@ public class StatusV3Service {
     }
 
     public StatusDTO updateStatus(String boardId, Integer statusId, Status updatedStatus, String token) {
+        // Check authorization first
+        if (token == null) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
+        }
+
+        // Find board first to avoid unnecessary processing
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
-        if (!isUserAuthorized(token, board, Collab.AccessRight.WRITE)) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+        PMUser user = pmUserRepository.findByOid(userOid)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
+        // Check if user is owner
+        boolean isOwner = board.getOwnerOid().getOid().equals(userOid);
 
+        if (!isOwner) {
+            // Get collaboration status
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+
+            // First check: Non-collaborators on public board (403)
+            if (collaboration.isEmpty() && board.getVisibility() == Board.BoardVisibility.PUBLIC) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Non-collaborators cannot update status");
+            }
+
+            // Second check: Non-collaborators on private board (403)
+            if (collaboration.isEmpty()) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
+            }
+
+            // Third check: READ collaborators (403)
+            if (collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Read-only collaborators cannot update status");
+            }
+
+            // Last check: WRITE collaborators (404)
+            if (collaboration.get().getAccess_right() == Collab.AccessRight.WRITE) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board");
+            }
         }
 
-        checkBoardAccess(board, token, true);
+        // Move validation checks after authorization
+        if (updatedStatus == null) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status cannot be null");
+        }
 
         Status existingStatus = statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
@@ -102,7 +174,6 @@ public class StatusV3Service {
         Status savedStatus = statusRepository.save(existingStatus);
         return mapper.map(savedStatus, StatusDTO.class);
     }
-
     @Transactional
     public void deleteStatus(String boardId, Integer statusId, String token) {
         Board board = boardRepository.findById(boardId)
@@ -208,38 +279,6 @@ public class StatusV3Service {
         boolean exists = statusRepository.existsByStatusNameAndBoardId(status.getStatusName(), board);
         if (exists) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name must be unique within the board");
-        }
-    }
-
-    private void checkBoardAccess(Board board, String token, boolean requireWriteAccess) {
-        if (token == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
-        }
-
-        String userOid = jwtTokenUtil.getUidFromToken(token);
-        PMUser user = pmUserRepository.findByOid(userOid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-        // If write access is required, only owner and write collaborators can proceed
-        if (requireWriteAccess) {
-            if (board.getOwnerOid().getOid().equals(userOid)) {
-                return;
-            }
-
-            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-            if (collaboration.isEmpty() || collaboration.get().getAccess_right() != Collab.AccessRight.WRITE) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
-            }
-        } else {
-            // For read access, check if user is owner or any type of collaborator
-            if (board.getOwnerOid().getOid().equals(userOid)) {
-                return;
-            }
-
-            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-            if (collaboration.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
-            }
         }
     }
 

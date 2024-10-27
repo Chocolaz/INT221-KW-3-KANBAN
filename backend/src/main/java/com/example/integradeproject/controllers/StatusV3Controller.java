@@ -50,24 +50,11 @@ public class StatusV3Controller {
             @PathVariable String boardId,
             @RequestBody(required = false) Status status,
             @RequestHeader(value = "Authorization", required = false) String token) {
-
-        // Check if the request body is empty
-        if (status == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Request body cannot be empty"));
-        }
-
         try {
-            // Extract JWT token if it exists
             String jwtToken = token != null ? token.substring(7) : null;
-
-            // Call the service to create a new status
             StatusDTO createdStatus = statusService.createNewStatus(status, boardId, jwtToken);
-
-            // Return 201 Created with the created status
             return ResponseEntity.status(HttpStatus.CREATED).body(createdStatus);
-
         } catch (ResponseStatusException e) {
-            // Handle specific exceptions and return error responses
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
@@ -78,9 +65,6 @@ public class StatusV3Controller {
             @PathVariable Integer statusId,
             @RequestBody(required = false) Status updatedStatus,
             @RequestHeader(value = "Authorization", required = false) String token) {
-        if (updatedStatus == null) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Request body cannot be empty"));
-        }
         try {
             String jwtToken = token != null ? token.substring(7) : null;
             StatusDTO updatedStatusDTO = statusService.updateStatus(boardId, statusId, updatedStatus, jwtToken);
@@ -89,6 +73,7 @@ public class StatusV3Controller {
             return ResponseEntity.status(e.getStatusCode()).body(Map.of("error", e.getReason()));
         }
     }
+
     @DeleteMapping("/{statusId}")
     public ResponseEntity<?> deleteStatus(@PathVariable String boardId, @PathVariable Integer statusId, @RequestHeader("Authorization") String token) {
         try {
