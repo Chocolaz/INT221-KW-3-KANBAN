@@ -37,6 +37,9 @@ const boardData = ref(null)
 const currentUser = ref(localStorage.getItem('username'))
 const canOperation = ref(false)
 
+const tooltipMessage =
+  'You need to be board owner or has write access to perform this action.'
+
 const checkBoardOwnership = () => {
   canOperation.value = checkOwnership(boardData.value, currentUser.value)
 }
@@ -275,8 +278,9 @@ onMounted(async () => {
                   </button>
                   <span
                     v-if="!canOperation"
-                    class="tooltiptext invisible w-48 bg-red-500 text-white text-center rounded-md absolute bottom-[80%] left-1/2 text-[8px] ml-[-90px] opacity-0 transition-opacity duration-500"
-                    >You need to be board owner to perform this action</span
+                    class="tooltiptext invisible w-48 bg-red-500 text-white text-center rounded-md absolute bottom-[60%] left-1/2 text-[8px] ml-[-90px] opacity-0 transition-opacity duration-500"
+                  >
+                    {{ tooltipMessage }}</span
                   >
                 </div>
               </th>
@@ -379,7 +383,7 @@ onMounted(async () => {
                           v-if="!canOperation"
                           class="tooltiptext invisible w-[103px] bg-red-500 text-white text-center rounded-md absolute bottom-[30%] left-1/2 text-[8px] ml-[-125px] opacity-0 transition-opacity duration-500"
                         >
-                          You need to be board owner to perform this action
+                          {{ tooltipMessage }}
                         </span>
                       </div>
 
@@ -396,7 +400,7 @@ onMounted(async () => {
                           v-if="!canOperation"
                           class="tooltiptext invisible w-[103px] bg-red-500 text-white text-center rounded-md absolute bottom-[-10%] left-1/2 text-[8px] ml-[-120px] opacity-0 transition-opacity duration-500"
                         >
-                          You need to be board owner to perform this action
+                          {{ tooltipMessage }}
                         </span>
                       </div>
                     </button>
@@ -465,6 +469,8 @@ onMounted(async () => {
 .tooltip:hover .tooltiptext {
   visibility: visible;
   opacity: 1;
+  word-break: break-word;
+  white-space: normal;
 }
 
 body {

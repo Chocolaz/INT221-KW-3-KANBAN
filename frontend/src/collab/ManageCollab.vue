@@ -34,11 +34,17 @@
             <th class="border px-6 py-4 text-left text-gray-600">
               Access Right
             </th>
+            <th
+              v-if="isBoardOwner"
+              class="border px-6 py-4 text-left text-gray-600"
+            >
+              Manage Access
+            </th>
           </tr>
         </thead>
         <tbody>
           <tr v-if="collaborators.length === 0">
-            <td colspan="4" class="text-gray-500 text-xl text-center py-6">
+            <td colspan="5" class="text-gray-500 text-xl text-center py-6">
               No collaborators added
             </td>
           </tr>
@@ -52,6 +58,15 @@
             <td class="border px-6 py-4 text-center">{{ collab.email }}</td>
             <td class="border px-6 py-4 text-center">
               {{ collab.access_right }}
+            </td>
+            <td v-if="isBoardOwner" class="border px-6 py-4 text-center">
+              <select
+                @change="updateAccessRight(collab.oid, collab.access_right)"
+                class="border border-gray-300 p-2 rounded"
+              >
+                <option value="READ">READ</option>
+                <option value="WRITE">WRITE</option>
+              </select>
             </td>
           </tr>
         </tbody>
@@ -103,7 +118,20 @@ const fetchCollaborators = async () => {
   }
 }
 
+// Update access right for a collaborator
+const updateAccessRight = async (collabId, newAccessRight) => {
+  try {
+    await fetchUtils.updateCollabAccess(props.boardId, collabId, newAccessRight)
+    console.log(
+      `Updated access right for collaborator ${collabId} to ${newAccessRight}`
+    )
+  } catch (error) {
+    console.error(
+      `Error updating access right for collaborator ${collabId}:`,
+      error
+    )
+  }
+}
+
 onMounted(fetchCollaborators)
 </script>
-
-<style scoped></style>
