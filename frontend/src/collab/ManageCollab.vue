@@ -58,8 +58,10 @@
             </td>
             <td v-if="isBoardOwner" class="border px-6 py-4 text-center">
               <select
-                v-model="collab.access_right"
-                @change="updateAccessRight(collab.oid, collab.access_right)"
+                :value="collab.access_right"
+                @change="
+                  openModalAccess(collab.oid, collab.name, $event.target.value)
+                "
                 class="border border-gray-300 p-2 rounded"
               >
                 <option value="READ">READ</option>
@@ -75,19 +77,32 @@
       @close="showAddCollabModal = false"
       @collab-added="fetchCollaborators"
     />
+    <ModalAccess
+      v-if="showModalAccess"
+      :board-id="boardId"
+      :collab-id="selectedCollabId"
+      :name="selectedCollabName"
+      :new-right="selectedNewAccessRight"
+      @confirmed="fetchCollaborators"
+      @close="showModalAccess = false"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
 import fetchUtils from '../lib/fetchUtils'
 import AddCollaborator from './AddCollaborator.vue'
+import ModalAccess from './ModalAccess.vue'
 
 const props = defineProps(['boardId'])
 
 const collaborators = ref([])
 const showAddCollabModal = ref(false)
+const showModalAccess = ref(false)
+const selectedCollabId = ref(null)
+const selectedCollabName = ref('')
+const selectedNewAccessRight = ref('')
 const isBoardOwner = ref(false)
 
 const fetchCollaborators = async () => {
@@ -107,18 +122,12 @@ const fetchCollaborators = async () => {
   }
 }
 
-const updateAccessRight = async (collabId, newAccessRight) => {
-  try {
-    await fetchUtils.updateCollabAccess(props.boardId, collabId, newAccessRight)
-    console.log(
-      `Updated access right for collaborator ${collabId} to ${newAccessRight}`
-    )
-  } catch (error) {
-    console.error(
-      `Error updating access right for collaborator ${collabId}:`,
-      error
-    )
-  }
+// Open confirmation modal for access right change
+const openModalAccess = (collabId, collabName, newAccessRight) => {
+  selectedCollabId.value = collabId
+  selectedCollabName.value = collabName
+  selectedNewAccessRight.value = newAccessRight
+  showModalAccess.value = true
 }
 
 onMounted(fetchCollaborators)
