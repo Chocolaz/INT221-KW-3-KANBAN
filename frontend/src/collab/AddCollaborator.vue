@@ -103,9 +103,7 @@ const addCollaborator = async () => {
       access_right: accessRight.value
     })
     emit('collab-added')
-    setTimeout(() => {
-      emit('close')
-    }, 3000)
+    emit('close')
   } catch (error) {
     console.error('Error adding collaborator:', error)
     const statusMatch = error.message.match(/Status: (\d+)/)
