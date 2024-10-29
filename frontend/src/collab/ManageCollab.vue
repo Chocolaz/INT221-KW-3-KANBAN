@@ -56,7 +56,10 @@
             <td class="border px-6 py-4 text-center">
               {{ collab.access_right }}
             </td>
-            <td v-if="isBoardOwner" class="border px-6 py-4 text-center">
+            <td
+              v-if="isBoardOwner"
+              class="border px-6 py-4 text-center flex gap-2 justify-center"
+            >
               <select
                 :value="collab.access_right"
                 @change="
@@ -67,6 +70,13 @@
                 <option value="READ">READ</option>
                 <option value="WRITE">WRITE</option>
               </select>
+              <!-- Remove button -->
+              <button
+                @click="openModalRemove(collab.oid, collab.name)"
+                class="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-500"
+              >
+                Remove
+              </button>
             </td>
           </tr>
         </tbody>
@@ -86,6 +96,14 @@
       @confirmed="fetchCollaborators"
       @close="showModalAccess = false"
     />
+    <RemoveCollabModal
+      v-if="showRemoveModal"
+      :board-id="boardId"
+      :collab-id="selectedCollabId"
+      :collab-name="selectedCollabName"
+      @confirmed="fetchCollaborators"
+      @close="showRemoveModal = false"
+    />
   </div>
 </template>
 
@@ -94,17 +112,20 @@ import { ref, onMounted } from 'vue'
 import fetchUtils from '../lib/fetchUtils'
 import AddCollaborator from './AddCollaborator.vue'
 import ModalAccess from './ModalAccess.vue'
+import RemoveCollabModal from './RemoveCollabModal.vue'
 
 const props = defineProps(['boardId'])
 
 const collaborators = ref([])
 const showAddCollabModal = ref(false)
 const showModalAccess = ref(false)
+const showRemoveModal = ref(false)
 const selectedCollabId = ref(null)
 const selectedCollabName = ref('')
 const selectedNewAccessRight = ref('')
 const isBoardOwner = ref(false)
 
+// Fetch collaborators and check board ownership
 const fetchCollaborators = async () => {
   try {
     const response = await fetchUtils.getCollab(props.boardId)
@@ -128,6 +149,13 @@ const openModalAccess = (collabId, collabName, newAccessRight) => {
   selectedCollabName.value = collabName
   selectedNewAccessRight.value = newAccessRight
   showModalAccess.value = true
+}
+
+// Open confirmation modal for removing a collaborator
+const openModalRemove = (collabId, collabName) => {
+  selectedCollabId.value = collabId
+  selectedCollabName.value = collabName
+  showRemoveModal.value = true
 }
 
 onMounted(fetchCollaborators)

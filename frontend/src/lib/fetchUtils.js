@@ -237,6 +237,27 @@ const updateCollabAccess = async (boardId, collabId, accessRight) => {
   }
 }
 
+const removeCollab = async (boardId, collabId) => {
+  try {
+    validateBoardId(boardId)
+    if (!collabId) throw new Error('Collaborator ID is required')
+
+    const fullUrl = `${baseUrl3}/boards/${boardId}/collabs/${collabId}`
+    console.log(`Removing collaborator with ID ${collabId}`)
+
+    const responseData = await fetchWithAuth(fullUrl, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    })
+
+    console.log(`Remove collaborator status code:`, responseData.statusCode)
+    return responseData
+  } catch (error) {
+    console.error('Error removing collaborator:', error.message)
+    throw error
+  }
+}
+
 export default {
   fetchData,
   postData,
@@ -248,5 +269,6 @@ export default {
   visibilityBoard,
   getCollab,
   addCollab,
-  updateCollabAccess
+  updateCollabAccess,
+  removeCollab
 }
