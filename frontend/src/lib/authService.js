@@ -123,9 +123,11 @@ export async function checkBoardAccess(boardId) {
     const response = await fetchUtils.getBoards(boardId)
 
     if (response.statusCode === 403) {
+      console.log(response.statusCode)
       return { hasAccess: false, notFound: false }
     }
     if (response.statusCode === 404) {
+      console.log(response.statusCode)
       return { hasAccess: false, notFound: true }
     }
 
@@ -138,8 +140,19 @@ export async function checkBoardAccess(boardId) {
       return { hasAccess: true, notFound: false }
     }
 
-    // If the board is not public, only allow the owner to access
+    // If the board is not public, check if the current user is the owner
     if (boardOwner === currentUser) {
+      return { hasAccess: true, notFound: false }
+    }
+
+    // Fetch collaborators and check if the current user is a collaborator
+    const collaborators = await fetchUtils.getCollab(boardId)
+    const isCollaborator = collaborators.some(
+      (collab) => collab.name === currentUser && collab.access_right === 'READ'
+    )
+
+    if (isCollaborator) {
+      console.log("Collab:", isCollaborator)
       return { hasAccess: true, notFound: false }
     }
 
