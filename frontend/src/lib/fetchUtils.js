@@ -214,6 +214,29 @@ const addCollab = async (boardId, data) => {
   }
 }
 
+const updateCollabAccess = async (boardId, collabId, accessRight) => {
+  try {
+    validateBoardId(boardId)
+    if (!collabId) throw new Error('Collaborator ID is required')
+
+    const fullUrl = `${baseUrl3}/boards/${boardId}/collabs/${collabId}`
+    const requestBody = { access_right: accessRight }
+    console.log(`Updating access for ${collabId} to ${accessRight}`)
+
+    const responseData = await fetchWithAuth(fullUrl, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(requestBody)
+    })
+
+    console.log(`Update access status code:`, responseData.statusCode)
+    return responseData
+  } catch (error) {
+    console.error('Error updating collaborator access:', error.message)
+    throw error
+  }
+}
+
 export default {
   fetchData,
   postData,
@@ -224,5 +247,6 @@ export default {
   getAllBoards: getBoards,
   visibilityBoard,
   getCollab,
-  addCollab
+  addCollab,
+  updateCollabAccess
 }

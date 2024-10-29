@@ -3,7 +3,6 @@
     <h2 class="text-3xl font-semibold mb-4 text-center text-red-600">
       Manage Collaborators
     </h2>
-
     <div class="flex justify-center mb-4">
       <button
         @click="showAddCollabModal = true"
@@ -17,11 +16,9 @@
         Add Collaborator
       </button>
     </div>
-
     <p v-if="!isBoardOwner" class="text-red-500 text-center">
       You must be the board owner to add collaborators.
     </p>
-
     <div class="overflow-x-auto">
       <table
         class="min-w-full bg-white border border-gray-200 rounded-lg shadow"
@@ -61,6 +58,7 @@
             </td>
             <td v-if="isBoardOwner" class="border px-6 py-4 text-center">
               <select
+                v-model="collab.access_right"
                 @change="updateAccessRight(collab.oid, collab.access_right)"
                 class="border border-gray-300 p-2 rounded"
               >
@@ -72,8 +70,6 @@
         </tbody>
       </table>
     </div>
-
-    <!-- Modal for Add Collaborator -->
     <AddCollaborator
       v-if="showAddCollabModal"
       @close="showAddCollabModal = false"
@@ -88,20 +84,13 @@ import { useRoute } from 'vue-router'
 import fetchUtils from '../lib/fetchUtils'
 import AddCollaborator from './AddCollaborator.vue'
 
-// Define props
 const props = defineProps(['boardId'])
 
 const collaborators = ref([])
 const showAddCollabModal = ref(false)
 const isBoardOwner = ref(false)
 
-// Fetch collaborators for the current board
 const fetchCollaborators = async () => {
-  if (!props.boardId) {
-    console.error('Error fetching collaborators: Board ID is required')
-    return
-  }
-
   try {
     const response = await fetchUtils.getCollab(props.boardId)
     collaborators.value = response.sort(
@@ -118,7 +107,6 @@ const fetchCollaborators = async () => {
   }
 }
 
-// Update access right for a collaborator
 const updateAccessRight = async (collabId, newAccessRight) => {
   try {
     await fetchUtils.updateCollabAccess(props.boardId, collabId, newAccessRight)
