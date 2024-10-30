@@ -7,7 +7,7 @@ import EditStatusModal from '../v2/EditStatusModal.vue'
 import DeleteStatusModal from '../v2/DeleteStatusModal.vue'
 import TransferStatusModal from '../v2/TransferStatusModal.vue'
 import { statusStyle } from '../lib/statusStyles'
-import { checkOwnership } from '@/lib/utils'
+import { checkOwnership, checkAccessRight } from '@/lib/utils'
 
 // State management
 const statuses = ref([])
@@ -20,6 +20,7 @@ const selectedStatus = ref(null)
 const selectedStatusIdToEdit = ref(null)
 const selectedStatusIdToDelete = ref(null)
 const selectedStatusIdToTransfer = ref(null)
+const collaborators = ref([])
 
 // Route and router
 const route = useRoute()
@@ -30,17 +31,40 @@ const boardData = ref(null)
 const currentUser = ref(localStorage.getItem('username'))
 const canOperation = ref(false)
 
-const checkBoardOwnership = () => {
-  canOperation.value = checkOwnership(boardData.value, currentUser.value)
+const fetchCollaborators = async () => {
+  try {
+    collaborators.value = await fetchUtils.getCollab(boardId)
+    console.log(collaborators.value)
+  } catch (error) {
+    console.error('Error fetching collaborator details:', error)
+  }
 }
 
 const fetchBoardDetails = async () => {
   try {
     boardData.value = await fetchUtils.getBoards(boardId)
-    checkBoardOwnership()
+
+    await fetchCollaborators()
+
+    console.log('boardId:', boardId)
+
+    checkBoardAccess()
   } catch (error) {
     console.error('Error fetching board details:', error)
   }
+}
+
+const checkBoardAccess = () => {
+  const isOwner = checkOwnership(boardData.value, currentUser.value)
+  const hasWriteAccess = checkAccessRight(
+    collaborators.value,
+    currentUser.value
+  )
+
+  console.log('checkBoardAccess collaborators:', collaborators.value)
+  console.log('checkBoardData:', boardData.value)
+
+  canOperation.value = isOwner || hasWriteAccess
 }
 
 // Fetch data
