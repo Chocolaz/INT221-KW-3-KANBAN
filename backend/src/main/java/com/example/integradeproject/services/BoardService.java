@@ -147,18 +147,21 @@ public class BoardService {
         PMUser user = pmUserRepository.findById(userOid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        List<Board> userBoards = boardRepository.findByOwnerOid(user);
-        List<Board> publicBoards = boardRepository.findByVisibility(Board.BoardVisibility.PUBLIC);
-        List<Collab> collaborations = collabRepository.findByOid(user);
+        Set<Board> userBoards = new HashSet<>(boardRepository.findByOwnerOid(user));
+        Set<Board> publicBoards = new HashSet<>(boardRepository.findByVisibility(Board.BoardVisibility.PUBLIC));
+        Set<Board> collaborationBoards = collabRepository.findByOid(user)
+                .stream()
+                .filter(collab -> collab.getAccess_right() == Collab.AccessRight.WRITE
+                        || collab.getAccess_right() == Collab.AccessRight.READ)
+                .map(Collab::getBoard)
+                .collect(Collectors.toSet());
 
-        return Stream.concat(
-                        Stream.concat(userBoards.stream(), publicBoards.stream()),
-                        collaborations.stream()
-                                .filter(collab -> collab.getAccess_right() == Collab.AccessRight.WRITE
-                                        || collab.getAccess_right() == Collab.AccessRight.READ)
-                                .map(Collab::getBoard)
-                )
-                .distinct()
+        Set<Board> allBoards = new HashSet<>();
+        allBoards.addAll(userBoards);
+        allBoards.addAll(publicBoards);
+        allBoards.addAll(collaborationBoards);
+
+        return allBoards.stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
