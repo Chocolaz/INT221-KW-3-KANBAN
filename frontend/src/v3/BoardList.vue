@@ -1,9 +1,7 @@
 <template>
-  <div class="flex justify-center items-center mt-10  ">
+  <div class="flex justify-center items-center mt-10">
     <div class="w-full max-w-5xl mx-auto rounded-xl">
-      <h2 class="text-2xl font-bold text-black text-center mb-6">
-        Board List
-      </h2>
+      <h2 class="text-2xl font-bold text-black text-center mb-6">Board List</h2>
 
       <!-- Create Board Button -->
       <div class="flex justify-center mb-4">
@@ -17,13 +15,18 @@
       </div>
 
       <!-- Message when the board limit is reached -->
-      <p v-if="personalBoards.length >= 1" class="text-red-500 text-center mb-4">
+      <p
+        v-if="personalBoards.length >= 1"
+        class="text-red-500 text-center mb-4"
+      >
         You can only create up to 1 personal board.
       </p>
 
       <!-- Personal Boards List -->
       <h3 class="text-xl font-semibold mb-2 text-center">Personal Boards</h3>
-      <div class="rounded-lg border-2 border-red-400 shadow-md overflow-hidden mb-6">
+      <div
+        class="rounded-lg border-2 border-red-400 shadow-md overflow-hidden mb-6"
+      >
         <table class="table-fixed min-w-full bg-white">
           <thead>
             <tr class="bg-red-400 text-white">
@@ -35,7 +38,10 @@
           </thead>
           <tbody>
             <tr v-if="personalBoards.length === 0">
-              <td colspan="4" class="py-10 text-center text-gray-500 italic text-lg">
+              <td
+                colspan="4"
+                class="py-10 text-center text-gray-500 italic text-lg"
+              >
                 No personal board
               </td>
             </tr>
@@ -70,11 +76,15 @@
               <th class="w-5/12 px-4 py-3 text-center">Name</th>
               <th class="w-3/12 px-4 py-3 text-center">Owner</th>
               <th class="w-3/12 px-4 py-3 text-center">Access Right</th>
+              <th class="w-1/12 px-4 py-3 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="collabBoards.length === 0">
-              <td colspan="4" class="py-10 text-center text-gray-500 italic text-lg">
+              <td
+                colspan="5"
+                class="py-10 text-center text-gray-500 italic text-lg"
+              >
                 No collaboration boards
               </td>
             </tr>
@@ -94,6 +104,14 @@
               </td>
               <td class="px-4 py-4 text-center">{{ board.owner.name }}</td>
               <td class="px-4 py-4 text-center">{{ board.accessRight }}</td>
+              <td class="px-4 py-4 text-center">
+                <button
+                  class="bg-red-600 text-white py-1 px-3 rounded-lg shadow hover:bg-red-400 focus:outline-none focus:ring-2 focus:ring-red-300"
+                  @click="showLeaveModal(board.name, board.id)"
+                >
+                  Leave
+                </button>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -105,19 +123,32 @@
         @close="showModal = false"
         @board-added="fetchBoards"
       />
+
+      <!-- Modal for Leaving Board -->
+      <LeaveBoardModal
+        v-if="isLeaveModalVisible"
+        :boardName="boardToLeave.name"
+        :isVisible="isLeaveModalVisible"
+        :onLeave="() => handleLeave(boardToLeave.id)"
+        @close="isLeaveModalVisible = false"
+      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import fetchUtils from '../lib/fetchUtils'
 import AddBoard from './AddBoard.vue'
+import LeaveBoardModal from './LeaveBoardModal.vue'
 
 const personalBoards = ref([])
 const collabBoards = ref([])
 const showModal = ref(false)
+const isLeaveModalVisible = ref(false)
+const boardToLeave = ref('')
+const boardToLeaveId = ref(null)
 const router = useRouter()
 const username = localStorage.getItem('username')
 
@@ -125,25 +156,19 @@ const fetchBoards = async () => {
   try {
     const response = await fetchUtils.getBoards()
 
-    // Filter personal boards where the user is the owner
     const personal = response.filter((board) => board.owner.name === username)
-
-    // Filter collaboration boards where the user is NOT the owner
     const collab = response.filter((board) => board.owner.name !== username)
 
-    // Sort personal boards by created_on in ascending order
     personal.sort((a, b) => new Date(a.created_on) - new Date(b.created_on))
 
-    // Fetch collab details for each collaboration board
     for (const board of collab) {
       try {
         const collabDetails = await fetchUtils.getCollab(board.id)
-
-        // Extract the relevant details from the API response
         if (collabDetails.length > 0) {
-          const { access_right, added_on } = collabDetails[0] // Assuming first item is relevant
+          const { access_right, added_on, oid } = collabDetails[0]
           board.accessRight = access_right
           board.addedOn = new Date(added_on)
+          board.oid = oid
         }
       } catch (error) {
         console.error(
@@ -153,10 +178,8 @@ const fetchBoards = async () => {
       }
     }
 
-    // Sort collaboration boards by the added date in ascending order
     collab.sort((a, b) => a.addedOn - b.addedOn)
 
-    // Update reactive data
     personalBoards.value = personal
     collabBoards.value = collab
   } catch (error) {
@@ -164,23 +187,32 @@ const fetchBoards = async () => {
   }
 }
 
-/*// Watch for changes in personalBoards and collabBoards
-watch(
-  () => [personalBoards.value.length, collabBoards.value.length],
-  ([personalCount, collabCount]) => {
-    // Redirect to the personal board if there is only one personal board and no collaboration boards
-    if (personalCount === 1 && collabCount === 0) {
-      const personalBoardId = personalBoards.value[0].id
-      router.push({ name: 'taskView', params: { boardId: personalBoardId } })
-    }
-  }
-)*/
-
 const viewBoardTasks = (boardId) => {
   router.push({ name: 'taskView', params: { boardId } })
 }
 
+const showLeaveModal = (boardName, boardId) => {
+  boardToLeave.value = boardName
+  boardToLeaveId.value = boardId
+  isLeaveModalVisible.value = true
+}
+
+const handleLeave = async () => {
+  try {
+    const board = collabBoards.value.find((b) => b.id === boardToLeaveId.value)
+    if (board && board.oid) {
+      const collabId = board.oid
+      await fetchUtils.removeCollab(boardToLeaveId.value, collabId)
+      await fetchBoards()
+    } else {
+      console.error('Collaborator ID not found')
+    }
+  } catch (error) {
+    console.error('Error leaving board:', error.message)
+  } finally {
+    isLeaveModalVisible.value = false
+  }
+}
+
 onMounted(fetchBoards)
 </script>
-
-<style scoped></style>
