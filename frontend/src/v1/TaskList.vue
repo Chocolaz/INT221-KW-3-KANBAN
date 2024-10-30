@@ -9,7 +9,7 @@ import EditModal from './EditModal.vue'
 import FilterModal from './FilterModal.vue'
 import FetchUtils from '../lib/fetchUtils'
 import { statusStyle } from '../lib/statusStyles'
-import { checkOwnership } from '../lib/utils'
+import { checkOwnership, checkAccessRight } from '../lib/utils'
 
 const tasks = ref([])
 const statuses = ref([])
@@ -34,23 +34,47 @@ const router = useRouter()
 
 const boardId = route.params.boardId
 const boardData = ref(null)
+const collaborators = ref([])
 const currentUser = ref(localStorage.getItem('username'))
 const canOperation = ref(false)
 
 const tooltipMessage =
   'You need to be board owner or has write access to perform this action.'
 
-const checkBoardOwnership = () => {
-  canOperation.value = checkOwnership(boardData.value, currentUser.value)
+const fetchCollaborators = async () => {
+  try {
+    collaborators.value = await FetchUtils.getCollab(boardId)
+    console.log(collaborators.value)
+  } catch (error) {
+    console.error('Error fetching collaborator details:', error)
+  }
 }
 
 const fetchBoardDetails = async () => {
   try {
     boardData.value = await FetchUtils.getBoards(boardId)
-    checkBoardOwnership()
+
+    await fetchCollaborators()
+
+    console.log('boardId:', boardId)
+
+    checkBoardAccess()
   } catch (error) {
     console.error('Error fetching board details:', error)
   }
+}
+
+const checkBoardAccess = () => {
+  const isOwner = checkOwnership(boardData.value, currentUser.value)
+  const hasWriteAccess = checkAccessRight(
+    collaborators.value,
+    currentUser.value
+  )
+
+  console.log('checkBoardAccess collaborators:', collaborators.value)
+  console.log('checkBoardData:', boardData.value)
+
+  canOperation.value = isOwner || hasWriteAccess
 }
 
 const formatLocalDate = (dateString) => {
