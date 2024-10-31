@@ -145,14 +145,16 @@ export async function checkBoardAccess(boardId) {
       return { hasAccess: true, notFound: false }
     }
 
-    // Fetch collaborators and check if the current user is a collaborator
+    // Fetch collaborators and check if the current user has READ or WRITE access
     const collaborators = await fetchUtils.getCollab(boardId)
-    const isCollaborator = collaborators.some(
-      (collab) => collab.name === currentUser && collab.access_right === 'READ'
+    const hasAccess = collaborators.some(
+      (collab) =>
+        collab.name === currentUser &&
+        (collab.access_right === 'READ' || collab.access_right === 'WRITE')
     )
 
-    if (isCollaborator) {
-      console.log("Collab:", isCollaborator)
+    if (hasAccess) {
+      console.log('Collaborator access granted:', hasAccess)
       return { hasAccess: true, notFound: false }
     }
 
