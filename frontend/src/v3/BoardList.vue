@@ -156,19 +156,27 @@ const fetchBoards = async () => {
   try {
     const response = await fetchUtils.getBoards()
 
+    // Filter personal boards based on the owner's name
     const personal = response.filter((board) => board.owner.name === username)
-    const collab = response.filter((board) => board.owner.name !== username)
+    const collab = []
 
+    // Sort personal boards by creation date
     personal.sort((a, b) => new Date(a.created_on) - new Date(b.created_on))
 
-    for (const board of collab) {
+    // Check collaboration details for each board not owned by the user
+    for (const board of response.filter(
+      (board) => board.owner.name !== username
+    )) {
       try {
         const collabDetails = await fetchUtils.getCollab(board.id)
+
+        // Add only if collaboration details exist, indicating the user is a collaborator
         if (collabDetails.length > 0) {
           const { access_right, added_on, oid } = collabDetails[0]
           board.accessRight = access_right
           board.addedOn = new Date(added_on)
           board.oid = oid
+          collab.push(board)
         }
       } catch (error) {
         console.error(
@@ -178,8 +186,10 @@ const fetchBoards = async () => {
       }
     }
 
+    // Sort collaborative boards by the added date
     collab.sort((a, b) => a.addedOn - b.addedOn)
 
+    // Update the board lists
     personalBoards.value = personal
     collabBoards.value = collab
   } catch (error) {
