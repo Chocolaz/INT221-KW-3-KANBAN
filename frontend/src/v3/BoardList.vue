@@ -127,9 +127,9 @@
       <!-- Modal for Leaving Board -->
       <LeaveBoardModal
         v-if="isLeaveModalVisible"
-        :boardName="boardToLeave.name"
+        :boardName="boardToLeave"
         :isVisible="isLeaveModalVisible"
-        :onLeave="() => handleLeave(boardToLeave.id)"
+        :onLeave="handleLeave"
         @close="isLeaveModalVisible = false"
       />
     </div>
