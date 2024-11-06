@@ -1,6 +1,7 @@
 package com.example.integradeproject.controllers;
 
 import com.example.integradeproject.project_management.pm_dtos.CollabDTO;
+import com.example.integradeproject.project_management.pm_dtos.InviterDTO;
 import com.example.integradeproject.project_management.pm_entities.Collab;
 import com.example.integradeproject.services.CollabService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -98,6 +99,17 @@ public class CollabController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", e.getMessage()));
+        }
+    }
+    @GetMapping("/invitations")
+    public ResponseEntity<?> getPendingInvitations(@RequestHeader("Authorization") String token) {
+        try {
+            String jwtToken = token.substring(7);
+            List<InviterDTO> pendingInvitations = collabService.getPendingInvitations(jwtToken);
+            return ResponseEntity.ok(pendingInvitations);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
         }
     }
 }

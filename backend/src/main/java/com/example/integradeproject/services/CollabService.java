@@ -1,6 +1,7 @@
 package com.example.integradeproject.services;
 
 import com.example.integradeproject.project_management.pm_dtos.CollabDTO;
+import com.example.integradeproject.project_management.pm_dtos.InviterDTO;
 import com.example.integradeproject.project_management.pm_entities.Board;
 import com.example.integradeproject.project_management.pm_entities.BoardCollaboratorsId;
 import com.example.integradeproject.project_management.pm_entities.Collab;
@@ -152,6 +153,7 @@ public class CollabService {
             collab.setEmail(email);
             collab.setAccess_right(accessRight);
             collab.setName(pmUser.getName());
+            collab.setInvitation(Collab.Invitation.PENDING);
 
             Collab savedCollab = collabRepository.save(collab);
             return modelMapper.map(savedCollab, CollabDTO.class);
@@ -272,6 +274,24 @@ public class CollabService {
 
         collabRepository.delete(collabToRemove);
     }
+
+    public List<InviterDTO> getPendingInvitations(String token) {
+        String userOid = jwtTokenUtil.getUidFromToken(token);
+
+        List<Collab> pendingInvitations = collabRepository.findByOidAndInvitation(pmUserRepository.findByOid(userOid).get(), Collab.Invitation.PENDING);
+
+        return pendingInvitations.stream()
+                .map(collab -> {
+                    InviterDTO inviterDTO = new InviterDTO();
+                    inviterDTO.setOid(collab.getBoard().getOwnerOid().getOid());
+                    inviterDTO.setOwnerName(collab.getBoard().getOwnerOid().getName());
+                    inviterDTO.setBoardName(collab.getBoard().getName());
+                    inviterDTO.setAccess_right(collab.getAccess_right().toString());
+                    inviterDTO.setInvitation(collab.getInvitation().toString());
+                    return inviterDTO;
+                })
+                .collect(Collectors.toList());
+    }
     private boolean hasAccessToBoard(Board board, String userOid) {
         if (board.getOwnerOid().getOid().equals(userOid)) {
             return true;
@@ -285,4 +305,5 @@ public class CollabService {
                 (collaboration.get().getAccess_right() == Collab.AccessRight.READ ||
                         collaboration.get().getAccess_right() == Collab.AccessRight.WRITE);
     }
+
 }

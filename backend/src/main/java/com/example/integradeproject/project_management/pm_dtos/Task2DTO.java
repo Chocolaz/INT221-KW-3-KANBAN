@@ -10,6 +10,8 @@ public class Task2DTO {
     private String title ;
     private String assignees ;
     private String StatusName ;
+    private String attachmentCount;
+
 
 
 

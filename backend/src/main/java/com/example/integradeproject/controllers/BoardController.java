@@ -4,12 +4,18 @@ import com.example.integradeproject.project_management.pm_dtos.BoardDTO;
 import com.example.integradeproject.project_management.pm_dtos.NewTask2DTO;
 import com.example.integradeproject.project_management.pm_dtos.Task2DTO;
 import com.example.integradeproject.project_management.pm_dtos.Task2IdDTO;
+import com.example.integradeproject.project_management.pm_entities.TaskV3;
+import com.example.integradeproject.project_management.pm_repositories.BoardRepository;
+import com.example.integradeproject.project_management.pm_repositories.TaskV3Repository;
 import com.example.integradeproject.security.JwtTokenUtil;
 import com.example.integradeproject.services.BoardService;
+import com.example.integradeproject.services.TaskAttachmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -25,6 +31,14 @@ public class BoardController {
 
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
+    @Autowired
+    private TaskAttachmentService taskAttachmentService;
+
+    @Autowired
+    private TaskV3Repository taskRepository;
+
+    @Autowired
+    BoardRepository boardRepository ;
 
     @PostMapping("")
     public ResponseEntity<?> createBoard(@RequestBody(required = false) Map<String, String> boardRequest, @RequestHeader("Authorization") String token) {
@@ -84,18 +98,7 @@ public class BoardController {
     }
 
 
-    @GetMapping("/{id}")
-    public ResponseEntity<?> getBoardById(@PathVariable String id, @RequestHeader(value = "Authorization", required = false) String token) {
 
-        try {
-            String jwtToken = token != null ? token.substring(7) : null;
-            BoardDTO boardDTO = boardService.getBoardById(id, jwtToken);
-            return ResponseEntity.ok(boardDTO);
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode())
-                    .body(Map.of("error", e.getReason()));
-        }
-    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteBoard(@PathVariable String id,
@@ -127,29 +130,82 @@ public class BoardController {
                     .body(Map.of("error", e.getReason()));
         }
     }
-    @PostMapping("/{id}/tasks")
-    public ResponseEntity<?> createTask(@PathVariable String id,
-                                        @RequestBody(required = false) NewTask2DTO newTaskDTO,
-                                        @RequestHeader(value = "Authorization", required = false) String token) {
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getBoardById(@PathVariable String id, @RequestHeader(value = "Authorization", required = false) String token) {
+
         try {
             String jwtToken = token != null ? token.substring(7) : null;
-            NewTask2DTO createdTask = boardService.createTask(id, newTaskDTO, jwtToken);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+            BoardDTO boardDTO = boardService.getBoardById(id, jwtToken);
+            return ResponseEntity.ok(boardDTO);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));
         }
     }
-
-    @PutMapping("/{boardId}/tasks/{taskId}")
-    public ResponseEntity<?> updateTask(@PathVariable String boardId,
-                                        @PathVariable Integer taskId,
-                                        @RequestBody(required = false) NewTask2DTO updateTaskDTO,
+    @PostMapping("/{id}/tasks")
+    public ResponseEntity<?> createTask(@PathVariable String id,
+                                        @RequestPart(required = false) NewTask2DTO newTaskDTO,
+                                        @RequestPart(required = false) List<MultipartFile> addAttachments,
+                                        @RequestParam(required = false) List<Integer> deleteAttachments,
                                         @RequestHeader(value = "Authorization", required = false) String token) {
         try {
             String jwtToken = token != null ? token.substring(7) : null;
-            NewTask2DTO updatedTask = boardService.updateTask(boardId, taskId, updateTaskDTO, jwtToken);
-            return ResponseEntity.ok(updatedTask);
+            NewTask2DTO createdTask = boardService.createTask(id, newTaskDTO, jwtToken, addAttachments, deleteAttachments);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to create task: " + e.getMessage()));
+        }
+    }
+
+    @PutMapping("/{boardId}/tasks/{taskId}")
+    @Transactional
+    public ResponseEntity<?> updateTask(
+            @PathVariable String boardId,
+            @PathVariable Integer taskId,
+            @RequestPart(required = false) NewTask2DTO updateTaskDTO,
+            @RequestPart(required = false) List<MultipartFile> addAttachments,
+            @RequestParam(required = false) List<Integer> deleteAttachments,
+            @RequestHeader(value = "Authorization", required = false) String token) {
+
+        try {
+            String jwtToken = token != null ? token.substring(7) : null;
+
+            // First update the basic task information
+            boardService.updateTask(boardId, taskId, updateTaskDTO, jwtToken);
+
+            // Get fresh task instance to handle attachments
+            TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, boardRepository.findById(boardId).get())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+
+            // Handle attachments if present
+            if (addAttachments != null || deleteAttachments != null) {
+                // Process new attachments
+                if (addAttachments != null) {
+                    for (MultipartFile file : addAttachments) {
+                        taskAttachmentService.validateAndAddAttachment(task, file);
+                    }
+                }
+
+                // Process attachment deletions
+                if (deleteAttachments != null) {
+                    for (Integer attachmentId : deleteAttachments) {
+                        taskAttachmentService.deleteAttachment(task, attachmentId);
+                    }
+                }
+
+                task = taskRepository.save(task);
+            }
+
+            // Convert updated task with latest attachments to DTO
+            NewTask2DTO finalUpdatedTask = boardService.convertToNewTaskDTO(task);
+
+            return ResponseEntity.ok(finalUpdatedTask);
+
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));

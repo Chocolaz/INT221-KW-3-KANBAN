@@ -13,4 +13,5 @@ public interface CollabRepository extends JpaRepository<Collab, String> {
     Optional<Collab> findByBoardAndOid(Board board, PMUser oid);
     List<Collab> findByOid(PMUser user);
 
+    List<Collab> findByOidAndInvitation(PMUser pmUser, Collab.Invitation invitation);
 }

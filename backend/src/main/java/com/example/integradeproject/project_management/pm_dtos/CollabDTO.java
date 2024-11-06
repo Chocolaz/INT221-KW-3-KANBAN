@@ -14,6 +14,7 @@ public class CollabDTO {
     private String name;
     private String email;
     private Collab.AccessRight access_right;
+    private Collab.Invitation invitation ;
     private Date added_on;
 
 }

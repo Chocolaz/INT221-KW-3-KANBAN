@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.sql.Timestamp;
+import java.util.List;
+
 @Getter
 @Setter
 public class Task2IdDTO {
@@ -11,6 +13,7 @@ public class Task2IdDTO {
         private String description;
         private String assignees;
         private String statusName;
+        private List<AttachmentDTO> attachments;
         private Timestamp createdOn;
         private Timestamp updatedOn;
 

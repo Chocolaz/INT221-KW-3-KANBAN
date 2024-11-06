@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.sql.Timestamp;
@@ -38,6 +39,11 @@ public class BoardService {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    @Autowired
+    private TaskAttachmentService taskAttachmentService;
+
+
 
 
     @Transactional
@@ -232,19 +238,6 @@ public class BoardService {
         return board.getOwnerOid().getOid().equals(userOid);
     }
 
-    public boolean isBoardPublic(String boardId) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
-        return board.getVisibility() == Board.BoardVisibility.PUBLIC;
-    }
-    private boolean isUserAuthorized(String token, Board board) {
-        try {
-            String userOid = jwtTokenUtil.getUidFromToken(token);
-            return board.getOwnerOid().getOid().equals(userOid);
-        } catch (Exception e) {
-            return false;
-        }
-    }
 
 
     public List<Task2DTO> getTasksForBoard(String boardId, String token, String sortBy, List<String> filterStatuses) {
@@ -286,6 +279,12 @@ public class BoardService {
         }
         return tasks.stream().map(this::convertToTaskDTO).collect(Collectors.toList());
     }
+    private Task2DTO convertToTaskDTO(TaskV3 task) {
+        Task2DTO taskDTO = modelMapper.map(task, Task2DTO.class);
+        int attachmentCount = task.getAttachments().size();
+        taskDTO.setAttachmentCount(attachmentCount > 0 ? String.valueOf(attachmentCount) : "-");
+        return taskDTO;
+    }
 
     public Task2IdDTO getTaskById(String boardId, Integer taskId, String token) {
         Board board = boardRepository.findById(boardId)
@@ -326,16 +325,17 @@ public class BoardService {
     }
 
     private Task2IdDTO convertToTask2IdDTO(TaskV3 task) {
-        Task2IdDTO dto = new Task2IdDTO();
-        dto.setTitle(task.getTitle());
-        dto.setDescription(task.getDescription());
-        dto.setAssignees(task.getAssignees());
-        dto.setStatusName(task.getStatusId().getStatusName());
-        dto.setCreatedOn((Timestamp) task.getCreatedOn());
-        dto.setUpdatedOn((Timestamp) task.getUpdatedOn());
+        Task2IdDTO dto = modelMapper.map(task, Task2IdDTO.class);
+
+        List<AttachmentDTO> attachmentDTOs = task.getAttachments().stream()
+                .map(attachment -> modelMapper.map(attachment, AttachmentDTO.class))
+                .collect(Collectors.toList());
+        dto.setAttachments(attachmentDTOs);
+
         return dto;
     }
-    public NewTask2DTO createTask(String boardId, NewTask2DTO newTaskDTO, String token) {
+    @Transactional
+    public NewTask2DTO createTask(String boardId, NewTask2DTO newTaskDTO, String token, List<MultipartFile> attachments, List<Integer> deleteAttachments) {
         // Authorization check first (403)
         if (token == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
@@ -385,8 +385,22 @@ public class BoardService {
         task.setAssignees(newTaskDTO.getAssignees());
         task.setBoardId(board);
         task.setStatusId(status);
-
         TaskV3 savedTask = taskRepository.save(task);
+
+        // Handle attachments if present
+        if (attachments != null && !attachments.isEmpty()) {
+            for (MultipartFile file : attachments) {
+                taskAttachmentService.validateAndAddAttachment(savedTask, file);
+            }
+        }
+
+        // Handle attachment deletions if present
+        if (deleteAttachments != null && !deleteAttachments.isEmpty()) {
+            for (Integer attachmentId : deleteAttachments) {
+                taskAttachmentService.deleteAttachment(savedTask, attachmentId);
+            }
+        }
+
         return convertToNewTaskDTO(savedTask);
     }
 
@@ -444,6 +458,29 @@ public class BoardService {
         return convertToNewTaskDTO(updatedTask);
     }
 
+
+    public NewTask2DTO convertToNewTaskDTO(TaskV3 task) {
+        NewTask2DTO dto = modelMapper.map(task, NewTask2DTO.class);
+        dto.setStatusName(task.getStatusId().getStatusName());
+
+        // Convert attachments
+        if (task.getAttachments() != null) {
+            List<AttachmentDTO> attachmentDTOs = task.getAttachments().stream()
+                    .map(attachment -> new AttachmentDTO(
+                            attachment.getAttachmentId(),
+                            attachment.getFile(),
+                            attachment.getUploadedOn()))
+                    .collect(Collectors.toList());
+            dto.setAttachments(attachmentDTOs);
+        }
+
+        return dto;
+    }
+
+
+
+
+
     public void deleteTask(String boardId, Integer taskId, String token) {
         String userOid = jwtTokenUtil.getUidFromToken(token);
         Board board = boardRepository.findById(boardId)
@@ -498,15 +535,10 @@ public class BoardService {
         return dto;
     }
 
-    private Task2DTO convertToTaskDTO(TaskV3 task) {
-        return modelMapper.map(task, Task2DTO.class);
-    }
 
-    private NewTask2DTO convertToNewTaskDTO(TaskV3 task) {
-        NewTask2DTO dto = modelMapper.map(task, NewTask2DTO.class);
-        dto.setStatusName(task.getStatusId().getStatusName());
-        return dto;
-    }
+
+
+
 
     private void checkWriteAccess(Board board, String token) {
         if (token == null) {
@@ -526,38 +558,6 @@ public class BoardService {
         Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
         if (collaboration.isEmpty() || collaboration.get().getAccess_right() == Collab.AccessRight.READ) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You don't have write permission for this board");
-        }
-    }
-// non-collab
-    private void checkBoardAccess(Board board, String token, boolean requireWriteAccess) {
-        if (token == null) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Authentication required");
-        }
-
-        String userOid = jwtTokenUtil.getUidFromToken(token);
-        PMUser user = pmUserRepository.findByOid(userOid)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-        // If write access is required, only owner and write collaborators can proceed
-        if (requireWriteAccess) {
-            if (board.getOwnerOid().getOid().equals(userOid)) {
-                return;
-            }
-
-            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-            if (collaboration.isEmpty() || collaboration.get().getAccess_right() != Collab.AccessRight.WRITE) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
-            }
-        } else {
-            // For read access, check if user is owner or any type of collaborator
-            if (board.getOwnerOid().getOid().equals(userOid)) {
-                return;
-            }
-
-            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-            if (collaboration.isEmpty()) {
-                throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to this board");
-            }
         }
     }
 

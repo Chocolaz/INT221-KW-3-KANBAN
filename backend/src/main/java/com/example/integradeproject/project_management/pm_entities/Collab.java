@@ -37,6 +37,11 @@ public class Collab {
     @Column(name = "access_right", nullable = false)
     private AccessRight access_right;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "invitation")
+    private Invitation invitation ;
+
+
     @Column(name = "added_on", nullable = false, updatable = false)
     @Temporal(TemporalType.TIMESTAMP)
     private Date added_on;
@@ -47,6 +52,9 @@ public class Collab {
     }
     public enum AccessRight {
         READ, WRITE
+    }
+    public enum Invitation {
+        PENDING, ACCEPTED, DECLINED
     }
 
 }

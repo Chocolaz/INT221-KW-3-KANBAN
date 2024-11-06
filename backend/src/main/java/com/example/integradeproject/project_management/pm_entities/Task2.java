@@ -6,7 +6,9 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Getter
 @Setter
@@ -29,6 +31,8 @@ public class Task2 {
     @ManyToOne
     @JoinColumn(name = "boardId", referencedColumnName = "boardId", nullable = false)
     private Board boardId;
+    @OneToMany(mappedBy = "task", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Attachment> attachments = new ArrayList<>();
 
     @Column(name = "createdOn", updatable = false, insertable = false)
     private Date createdOn;
