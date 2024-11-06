@@ -1,3 +1,4 @@
+
 CREATE SCHEMA IF NOT EXISTS kanban_DB DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
 USE kanban_DB;
@@ -25,6 +26,7 @@ DROP TABLE IF EXISTS statuses;
 DROP TABLE IF EXISTS collabs; -- Junction table
 DROP TABLE IF EXISTS boards;
 DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS attachments;
 
 -- Table structure for 'users'
 CREATE TABLE users (
@@ -58,7 +60,9 @@ CREATE TABLE collabs (
   email VARCHAR(50) NOT NULL,
 	name VARCHAR(100) NOT NULL,
   access_right ENUM('READ', 'WRITE') NOT NULL DEFAULT 'READ', 
+  invitation ENUM('PENDING', 'ACCEPTED', 'DECLINED') DEFAULT 'PENDING',
   added_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  
   PRIMARY KEY (boardId, userOid),
   CONSTRAINT fk_collaborators_board FOREIGN KEY (boardId) REFERENCES boards(boardId) ,
   CONSTRAINT fk_collaborators_user FOREIGN KEY (userOid) REFERENCES users(oid)
@@ -89,6 +93,17 @@ CREATE TABLE tasks (
   CONSTRAINT fk_tasks_statuses FOREIGN KEY (statusId) REFERENCES statuses(statusId),
   CONSTRAINT fk_tasks_boards FOREIGN KEY (boardId) REFERENCES boards(boardId)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+CREATE TABLE attachments (
+  attachmentId INT NOT NULL AUTO_INCREMENT,
+  taskId INT NOT NULL,
+  file VARCHAR(255) NOT NULL, 
+  uploaded_on TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (attachmentId),
+  CONSTRAINT fk_attachments_tasks FOREIGN KEY (taskId) REFERENCES tasks(taskId)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
 
 -- Insert data into 'boards' table
 INSERT INTO boards (boardId, boardName)
