@@ -82,6 +82,10 @@ const formatLocalDate = (dateString) => {
   return date.toLocaleString('en-GB')
 }
 
+const timezone = computed(
+  () => Intl.DateTimeFormat().resolvedOptions().timeZone
+)
+
 const fetchTasks = async () => {
   try {
     if (!boardId) {
