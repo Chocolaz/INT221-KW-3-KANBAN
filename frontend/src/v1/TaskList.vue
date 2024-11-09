@@ -318,6 +318,7 @@ onMounted(async () => {
                 </button>
               </th>
               <th>Assignees</th>
+              <th>Attachment</th>
               <th style="position: relative">
                 Status
                 <button
@@ -354,7 +355,6 @@ onMounted(async () => {
         <div class="body-container relative">
           <table class="table body-table w-full">
             <tbody>
-              <!-- Conditional rendering for tasks -->
               <tr v-if="filteredTasks.length === 0" class="h-full">
                 <td colspan="5" class="relative">
                   <div
@@ -383,6 +383,16 @@ onMounted(async () => {
                   }"
                 >
                   {{ task.assignees || 'Unassigned' }}
+                </td>
+                <td
+                  class="border px-4 py-2 itbkk-attachment"
+                  :style="{
+                    fontStyle:
+                      task.attachmentCount === '-' ? 'italic' : 'normal',
+                    color: task.attachmentCount === '-' ? 'grey' : 'black'
+                  }"
+                >
+                  {{ task.attachmentCount }}
                 </td>
                 <td
                   class="border px-4 py-2 itbkk-status"
