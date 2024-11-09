@@ -50,6 +50,37 @@
             </p>
           </div>
         </div>
+        <div v-if="task.attachments && task.attachments.length > 0">
+          <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 class="text-base font-semibold text-gray-700 mb-2">
+              Attachments
+            </h3>
+            <div
+              v-for="attachment in task.attachments"
+              :key="attachment.attachmentId"
+              class="mb-4"
+            >
+              <div class="flex items-center">
+                <!-- Thumbnail of the attachment -->
+                <img
+                  :src="getThumbnailUrl(attachment.file)"
+                  alt="Attachment Thumbnail"
+                  class="w-16 h-16 object-cover rounded-md mr-4"
+                />
+                <!-- File Name -->
+                <span class="text-gray-700">{{ attachment.file }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div v-else>
+          <div class="bg-gray-50 rounded-lg p-4 mb-6">
+            <h3 class="text-base font-semibold text-gray-700 mb-2">
+              Attachments
+            </h3>
+            <p class="text-gray-600">No attachments available.</p>
+          </div>
+        </div>
 
         <div>
           <div class="bg-gray-50 rounded-lg p-4 mb-6">
@@ -123,6 +154,10 @@ const props = defineProps({
     required: true
   }
 })
+
+const getThumbnailUrl = (file) => {
+  return `http://localhost:8080/uploads/${file}`
+}
 </script>
 
 <style scoped>
