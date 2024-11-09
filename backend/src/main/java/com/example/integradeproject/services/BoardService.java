@@ -232,11 +232,7 @@ public class BoardService {
     }
 
 
-    public boolean isUserBoardOwner(String boardId, String userOid) {
-        Board board = boardRepository.findById(boardId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
-        return board.getOwnerOid().getOid().equals(userOid);
-    }
+
 
 
 

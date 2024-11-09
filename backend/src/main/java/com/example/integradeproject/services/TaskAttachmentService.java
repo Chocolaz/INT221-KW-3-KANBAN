@@ -1,9 +1,12 @@
 package com.example.integradeproject.services;
 
+import com.example.integradeproject.project_management.pm_dtos.AttachmentDTO;
 import com.example.integradeproject.project_management.pm_entities.Attachment;
+import com.example.integradeproject.project_management.pm_entities.Board;
 import com.example.integradeproject.project_management.pm_entities.TaskV3;
 import com.example.integradeproject.project_management.pm_repositories.AttachmentRepository;
-import com.example.integradeproject.project_management.pm_repositories.CollabRepository;
+import com.example.integradeproject.project_management.pm_repositories.BoardRepository;
+import com.example.integradeproject.project_management.pm_repositories.TaskV3Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -27,13 +30,25 @@ public class TaskAttachmentService {
 
     private final Path uploadPath;
     private final AttachmentRepository attachmentRepository;
-
+    private final TaskV3Repository taskRepository;
+    private final BoardRepository boardRepository;
 
     @Autowired
-    public TaskAttachmentService(Path uploadPath, AttachmentRepository attachmentRepository) {
+    public TaskAttachmentService(Path uploadPath, AttachmentRepository attachmentRepository, TaskV3Repository taskRepository, BoardRepository boardRepository) {
         this.uploadPath = uploadPath;
         this.attachmentRepository = attachmentRepository;
+        this.taskRepository = taskRepository;
+        this.boardRepository = boardRepository;
     }
+
+    private AttachmentDTO convertToDTO(Attachment attachment) {
+        return new AttachmentDTO(
+                attachment.getAttachmentId(),
+                attachment.getFile(),
+                attachment.getUploadedOn()
+        );
+    }
+
 
     private String saveFile(MultipartFile file) {
         try {
@@ -48,7 +63,6 @@ public class TaskAttachmentService {
             Files.copy(file.getInputStream(), targetPath, StandardCopyOption.REPLACE_EXISTING);
 
             return fileName;
-
         } catch (IOException e) {
             String errorMessage = String.format("Failed to save file %s: %s",
                     file.getOriginalFilename(), e.getMessage());
@@ -75,7 +89,15 @@ public class TaskAttachmentService {
         }
     }
 
-    public void validateAndAddAttachment(TaskV3 task, MultipartFile file) {
+    public TaskV3 getTaskByBoardIdAndTaskId(String boardId, Integer taskId, String jwtToken) {
+        Board board = boardRepository.findById(boardId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
+
+        return taskRepository.findByTaskIdAndBoardId(taskId, board)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
+    }
+
+    public AttachmentDTO validateAndAddAttachment(TaskV3 task, MultipartFile file) {
         // Validate file presence
         if (file == null || file.isEmpty()) {
             throw new ResponseStatusException(
@@ -109,7 +131,6 @@ public class TaskAttachmentService {
             );
         }
 
-
         try {
             // Save file and create attachment
             String savedFileName = saveFile(file);
@@ -120,8 +141,9 @@ public class TaskAttachmentService {
             attachment.setUploadedOn(new Date());
 
             task.getAttachments().add(attachment);
-            attachmentRepository.save(attachment);
+            attachment = attachmentRepository.save(attachment);
 
+            return convertToDTO(attachment);
         } catch (Exception e) {
             throw new ResponseStatusException(
                     HttpStatus.INTERNAL_SERVER_ERROR,
@@ -131,9 +153,7 @@ public class TaskAttachmentService {
     }
 
     public void deleteAttachment(TaskV3 task, Integer attachmentId) {
-        Attachment attachment = task.getAttachments().stream()
-                .filter(a -> a.getAttachmentId().equals(attachmentId))
-                .findFirst()
+        Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Attachment not found"

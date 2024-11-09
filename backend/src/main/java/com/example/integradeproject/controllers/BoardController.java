@@ -40,6 +40,7 @@ public class BoardController {
     @Autowired
     BoardRepository boardRepository ;
 
+
     @PostMapping("")
     public ResponseEntity<?> createBoard(@RequestBody(required = false) Map<String, String> boardRequest, @RequestHeader("Authorization") String token) {
         if (boardRequest == null || !boardRequest.containsKey("name")) {
@@ -168,7 +169,6 @@ public class BoardController {
             @PathVariable String boardId,
             @PathVariable Integer taskId,
             @RequestPart(required = false) NewTask2DTO updateTaskDTO,
-            @RequestPart(required = false) List<MultipartFile> addAttachments,
             @RequestParam(required = false) List<Integer> deleteAttachments,
             @RequestHeader(value = "Authorization", required = false) String token) {
 
@@ -182,24 +182,15 @@ public class BoardController {
             TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, boardRepository.findById(boardId).get())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
-            // Handle attachments if present
-            if (addAttachments != null || deleteAttachments != null) {
-                // Process new attachments
-                if (addAttachments != null) {
-                    for (MultipartFile file : addAttachments) {
-                        taskAttachmentService.validateAndAddAttachment(task, file);
-                    }
+            // Handle attachment deletions if any
+            if (deleteAttachments != null && !deleteAttachments.isEmpty()) {
+                for (Integer attachmentId : deleteAttachments) {
+                    taskAttachmentService.deleteAttachment(task, attachmentId);
                 }
-
-                // Process attachment deletions
-                if (deleteAttachments != null) {
-                    for (Integer attachmentId : deleteAttachments) {
-                        taskAttachmentService.deleteAttachment(task, attachmentId);
-                    }
-                }
-
-                task = taskRepository.save(task);
             }
+
+            // Handle new attachments if any
+
 
             // Convert updated task with latest attachments to DTO
             NewTask2DTO finalUpdatedTask = boardService.convertToNewTaskDTO(task);
@@ -214,7 +205,6 @@ public class BoardController {
                     .body(Map.of("error", "Failed to update task: " + e.getMessage()));
         }
     }
-
     @GetMapping("/{boardId}/tasks/{taskId}")
     public ResponseEntity<?> getTaskById(@PathVariable String boardId, @PathVariable Integer taskId,
                                          @RequestHeader(value = "Authorization", required = false) String token) {
