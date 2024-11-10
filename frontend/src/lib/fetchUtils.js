@@ -53,12 +53,19 @@ const fetchWithAuth = async (url, options = {}) => {
   const headers = {
     ...options.headers
   }
-
   if (token) {
     headers.Authorization = `Bearer ${token}`
   }
-
   const response = await fetch(url, { ...options, headers })
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! Status: ${response.status}`)
+  }
+
+  if (options.rawResponse) {
+    return response
+  }
+
   return handleResponse(response)
 }
 
@@ -258,6 +265,31 @@ const removeCollab = async (boardId, collabId) => {
   }
 }
 
+const fetchAttachments = async (attachments) => {
+  try {
+    if (Array.isArray(attachments)) {
+      return await Promise.all(
+        attachments.map(async (attachment) => {
+          const fullUrl = `${baseUrl3}/attachments/${attachment.attachmentId}`
+          const response = await fetchWithAuth(fullUrl, { rawResponse: true })
+          const blob = await response.blob()
+          const blobUrl = URL.createObjectURL(blob)
+          return { ...attachment, blobUrl }
+        })
+      )
+    }
+
+    const fullUrl = `${baseUrl3}/attachments/${attachments.attachmentId}`
+    const response = await fetchWithAuth(fullUrl, { rawResponse: true })
+    const blob = await response.blob()
+    const blobUrl = URL.createObjectURL(blob)
+    return { ...attachments, blobUrl }
+  } catch (error) {
+    console.error('Error fetching attachments:', error)
+    throw error
+  }
+}
+
 export default {
   fetchData,
   postData,
@@ -270,5 +302,6 @@ export default {
   getCollab,
   addCollab,
   updateCollabAccess,
-  removeCollab
+  removeCollab,
+  fetchAttachments
 }
