@@ -62,7 +62,7 @@
                 </div>
               </div>
 
-              <!-- Attachments -->
+              <!-- Attachments Section -->
               <div class="bg-gray-50 rounded-xl p-6">
                 <h3
                   class="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
@@ -71,26 +71,30 @@
                   Attachments
                 </h3>
                 <div class="flex flex-wrap gap-3">
-                  <template v-if="task.attachments?.length">
+                  <template v-if="attachments.length">
                     <div
-                      v-for="attachment in task.attachments"
+                      v-for="attachment in attachments"
                       :key="attachment.attachmentId"
-                      class="flex items-center bg-gray-200 rounded-lg overflow-hidden group transition-colors hover:bg-gray-300 pr-4"
+                      class="flex items-center bg-gray-200 rounded-lg overflow-hidden group transition-colors hover:bg-gray-300 pr-4 cursor-pointer"
+                      @click="handleAttachmentClick(attachment)"
                     >
-                      <img
-                        :src="`http://localhost:8080/uploads/${attachment.file}`"
-                        :alt="attachment.file"
-                        class="w-10 h-10 object-cover"
-                      />
+                      <div class="w-16 h-16 overflow-hidden rounded-lg">
+                        <img
+                          v-if="attachment.blobUrl"
+                          :src="attachment.blobUrl"
+                          :alt="attachment.file"
+                          class="w-full h-full object-cover"
+                        />
+                      </div>
+
                       <span
                         class="text-sm text-gray-700 px-3 truncate max-w-[200px]"
-                        >{{ attachment.file }}</span
                       >
+                        {{ attachment.file }}
+                      </span>
                     </div>
                   </template>
-                  <span v-else class="text-gray-500"
-                    >No attachments available</span
-                  >
+                  <span v-else class="text-gray-500">No attachments</span>
                 </div>
               </div>
             </div>
@@ -168,7 +172,9 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import { defineProps } from 'vue'
+import fetchUtils from '@/lib/fetchUtils'
 import { statusStyle } from '@/lib/statusStyles'
 
 const props = defineProps({
@@ -193,6 +199,29 @@ const props = defineProps({
     required: true
   }
 })
+
+const attachments = ref([])
+
+onMounted(async () => {
+  attachments.value = await fetchUtils.fetchAttachments(props.task.attachments)
+})
+
+// Handle attachment click to display or download
+const handleAttachmentClick = (attachment) => {
+  const fileType = attachment.file.split('.').pop().toLowerCase()
+  const supportedFileTypes = ['pdf', 'jpeg', 'jpg', 'png', 'txt']
+
+  if (supportedFileTypes.includes(fileType)) {
+    // Open in a new tab if supported
+    window.open(attachment.blobUrl, '_blank')
+  } else {
+    // Force download if unsupported
+    const link = document.createElement('a')
+    link.href = attachment.blobUrl
+    link.download = attachment.file
+    link.click()
+  }
+}
 </script>
 
 <style scoped>

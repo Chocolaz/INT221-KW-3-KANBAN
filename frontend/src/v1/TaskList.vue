@@ -159,6 +159,7 @@ const openModal = async (taskId) => {
     const data = await FetchUtils.fetchData('tasks', boardId, taskId)
     if (data) {
       selectedTask.value = data
+      console.log(selectedTask.value)
     }
   } catch (error) {
     console.error('Error fetching task details:', error)
