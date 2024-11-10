@@ -12,10 +12,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.nio.file.Path;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
 
 @Service
 public class BoardService {
@@ -42,7 +44,6 @@ public class BoardService {
 
     @Autowired
     private TaskAttachmentService taskAttachmentService;
-
 
 
 
@@ -453,7 +454,6 @@ public class BoardService {
         TaskV3 updatedTask = taskRepository.save(task);
         return convertToNewTaskDTO(updatedTask);
     }
-
 
     public NewTask2DTO convertToNewTaskDTO(TaskV3 task) {
         NewTask2DTO dto = modelMapper.map(task, NewTask2DTO.class);

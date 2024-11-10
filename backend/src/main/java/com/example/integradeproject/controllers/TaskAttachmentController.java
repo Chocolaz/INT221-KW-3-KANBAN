@@ -42,7 +42,25 @@ public class TaskAttachmentController {
                     .body(Map.of("error", "Failed to add attachment: " + e.getMessage()));
         }
     }
-
+    @DeleteMapping("/{boardId}/tasks/{taskId}/attachments/{attachmentId}")
+    public ResponseEntity<?> deleteAttachment(
+            @PathVariable String boardId,
+            @PathVariable Integer taskId,
+            @PathVariable Integer attachmentId,
+            @RequestHeader("Authorization") String token) {
+        try {
+            String jwtToken = token.substring(7);
+            TaskV3 task = taskAttachmentService.getTaskByBoardIdAndTaskId(boardId, taskId, jwtToken);
+            taskAttachmentService.deleteAttachment(task, attachmentId);
+            return ResponseEntity.ok().build();
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode())
+                    .body(Map.of("error", e.getReason()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Failed to delete attachment: " + e.getMessage()));
+        }
+    }
 
 
 }

@@ -20,6 +20,8 @@ public class NewTask2DTO {
     private String statusName;
     private List<AttachmentDTO> attachments;
 
+
+
     // เพิ่ม constructor ที่มี attachments
 
     // อัพเดท setters/getters ที่มีอยู่
