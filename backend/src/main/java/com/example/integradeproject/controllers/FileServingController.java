@@ -65,13 +65,35 @@ public class FileServingController {
                 // Detect content type
                 String contentType = Files.probeContentType(file);
                 if (contentType == null) {
-                    contentType = "application/octet-stream";
+                    // Try to determine content type from file extension
+                    String fileName = file.getFileName().toString().toLowerCase();
+                    if (fileName.endsWith(".png")) {
+                        contentType = "image/png";
+                    } else if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) {
+                        contentType = "image/jpeg";
+                    } else if (fileName.endsWith(".gif")) {
+                        contentType = "image/gif";
+                    } else if (fileName.endsWith(".pdf")) {
+                        contentType = "application/pdf";
+                    } else {
+                        contentType = "application/octet-stream";
+                    }
+                }
+
+                // Set response headers for inline display (especially for images)
+                HttpHeaders headers = new HttpHeaders();
+                headers.setContentType(MediaType.parseMediaType(contentType));
+
+                // For images, set inline disposition to display in browser
+                if (contentType.startsWith("image/")) {
+                    headers.set(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + attachment.getFile() + "\"");
+                } else {
+                    // For other files, set as attachment
+                    headers.set(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFile() + "\"");
                 }
 
                 return ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType(contentType))
-                        .header(HttpHeaders.CONTENT_DISPOSITION,
-                                "attachment; filename=\"" + attachment.getFile() + "\"")
+                        .headers(headers)
                         .body(resource);
             } else {
                 throw new ResponseStatusException(HttpStatus.NOT_FOUND, "File not found");
