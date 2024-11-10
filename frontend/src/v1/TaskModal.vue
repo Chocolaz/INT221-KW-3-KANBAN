@@ -1,125 +1,164 @@
 <template>
   <div
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto w-full z-50 flex items-center justify-center"
+    class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
   >
     <div
-      class="relative text-base bg-white rounded-lg shadow-xl max-w-4xl w-full m-4 mt-20 p-6 animate-fade-in-up"
+      class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col mt-14 animate-modal"
+      @click.stop
     >
-      <div class="absolute top-4 right-4">
+      <!-- Header -->
+      <div
+        class="p-6 border-b border-gray-100 flex items-start justify-between"
+      >
+        <h2 class="text-2xl font-semibold text-gray-900 pr-8">
+          {{ task.title }}
+        </h2>
         <button
           @click="closeModal"
-          class="text-gray-400 hover:text-gray-600 transition duration-150 ease-in-out"
+          class="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-full"
         >
-          <svg
-            class="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <i class="fas fa-times w-5 h-5"></i>
         </button>
       </div>
 
-      <h2 class="text-2xl font-bold text-primary mb-4 pr-8 itbkk-title">
-        {{ task.title }}
-      </h2>
+      <!-- Scrollable Content -->
+      <div class="flex-1 overflow-y-auto">
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Main Content - Now spans 2 columns -->
+            <div class="md:col-span-2 space-y-6">
+              <!-- Description -->
+              <div class="bg-gray-50 rounded-xl p-6">
+                <h3
+                  class="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
+                >
+                  <i class="fas fa-align-justify w-5 h-5 text-gray-500"></i>
+                  Description
+                </h3>
+                <p class="text-gray-600 leading-relaxed">
+                  {{ task.description || 'No description provided' }}
+                </p>
+              </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="md:col-span-2">
-          <div class="bg-gray-50 rounded-lg p-4 mb-6 h-48">
-            <h3 class="text-base font-semibold text-gray-700 mb-2">
-              Description
-            </h3>
-            <p class="text-gray-600 itbkk-description text-start">
-              {{ task.description || 'No description provided' }}
-            </p>
-          </div>
+              <!-- Assignees -->
+              <div class="bg-gray-50 rounded-xl p-6">
+                <h3
+                  class="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
+                >
+                  <i class="fas fa-user-friends w-5 h-5 text-gray-500"></i>
+                  Assignees
+                </h3>
+                <div class="flex flex-wrap gap-2">
+                  <template v-if="task.assignees">
+                    <span
+                      v-for="(assignee, index) in task.assignees.split(',')"
+                      :key="index"
+                      class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium"
+                    >
+                      {{ assignee.trim() }}
+                    </span>
+                  </template>
+                  <span v-else class="text-gray-500">Unassigned</span>
+                </div>
+              </div>
 
-          <div class="bg-gray-50 rounded-lg p-4">
-            <h3 class="text-base font-semibold text-gray-700 mb-2">
-              Assignees
-            </h3>
-            <p class="text-gray-600 itbkk-assignees text-start mb-5">
-              {{ task.assignees || 'Unassigned' }}
-            </p>
-          </div>
-        </div>
-        <div v-if="task.attachments && task.attachments.length > 0">
-          <div class="bg-gray-50 rounded-lg p-4 mb-6">
-            <h3 class="text-base font-semibold text-gray-700 mb-2">
-              Attachments
-            </h3>
-            <div
-              v-for="attachment in task.attachments"
-              :key="attachment.attachmentId"
-              class="mb-4"
-            >
-              <div class="flex items-center">
-                <!-- Thumbnail of the attachment -->
-                <img
-                  :src="getThumbnailUrl(attachment.file)"
-                  alt="Attachment Thumbnail"
-                  class="w-16 h-16 object-cover rounded-md mr-4"
-                />
-                <!-- File Name -->
-                <span class="text-gray-700">{{ attachment.file }}</span>
+              <!-- Attachments -->
+              <div class="bg-gray-50 rounded-xl p-6">
+                <h3
+                  class="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
+                >
+                  <i class="fas fa-paperclip w-5 h-5 text-gray-500"></i>
+                  Attachments
+                </h3>
+                <div class="flex flex-wrap gap-3">
+                  <template v-if="task.attachments?.length">
+                    <div
+                      v-for="attachment in task.attachments"
+                      :key="attachment.attachmentId"
+                      class="flex items-center bg-gray-200 rounded-lg overflow-hidden group transition-colors hover:bg-gray-300 pr-4"
+                    >
+                      <img
+                        :src="`http://localhost:8080/uploads/${attachment.file}`"
+                        :alt="attachment.file"
+                        class="w-10 h-10 object-cover"
+                      />
+                      <span
+                        class="text-sm text-gray-700 px-3 truncate max-w-[200px]"
+                        >{{ attachment.file }}</span
+                      >
+                    </div>
+                  </template>
+                  <span v-else class="text-gray-500"
+                    >No attachments available</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Sidebar -->
+            <div class="space-y-6">
+              <!-- Status -->
+              <div class="bg-gray-50 rounded-xl p-6">
+                <h3
+                  class="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
+                >
+                  <i class="fas fa-check-circle w-5 h-5 text-gray-500"></i>
+                  Status
+                </h3>
+                <span
+                  class="px-3 py-1 rounded-full text-sm font-semibold itbkk-status"
+                  :style="statusStyle(task.statusName)"
+                >
+                  {{ task.statusName || 'Unassigned' }}
+                </span>
+              </div>
+
+              <!-- Metadata -->
+              <div class="bg-gray-50 rounded-xl p-6 space-y-4">
+                <div>
+                  <div
+                    class="flex items-center gap-2 text-sm text-gray-500 mb-1"
+                  >
+                    <i class="fas fa-globe w-4 h-4"></i>
+                    Timezone
+                  </div>
+                  <p class="text-gray-900">{{ timezone }}</p>
+                </div>
+                <div>
+                  <div
+                    class="flex items-center gap-2 text-sm text-gray-500 mb-1"
+                  >
+                    <i class="fas fa-calendar-alt w-4 h-4"></i>
+                    Created
+                  </div>
+                  <p class="text-gray-900">{{ createdDate }}</p>
+                </div>
+                <div>
+                  <div
+                    class="flex items-center gap-2 text-sm text-gray-500 mb-1"
+                  >
+                    <i class="fas fa-calendar-check w-4 h-4"></i>
+                    Updated
+                  </div>
+                  <p class="text-gray-900">{{ updatedDate }}</p>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <div v-else>
-          <div class="bg-gray-50 rounded-lg p-4 mb-6">
-            <h3 class="text-base font-semibold text-gray-700 mb-2">
-              Attachments
-            </h3>
-            <p class="text-gray-600">No attachments available.</p>
-          </div>
-        </div>
-
-        <div>
-          <div class="bg-gray-50 rounded-lg p-4 mb-6">
-            <h3 class="text-base font-semibold text-gray-700 mb-2">Status</h3>
-            <span
-              class="px-3 py-1 rounded-full text-sm font-semibold itbkk-status"
-              :style="statusStyle(task.statusName)"
-            >
-              {{ task.statusName || 'Unassigned' }}
-            </span>
-          </div>
-
-          <div class="bg-gray-50 rounded-lg p-4 space-y-4">
-            <div>
-              <h4 class="text-sm font-medium text-gray-500">Timezone</h4>
-              <p class="text-gray-700 itbkk-timezone">{{ timezone }}</p>
-            </div>
-            <div>
-              <h4 class="text-sm font-medium text-gray-500">Created</h4>
-              <p class="text-gray-700 itbkk-created-on">{{ createdDate }}</p>
-            </div>
-            <div>
-              <h4 class="text-sm font-medium text-gray-500">Updated</h4>
-              <p class="text-gray-700 itbkk-updated-on">{{ updatedDate }}</p>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <div class="flex justify-end space-x-4">
+      <!-- Footer -->
+      <div class="border-t border-gray-100 p-4 flex justify-end gap-3">
         <button
           @click="closeModal"
-          class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition duration-150 ease-in-out itbkk-button"
+          class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
         >
-          Close
+          Cancel
         </button>
         <button
           @click="closeModal"
-          class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-150 ease-in-out itbkk-button"
+          class="px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
         >
           Done
         </button>
@@ -154,29 +193,43 @@ const props = defineProps({
     required: true
   }
 })
-
-const getThumbnailUrl = (file) => {
-  return `http://localhost:8080/uploads/${file}`
-}
 </script>
 
 <style scoped>
-@keyframes fadeInUp {
+.animate-modal {
+  animation: modal-in 0.3s ease-out;
+}
+
+@keyframes modal-in {
   from {
     opacity: 0;
-    transform: translate3d(0, 20px, 0);
+    transform: scale(0.95) translateY(10px);
   }
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: scale(1) translateY(0);
   }
 }
 
-.animate-fade-in-up {
-  animation: fadeInUp 0.3s ease-out;
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: #e5e7eb transparent;
 }
 
-.text-primary {
-  color: #ff6b6b;
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background-color: #e5e7eb;
+  border-radius: 3px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background-color: #d1d5db;
 }
 </style>
