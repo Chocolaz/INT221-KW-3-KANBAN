@@ -290,25 +290,24 @@ const fetchAttachments = async (attachments) => {
   }
 }
 
-const postTaskWithAttachment = async (boardId, newTaskDTO, file) => {
+const postTaskWithAttachment = async (boardId, newTaskDTO, files) => {
   try {
     validateBoardId(boardId)
-    const fullUrl = `http://localhost:8080/v3/boards/${boardId}/tasks`
+    const fullUrl = `${baseUrl3}/boards/${boardId}/tasks`
 
     const formData = new FormData()
 
-    // Convert the newTaskDTO object to a JSON string and append it with the correct content-type
     formData.append(
       'newTaskDTO',
       new Blob([JSON.stringify(newTaskDTO)], { type: 'application/json' })
     )
 
-    // If a file is provided, append it as 'addAttachments'
-    if (file) {
-      formData.append('addAttachments', file)
+    if (files && files.length > 0) {
+      files.forEach((file) => {
+        formData.append(`addAttachments`, file)
+      })
     }
 
-    // Send the FormData using fetchWithAuth
     const responseData = await fetchWithAuth(fullUrl, {
       method: 'POST',
       body: formData

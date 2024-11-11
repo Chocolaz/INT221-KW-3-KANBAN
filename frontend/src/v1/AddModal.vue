@@ -55,14 +55,15 @@ async function handleSaveTask() {
     statusName: taskDetails.value.statusName
   }
 
-  const file =
+  // Collect all selected files
+  const files =
     fileInput.value && fileInput.value.files.length > 0
-      ? fileInput.value.files[0]
-      : null
+      ? Array.from(fileInput.value.files) // Convert FileList to Array
+      : []
 
   try {
     const { success, data, statusCode } =
-      await FetchUtils.postTaskWithAttachment(boardId, newTaskDTO, file)
+      await FetchUtils.postTaskWithAttachment(boardId, newTaskDTO, files)
 
     if (success && statusCode === 201) {
       console.log('Task added successfully:', statusCode)
@@ -303,23 +304,8 @@ textarea {
   transition: opacity 0.2s;
 }
 
-.fade-enter-from,
+.fade-enter,
 .fade-leave-to {
   opacity: 0;
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.3s ease-out;
 }
 </style>
