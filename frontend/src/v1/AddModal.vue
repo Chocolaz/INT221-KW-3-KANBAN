@@ -10,6 +10,7 @@ import {
 import FetchUtils from '../lib/fetchUtils'
 import { useRoute } from 'vue-router'
 import { statusStyle } from '../lib/statusStyles'
+import FileAttachmentInput from './FileAttachmentInput.vue'
 
 const props = defineProps({
   closeModal: {
@@ -34,6 +35,7 @@ const isDropdownOpen = ref(false)
 const hoverStatus = ref(null)
 
 const fileInput = ref(null) // Ref for file input
+const selectedFiles = ref([]) // New ref to store selected files
 
 const isSaveDisabled = computed(() => {
   const { title, description, assignees } = taskDetails.value
@@ -55,15 +57,13 @@ async function handleSaveTask() {
     statusName: taskDetails.value.statusName
   }
 
-  // Collect all selected files
-  const files =
-    fileInput.value && fileInput.value.files.length > 0
-      ? Array.from(fileInput.value.files) // Convert FileList to Array
-      : []
-
   try {
     const { success, data, statusCode } =
-      await FetchUtils.postTaskWithAttachment(boardId, newTaskDTO, files)
+      await FetchUtils.postTaskWithAttachment(
+        boardId,
+        newTaskDTO,
+        selectedFiles.value
+      )
 
     if (success && statusCode === 201) {
       console.log('Task added successfully:', statusCode)
@@ -77,6 +77,11 @@ async function handleSaveTask() {
   } catch (error) {
     console.error('Error saving task:', error)
   }
+}
+
+// Handler for file selection
+function handleFilesSelected(files) {
+  selectedFiles.value = files
 }
 
 function cancelModal() {
@@ -139,20 +144,22 @@ onUnmounted(() => {
     @click.self="cancelModal"
   >
     <div
-      class="itbkk-modal-task bg-white shadow-lg rounded-lg w-full max-w-lg mt-14 animate-fade-in-up"
+      class="itbkk-modal-task bg-white shadow-lg rounded-lg w-full max-w-lg mt-14 animate-fade-in-up max-h-full"
     >
-      <div class="p-6">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-xl font-semibold text-red-600">Add Task</h2>
-          <button
-            class="text-2xl text-red-600 hover:text-red-800"
-            @click="cancelModal"
-          >
-            &times;
-          </button>
-        </div>
+      <div
+        class="flex justify-between items-center p-4 border-b border-gray-200"
+      >
+        <h2 class="text-xl font-semibold text-red-600">Add Task</h2>
+        <button
+          class="text-2xl text-red-600 hover:text-red-800"
+          @click="cancelModal"
+        >
+          &times;
+        </button>
+      </div>
 
-        <form @submit.prevent="handleSaveTask">
+      <form @submit.prevent="handleSaveTask">
+        <div class="p-5 overflow-y-auto max-h-[350px]">
           <div class="mb-4">
             <label
               for="title"
@@ -163,7 +170,7 @@ onUnmounted(() => {
               type="text"
               id="title"
               v-model="taskDetails.title"
-              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm"
               required
               maxlength="100"
               placeholder="Enter task title"
@@ -182,7 +189,7 @@ onUnmounted(() => {
             <textarea
               id="description"
               v-model="taskDetails.description"
-              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm"
               maxlength="500"
               placeholder="Enter task description"
             ></textarea>
@@ -194,85 +201,78 @@ onUnmounted(() => {
             </small>
           </div>
 
-          <div class="mb-4">
-            <label
-              for="assignees"
-              class="block text-sm font-semibold text-start text-gray-700"
-              >Assignees</label
-            >
-            <input
-              type="text"
-              id="assignees"
-              v-model="taskDetails.assignees"
-              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-              maxlength="30"
-              placeholder="Enter assignees"
-            />
-            <small
-              v-if="taskDetails.assignees.length > 25"
-              class="text-red-600"
-            >
-              {{ 30 - taskDetails.assignees.length }} characters left
-            </small>
-          </div>
-
-          <div class="mb-4 status-dropdown">
-            <label
-              for="status"
-              class="block text-sm font-semibold text-start text-gray-700"
-              >Status</label
-            >
-            <div class="relative">
-              <div
-                class="block p-2 border border-gray-300 rounded-md shadow-sm cursor-pointer text-xs w-36 hover:opacity-80 transition-opacity duration-200"
-                :style="statusStyle(taskDetails.statusName)"
-                @click="toggleDropdown"
+          <div class="mb-4 flex space-x-4">
+            <!-- Assignees Input -->
+            <div class="flex-1">
+              <label
+                for="assignees"
+                class="block text-sm font-semibold text-start text-gray-700"
+                >Assignees</label
               >
-                {{ taskDetails.statusName || 'Select Status' }}
-              </div>
+              <input
+                type="text"
+                id="assignees"
+                v-model="taskDetails.assignees"
+                class="mt-1 p-2 w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm"
+                maxlength="30"
+                placeholder="Enter assignees"
+              />
+              <small
+                v-if="taskDetails.assignees.length > 25"
+                class="text-red-600"
+              >
+                {{ 30 - taskDetails.assignees.length }} characters left
+              </small>
+            </div>
 
-              <transition name="fade">
+            <!-- Status Dropdown -->
+            <div class="status-dropdown w-36">
+              <label
+                for="status"
+                class="block text-sm font-semibold text-start text-gray-700 mb-1"
+                >Status</label
+              >
+              <div class="relative">
                 <div
-                  v-if="isDropdownOpen"
-                  class="absolute top-full mt-1 w-36 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto h-20 z-20"
+                  class="block p-2 border border-gray-300 rounded-md shadow-sm cursor-pointer text-xs hover:opacity-80 transition-opacity duration-200 h-9"
+                  :style="statusStyle(taskDetails.statusName)"
+                  @click="toggleDropdown"
                 >
-                  <ul class="list-none p-0 m-0">
-                    <li
-                      v-for="status in statuses"
-                      :key="status.id"
-                      class="p-2 cursor-pointer text-xs transition-colors duration-200"
-                      :style="statusStyle(status.name)"
-                      @click="selectStatus(status.name)"
-                      @mouseenter="hoverStatus = status.name"
-                      @mouseleave="hoverStatus = null"
-                      :class="{ 'opacity-80': hoverStatus === status.name }"
-                    >
-                      {{ status.name }}
-                    </li>
-                  </ul>
+                  {{ taskDetails.statusName || 'Select Status' }}
                 </div>
-              </transition>
+
+                <transition name="fade">
+                  <div
+                    v-if="isDropdownOpen"
+                    class="absolute top-full mt-1 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto z-20"
+                  >
+                    <ul class="list-none p-0 m-0">
+                      <li
+                        v-for="status in statuses"
+                        :key="status.id"
+                        class="p-2 cursor-pointer text-xs transition-colors duration-200"
+                        :style="statusStyle(status.name)"
+                        @click="selectStatus(status.name)"
+                        @mouseenter="hoverStatus = status.name"
+                        @mouseleave="hoverStatus = null"
+                        :class="{ 'opacity-80': hoverStatus === status.name }"
+                      >
+                        {{ status.name }}
+                      </li>
+                    </ul>
+                  </div>
+                </transition>
+              </div>
             </div>
           </div>
 
           <!-- File input for attachments -->
           <div class="mb-4">
-            <label
-              for="attachments"
-              class="block text-sm font-semibold text-start text-gray-700"
-            >
-              Attachments
-            </label>
-            <input
-              type="file"
-              id="attachments"
-              ref="fileInput"
-              multiple
-              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
-            />
+            <FileAttachmentInput @filesSelected="handleFilesSelected" />
           </div>
-
-          <div class="flex justify-end space-x-2">
+        </div>
+        <div class="flex justify-end items-center p-2 border-t border-gray-200">
+          <div class="space-x-2">
             <button
               type="button"
               class="py-2 px-4 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300"
@@ -288,8 +288,8 @@ onUnmounted(() => {
               Save
             </button>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
   </div>
 </template>
