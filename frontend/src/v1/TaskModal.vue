@@ -70,25 +70,37 @@
                   <i class="fas fa-paperclip w-5 h-5 text-gray-500"></i>
                   Attachments
                 </h3>
-                <div class="flex flex-wrap gap-3">
+                <div class="flex flex-wrap gap-4">
                   <template v-if="attachments.length">
                     <div
                       v-for="attachment in attachments"
                       :key="attachment.attachmentId"
-                      class="flex items-center bg-gray-200 rounded-lg overflow-hidden group transition-colors hover:bg-gray-300 pr-4 cursor-pointer"
+                      class="flex items-center bg-gray-200 rounded-lg overflow-hidden group transition-colors hover:bg-gray-300 cursor-pointer w-60"
                       @click="handleAttachmentClick(attachment)"
                     >
-                      <div class="w-16 h-16 overflow-hidden rounded-lg">
-                        <img
-                          v-if="attachment.blobUrl"
-                          :src="attachment.blobUrl"
-                          :alt="attachment.file"
-                          class="w-full h-full object-cover"
-                        />
+                      <div
+                        class="w-16 h-16 flex items-center justify-center overflow-hidden bg-gray-100 rounded-lg text-3xl"
+                      >
+                        <template
+                          v-if="
+                            ['jpg', 'jpeg', 'png'].includes(
+                              attachment.file.split('.').pop().toLowerCase()
+                            )
+                          "
+                        >
+                          <img
+                            v-if="attachment.blobUrl"
+                            :src="attachment.blobUrl"
+                            :alt="attachment.file"
+                            class="object-cover w-full h-full"
+                          />
+                        </template>
+                        <template v-else>
+                          <span>{{ getFileIcon(attachment.file) }}</span>
+                        </template>
                       </div>
-
                       <span
-                        class="text-sm text-gray-700 px-3 truncate max-w-[200px]"
+                        class="text-sm text-gray-700 px-3 truncate max-w-[160px]"
                       >
                         {{ attachment.file }}
                       </span>
@@ -218,6 +230,23 @@ const handleAttachmentClick = (attachment) => {
     link.download = attachment.file
     link.click()
   }
+}
+
+const getFileIcon = (fileName) => {
+  const fileType = fileName.toLowerCase()
+
+  if (fileType.includes('pdf')) return '📄'
+  if (fileType.includes('doc') || fileType.includes('word')) return '📝'
+  if (
+    fileType.includes('xls') ||
+    fileType.includes('sheet') ||
+    fileType.includes('excel')
+  )
+    return '📊'
+  if (fileType.includes('ppt')) return '📈'
+  if (fileType.includes('txt')) return '📜'
+
+  return '📎'
 }
 </script>
 
