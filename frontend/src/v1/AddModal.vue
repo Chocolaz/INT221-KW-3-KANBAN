@@ -33,6 +33,8 @@ const statuses = ref([])
 const isDropdownOpen = ref(false)
 const hoverStatus = ref(null)
 
+const fileInput = ref(null) // Ref for file input
+
 const isSaveDisabled = computed(() => {
   const { title, description, assignees } = taskDetails.value
   return (
@@ -46,17 +48,21 @@ const isSaveDisabled = computed(() => {
 async function handleSaveTask() {
   const boardId = route.params.boardId
 
-  if (!boardId) {
-    console.error('Board ID is undefined')
-    return
+  const newTaskDTO = {
+    title: taskDetails.value.title,
+    description: taskDetails.value.description,
+    assignees: taskDetails.value.assignees,
+    statusName: taskDetails.value.statusName
   }
 
+  const file =
+    fileInput.value && fileInput.value.files.length > 0
+      ? fileInput.value.files[0]
+      : null
+
   try {
-    const { success, data, statusCode } = await FetchUtils.postData(
-      'tasks',
-      boardId,
-      taskDetails.value
-    )
+    const { success, data, statusCode } =
+      await FetchUtils.postTaskWithAttachment(boardId, newTaskDTO, file)
 
     if (success && statusCode === 201) {
       console.log('Task added successfully:', statusCode)
@@ -248,6 +254,23 @@ onUnmounted(() => {
             </div>
           </div>
 
+          <!-- File input for attachments -->
+          <div class="mb-4">
+            <label
+              for="attachments"
+              class="block text-sm font-semibold text-start text-gray-700"
+            >
+              Attachments
+            </label>
+            <input
+              type="file"
+              id="attachments"
+              ref="fileInput"
+              multiple
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+            />
+          </div>
+
           <div class="flex justify-end space-x-2">
             <button
               type="button"
@@ -258,9 +281,8 @@ onUnmounted(() => {
             </button>
             <button
               type="submit"
-              :class="{ 'opacity-50 cursor-not-allowed': isSaveDisabled }"
               :disabled="isSaveDisabled"
-              class="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700"
+              class="py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:bg-gray-400"
             >
               Save
             </button>

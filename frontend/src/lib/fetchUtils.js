@@ -290,6 +290,41 @@ const fetchAttachments = async (attachments) => {
   }
 }
 
+const postTaskWithAttachment = async (boardId, newTaskDTO, file) => {
+  try {
+    validateBoardId(boardId)
+    const fullUrl = `http://localhost:8080/v3/boards/${boardId}/tasks`
+
+    const formData = new FormData()
+
+    // Convert the newTaskDTO object to a JSON string and append it with the correct content-type
+    formData.append(
+      'newTaskDTO',
+      new Blob([JSON.stringify(newTaskDTO)], { type: 'application/json' })
+    )
+
+    // If a file is provided, append it as 'addAttachments'
+    if (file) {
+      formData.append('addAttachments', file)
+    }
+
+    // Send the FormData using fetchWithAuth
+    const responseData = await fetchWithAuth(fullUrl, {
+      method: 'POST',
+      body: formData
+    })
+
+    console.log(
+      'Post task with attachment status code:',
+      responseData.statusCode
+    )
+    return responseData
+  } catch (error) {
+    console.error('Error posting task with attachment:', error)
+    throw error
+  }
+}
+
 export default {
   fetchData,
   postData,
@@ -303,5 +338,6 @@ export default {
   addCollab,
   updateCollabAccess,
   removeCollab,
-  fetchAttachments
+  fetchAttachments,
+  postTaskWithAttachment
 }

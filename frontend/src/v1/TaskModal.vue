@@ -206,16 +206,13 @@ onMounted(async () => {
   attachments.value = await fetchUtils.fetchAttachments(props.task.attachments)
 })
 
-// Handle attachment click to display or download
 const handleAttachmentClick = (attachment) => {
   const fileType = attachment.file.split('.').pop().toLowerCase()
   const supportedFileTypes = ['pdf', 'jpeg', 'jpg', 'png', 'txt']
 
   if (supportedFileTypes.includes(fileType)) {
-    // Open in a new tab if supported
     window.open(attachment.blobUrl, '_blank')
   } else {
-    // Force download if unsupported
     const link = document.createElement('a')
     link.href = attachment.blobUrl
     link.download = attachment.file

@@ -186,6 +186,7 @@ const handleTaskSaved = (savedTask) => {
   tasks.value.push(savedTask)
   showAddModal.value = false
   tasks.value.sort((a, b) => new Date(a.createdOn) - new Date(b.createdOn))
+  fetchTasks()
 }
 const cancelAdd = () => {
   showAddModal.value = false
@@ -226,6 +227,7 @@ const openEditModal = async (taskId) => {
   try {
     const data = await FetchUtils.fetchData('tasks', boardId, taskId)
     taskToEdit.value = data
+    console.log(taskToEdit.value)
     if (taskToEdit.value) {
       operationType.value = 'edit'
       showEditModal.value = true
