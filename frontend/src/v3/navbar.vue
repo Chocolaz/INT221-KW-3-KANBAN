@@ -1,18 +1,32 @@
 <template>
-  <nav class="navbar">
-    <div class="navbar-content">
-      <div class="logo-container">
+  <nav
+    class="bg-white shadow-md sticky top-0 z-10 py-3 px-6 transition-all duration-300"
+  >
+    <div class="max-w-screen-xl h-10 mx-auto flex justify-between items-center">
+      <div class="flex items-center">
         <router-link to="/board">
-          <img src="../assets/KANBANLOGO.png" alt="KANBAN Logo" class="logo" />
+          <img
+            src="../assets/KANBANLOGO.png"
+            alt="KANBAN Logo"
+            class="h-12 w-auto transition-transform duration-300 hover:scale-105"
+          />
         </router-link>
       </div>
 
-      <div class="user-actions">
-        <div class="user-info">
-          <i class="fa fa-user user-avatar" aria-hidden="true"></i>
-          <span class="username itbkk-fullname">{{ displayUsername }}</span>
+      <div class="flex items-center gap-4 relative">
+        <div class="flex items-center gap-2">
+          <i
+            class="fa fa-user w-10 h-10 rounded-full object-cover text-red-500 transition-transform duration-300 mt-5 hover:scale-110"
+          ></i>
+          <span class="text-lg font-medium text-gray-800">{{
+            displayUsername
+          }}</span>
         </div>
-        <button @click="toggleDropdown" class="menu-btn" aria-label="User Menu">
+        <button
+          @click="toggleDropdown"
+          class="bg-none border-none cursor-pointer p-2 rounded-full transition-all duration-300 ease-in-out transform hover:bg-gray-100 hover:rotate-90"
+          aria-label="User Menu"
+        >
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
@@ -21,7 +35,7 @@
             stroke-width="2"
             stroke-linecap="round"
             stroke-linejoin="round"
-            class="menu-icon"
+            class="w-6 h-6 text-gray-500 transition-colors duration-300 hover:text-gray-800"
           >
             <circle cx="12" cy="12" r="1"></circle>
             <circle cx="12" cy="5" r="1"></circle>
@@ -29,11 +43,20 @@
           </svg>
         </button>
         <transition name="dropdown">
-          <div v-if="showDropdown" class="dropdown">
-            <button @click="navigate" class="dropdown-item">
-              {{ isManageStatus ? 'Task List' : 'Manage Status' }}
+          <div
+            v-if="showDropdown"
+            class="absolute top-full right-0 bg-white rounded-md shadow-lg overflow-hidden min-w-[150px]"
+          >
+            <button
+              @click="navigate"
+              class="w-full p-3 text-left text-gray-800 text-sm transition-all duration-300 ease-in-out hover:bg-green-100 transform hover:translate-x-1"
+            >
+              {{ isManageStatus ? "Task List" : "Manage Status" }}
             </button>
-            <button @click="logout" class="dropdown-item logout itbkk-sign-out">
+            <button
+              @click="logout"
+              class="w-full p-3 text-left text-red-500 text-sm transition-all duration-300 ease-in-out hover:bg-red-100 transform hover:translate-x-1"
+            >
               Logout
             </button>
           </div>
@@ -44,196 +67,38 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { ref, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
 
-const showDropdown = ref(false)
-const router = useRouter()
-const route = useRoute()
+const showDropdown = ref(false);
+const router = useRouter();
+const route = useRoute();
 
-const username = localStorage.getItem('username')
-const isAuthenticated = !!username
+const username = localStorage.getItem("username");
+const isAuthenticated = !!username;
 
 const displayUsername = computed(() => {
-  return isAuthenticated ? username : 'Guest'
-})
+  return isAuthenticated ? username : "Guest";
+});
 
-const isManageStatus = computed(() => route.name === 'statusView')
+const isManageStatus = computed(() => route.name === "statusView");
 
 const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value
-}
+  showDropdown.value = !showDropdown.value;
+};
 
 const navigate = () => {
   if (isManageStatus.value) {
-    router.push({ name: 'taskView' })
+    router.push({ name: "taskView" });
   } else {
-    router.push({ name: 'statusView' })
+    router.push({ name: "statusView" });
   }
-  showDropdown.value = false
-}
+  showDropdown.value = false;
+};
 
 const logout = () => {
-  localStorage.clear()
-  showDropdown.value = false
-  router.push({ name: 'loginView' })
-}
+  localStorage.clear();
+  showDropdown.value = false;
+  router.push({ name: "loginView" });
+};
 </script>
-
-<style scoped>
-.navbar {
-  background-color: #ffffff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  padding: 0.75rem 1.5rem;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  transition: all 0.3s ease;
-}
-
-.navbar-content {
-  max-width: 1200px;
-  height: 40px;
-  margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.logo-container {
-  display: flex;
-  align-items: center;
-}
-
-.logo {
-  height: 50px;
-  width: auto;
-  transition: transform 0.3s ease;
-}
-
-.logo:hover {
-  transform: scale(1.05);
-}
-
-.user-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  position: relative;
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  object-fit: cover;
-  transition: transform 0.3s ease;
-  margin-top: 20px;
-  color: #e74c3c;
-}
-
-.user-avatar:hover {
-  transform: scale(1.1);
-}
-
-.username {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #333;
-}
-
-.menu-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0.5rem;
-  border-radius: 50%;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-.menu-btn:hover {
-  background-color: #f0f0f0;
-  transform: rotate(90deg);
-}
-
-.menu-icon {
-  width: 24px;
-  height: 24px;
-  color: #666;
-  transition: color 0.3s ease;
-}
-
-.menu-btn:hover .menu-icon {
-  color: #333;
-}
-
-.dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background-color: #ffffff;
-  border-radius: 4px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  min-width: 150px;
-}
-
-.dropdown-item {
-  display: block;
-  width: 100%;
-  padding: 0.75rem 1rem;
-  text-align: left;
-  background: none;
-  border: none;
-  font-size: 0.9rem;
-  color: #333;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-}
-
-.dropdown-item:hover {
-  background-color: #f0f0f0;
-  transform: translateX(5px);
-}
-
-.dropdown-item.logout {
-  color: #e74c3c;
-}
-
-.dropdown-item.logout:hover {
-  background-color: #fbe9e7;
-}
-
-/* Dropdown animation */
-.dropdown-enter-active,
-.dropdown-leave-active {
-  transition: opacity 0.3s, transform 0.3s;
-}
-
-.dropdown-enter-from,
-.dropdown-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-@media (max-width: 768px) {
-  .navbar-content {
-    flex-direction: row;
-  }
-
-  .user-actions {
-    flex-grow: 1;
-    justify-content: flex-end;
-  }
-
-  .username {
-    display: none;
-  }
-}
-</style>
