@@ -12,16 +12,13 @@ const fileList = ref([])
 const isDragging = ref(false)
 const errorMessage = ref(null)
 
-// Function to format file size
 function formatFileSize(bytes) {
-  if (bytes === 0) return '0 Bytes'
   const k = 1024
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-// Function to get file icon based on type
 function getFileIcon(type) {
   if (type.includes('pdf')) return '📄'
   if (type.includes('word')) return '📝'
@@ -33,26 +30,20 @@ function isImageFile(type) {
   return type.startsWith('image/')
 }
 
-// Function to create thumbnail for image files
 function createThumbnail(file) {
   return new Promise((resolve) => {
     if (!isImageFile(file.type)) {
       resolve(null)
       return
     }
-
     const reader = new FileReader()
-    reader.onload = (e) => {
-      resolve(e.target.result)
-    }
+    reader.onload = (e) => resolve(e.target.result)
     reader.readAsDataURL(file)
   })
 }
 
-// Check if file list exceeds limits
 const canAddMoreFiles = computed(() => fileList.value.length < MAX_FILES)
 
-// Handle file selection with validation
 async function handleFileChange(event) {
   const files = event?.target?.files ? Array.from(event.target.files) : []
   await addFiles(files)
@@ -65,65 +56,52 @@ function displayError(message) {
   }, 7000)
 }
 
-// Add selected files to the list with validation
 async function addFiles(files) {
   const validFiles = []
   const notAddedFiles = []
 
   for (const file of files) {
-    // Check if the file size exceeds the maximum allowed size
-    if (file.size > MAX_FILE_SIZE) {
+    if (
+      file.size > MAX_FILE_SIZE ||
+      fileList.value.some((item) => item.file.name === file.name)
+    ) {
       notAddedFiles.push(file.name)
       continue
     }
 
-    // Check if the file already exists in the list
-    if (fileList.value.some((item) => item.file.name === file.name)) {
-      notAddedFiles.push(file.name)
-      continue
-    }
-
-    // Check if adding the file exceeds the MAX_FILES limit
-    if (fileList.value.length + validFiles.length >= MAX_FILES) {
-      notAddedFiles.push(file.name)
-      continue
-    }
-
-    // Check combined file size limit
-    const combinedSize =
+    if (
+      fileList.value.length + validFiles.length >= MAX_FILES ||
       fileList.value.reduce((total, item) => total + item.file.size, 0) +
-      file.size
-    if (combinedSize > MAX_TOTAL_FILE_SIZE) {
+        file.size >
+        MAX_TOTAL_FILE_SIZE
+    ) {
       notAddedFiles.push(file.name)
       continue
     }
 
-    // Add valid file to the list of files to be added
     validFiles.push({
       file,
       thumbnail: await createThumbnail(file)
     })
   }
 
-  // Add valid files up to the MAX_FILES limit
   const filesToAdd = validFiles.slice(0, MAX_FILES - fileList.value.length)
   fileList.value = [...fileList.value, ...filesToAdd]
 
-  // Generate error message if there are files not added
-  let errorMessage = ''
+  let errorMessageText = ''
 
-  // Check if there were files not added due to size limit
+  // Check for file size limit
   if (
     notAddedFiles.length > 0 &&
     notAddedFiles.every((file) =>
       files.some((f) => f.name === file && f.size > MAX_FILE_SIZE)
     )
   ) {
-    errorMessage = `Each file cannot be larger than ${
+    errorMessageText = `Each file cannot be larger than ${
       MAX_FILE_SIZE / (1024 * 1024)
-    } MB. The following files were not added: ${notAddedFiles.join(', ')}.`
+    } MB.`
   }
-  // Check if there were files not added due to the MAX_FILES limit
+  // Check for file count limit
   else if (
     notAddedFiles.length > 0 &&
     notAddedFiles.some((file) =>
@@ -134,11 +112,9 @@ async function addFiles(files) {
       )
     )
   ) {
-    errorMessage = `Each task can have at most ${MAX_FILES} files. The following files were not added: ${notAddedFiles.join(
-      ', '
-    )}.`
+    errorMessageText = `Each task can have at most ${MAX_FILES} files.`
   }
-  // Check if there were files not added due to the combined file size limit
+  // Check for total file size limit
   else if (
     notAddedFiles.length > 0 &&
     notAddedFiles.some((file) =>
@@ -151,33 +127,35 @@ async function addFiles(files) {
       )
     )
   ) {
-    errorMessage = `Total file size must not exceed ${
+    errorMessageText = `Total file size must not exceed ${
       MAX_TOTAL_FILE_SIZE / (1024 * 1024)
-    } MB. The following files were not added: ${notAddedFiles.join(', ')}.`
+    } MB.`
   }
 
-  if (errorMessage) {
-    displayError(errorMessage)
+  if (notAddedFiles.length > 0) {
+    errorMessageText += ` The following files were not added: <p> ${notAddedFiles.join(
+      ', '
+    )}.</p>`
   }
 
-  // Emit the selected files to the parent component
+  if (errorMessageText) {
+    displayError(errorMessageText)
+  }
+
   emit(
     'filesSelected',
     fileList.value.map((item) => item.file)
   )
 }
 
-// Remove file from the list
 function removeFile(index) {
   fileList.value.splice(index, 1)
-  errorMessage.value = ''
   emit(
     'filesSelected',
     fileList.value.map((item) => item.file)
   )
 }
 
-// Handle drag and drop events
 function handleDragEnter(e) {
   e.preventDefault()
   isDragging.value = true
@@ -269,9 +247,11 @@ async function handleDrop(e) {
 
     <!-- Error Message -->
     <transition name="fade">
-      <div v-if="errorMessage" class="text-xs text-red-500 mt-2">
-        {{ errorMessage }}
-      </div>
+      <div
+        v-if="errorMessage"
+        class="text-xs text-red-500 mt-2"
+        v-html="errorMessage"
+      ></div>
     </transition>
 
     <!-- File List -->
