@@ -5,7 +5,7 @@ const emit = defineEmits(['filesSelected'])
 
 const MAX_FILES = 10
 const MAX_FILE_SIZE = 20 * 1024 * 1024
-const MAX_COMBINED_SIZE = 20 * 1024 * 1024
+const MAX_TOTAL_FILE_SIZE = 20 * 1024 * 1024
 
 const fileInput = ref(null)
 const fileList = ref([])
@@ -19,15 +19,6 @@ function formatFileSize(bytes) {
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
-const combinedFileSize = computed(() => {
-  return fileList.value.reduce((total, item) => total + item.file.size, 0)
-})
-
-function checkCombinedFileSize(files) {
-  const newFilesSize = files.reduce((total, file) => total + file.size, 0)
-  return combinedFileSize.value + newFilesSize <= MAX_COMBINED_SIZE
 }
 
 // Function to get file icon based on type
@@ -77,32 +68,99 @@ function displayError(message) {
 // Add selected files to the list with validation
 async function addFiles(files) {
   const validFiles = []
+  const notAddedFiles = []
+
   for (const file of files) {
+    // Check if the file size exceeds the maximum allowed size
     if (file.size > MAX_FILE_SIZE) {
-      displayError(`File "${file.name}" exceeds the 20 MB size limit.`)
+      notAddedFiles.push(file.name)
       continue
     }
+
+    // Check if the file already exists in the list
     if (fileList.value.some((item) => item.file.name === file.name)) {
-      displayError(`File "${file.name}" already exists.`)
+      notAddedFiles.push(file.name)
       continue
     }
+
+    // Check if adding the file exceeds the MAX_FILES limit
     if (fileList.value.length + validFiles.length >= MAX_FILES) {
-      displayError(`You can only upload up to ${MAX_FILES} files.`)
-      break
+      notAddedFiles.push(file.name)
+      continue
     }
 
-    if (!checkCombinedFileSize(files)) {
-      displayError(`Total file size must not exceed 20 MB.`)
-      break
+    // Check combined file size limit
+    const combinedSize =
+      fileList.value.reduce((total, item) => total + item.file.size, 0) +
+      file.size
+    if (combinedSize > MAX_TOTAL_FILE_SIZE) {
+      notAddedFiles.push(file.name)
+      continue
     }
 
+    // Add valid file to the list of files to be added
     validFiles.push({
       file,
       thumbnail: await createThumbnail(file)
     })
   }
 
-  fileList.value = [...fileList.value, ...validFiles]
+  // Add valid files up to the MAX_FILES limit
+  const filesToAdd = validFiles.slice(0, MAX_FILES - fileList.value.length)
+  fileList.value = [...fileList.value, ...filesToAdd]
+
+  // Generate error message if there are files not added
+  let errorMessage = ''
+
+  // Check if there were files not added due to size limit
+  if (
+    notAddedFiles.length > 0 &&
+    notAddedFiles.every((file) =>
+      files.some((f) => f.name === file && f.size > MAX_FILE_SIZE)
+    )
+  ) {
+    errorMessage = `Each file cannot be larger than ${
+      MAX_FILE_SIZE / (1024 * 1024)
+    } MB. The following files were not added: ${notAddedFiles.join(', ')}.`
+  }
+  // Check if there were files not added due to the MAX_FILES limit
+  else if (
+    notAddedFiles.length > 0 &&
+    notAddedFiles.some((file) =>
+      files.some(
+        (f) =>
+          f.name === file &&
+          fileList.value.length + validFiles.length >= MAX_FILES
+      )
+    )
+  ) {
+    errorMessage = `Each task can have at most ${MAX_FILES} files. The following files were not added: ${notAddedFiles.join(
+      ', '
+    )}.`
+  }
+  // Check if there were files not added due to the combined file size limit
+  else if (
+    notAddedFiles.length > 0 &&
+    notAddedFiles.some((file) =>
+      files.some(
+        (f) =>
+          f.name === file &&
+          fileList.value.reduce((total, item) => total + item.file.size, 0) +
+            f.size >
+            MAX_TOTAL_FILE_SIZE
+      )
+    )
+  ) {
+    errorMessage = `Total file size must not exceed ${
+      MAX_TOTAL_FILE_SIZE / (1024 * 1024)
+    } MB. The following files were not added: ${notAddedFiles.join(', ')}.`
+  }
+
+  if (errorMessage) {
+    displayError(errorMessage)
+  }
+
+  // Emit the selected files to the parent component
   emit(
     'filesSelected',
     fileList.value.map((item) => item.file)
@@ -145,12 +203,6 @@ async function handleDrop(e) {
       <label for="attachments" class="text-sm font-bold text-gray-700">
         Upload Attachments
       </label>
-      <!-- Error Message -->
-      <transition name="fade">
-        <div v-if="errorMessage" class="text-xs text-red-500">
-          {{ errorMessage }}
-        </div>
-      </transition>
     </div>
 
     <!-- Upload Area -->
@@ -214,6 +266,13 @@ async function handleDrop(e) {
         />
       </div>
     </div>
+
+    <!-- Error Message -->
+    <transition name="fade">
+      <div v-if="errorMessage" class="text-xs text-red-500 mt-2">
+        {{ errorMessage }}
+      </div>
+    </transition>
 
     <!-- File List -->
     <div v-if="fileList.length > 0" class="mt-3">
