@@ -5,11 +5,12 @@ const emit = defineEmits(['filesSelected'])
 
 const MAX_FILES = 10
 const MAX_FILE_SIZE = 20 * 1024 * 1024
+const MAX_COMBINED_SIZE = 20 * 1024 * 1024
 
 const fileInput = ref(null)
 const fileList = ref([])
 const isDragging = ref(false)
-const errorMessage = ref('')
+const errorMessage = ref(null)
 
 // Function to format file size
 function formatFileSize(bytes) {
@@ -18,6 +19,15 @@ function formatFileSize(bytes) {
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
+
+const combinedFileSize = computed(() => {
+  return fileList.value.reduce((total, item) => total + item.file.size, 0)
+})
+
+function checkCombinedFileSize(files) {
+  const newFilesSize = files.reduce((total, file) => total + file.size, 0)
+  return combinedFileSize.value + newFilesSize <= MAX_COMBINED_SIZE
 }
 
 // Function to get file icon based on type
@@ -57,22 +67,35 @@ async function handleFileChange(event) {
   await addFiles(files)
 }
 
+function displayError(message) {
+  errorMessage.value = message
+  setTimeout(() => {
+    errorMessage.value = null
+  }, 7000)
+}
+
 // Add selected files to the list with validation
 async function addFiles(files) {
   const validFiles = []
   for (const file of files) {
     if (file.size > MAX_FILE_SIZE) {
-      errorMessage.value = `File "${file.name}" exceeds the 20 MB size limit.`
+      displayError(`File "${file.name}" exceeds the 20 MB size limit.`)
       continue
     }
     if (fileList.value.some((item) => item.file.name === file.name)) {
-      errorMessage.value = `File "${file.name}" already exists.`
+      displayError(`File "${file.name}" already exists.`)
       continue
     }
     if (fileList.value.length + validFiles.length >= MAX_FILES) {
-      errorMessage.value = `You can only upload up to ${MAX_FILES} files.`
+      displayError(`You can only upload up to ${MAX_FILES} files.`)
       break
     }
+
+    if (!checkCombinedFileSize(files)) {
+      displayError(`Total file size must not exceed 20 MB.`)
+      break
+    }
+
     validFiles.push({
       file,
       thumbnail: await createThumbnail(file)
@@ -123,9 +146,11 @@ async function handleDrop(e) {
         Upload Attachments
       </label>
       <!-- Error Message -->
-      <div v-if="errorMessage" class="text-xs text-red-500">
-        {{ errorMessage }}
-      </div>
+      <transition name="fade">
+        <div v-if="errorMessage" class="text-xs text-red-500">
+          {{ errorMessage }}
+        </div>
+      </transition>
     </div>
 
     <!-- Upload Area -->
@@ -268,5 +293,14 @@ async function handleDrop(e) {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>
