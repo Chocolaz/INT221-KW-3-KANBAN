@@ -30,12 +30,12 @@
               <!-- Description -->
               <div class="bg-gray-50 rounded-xl p-6">
                 <h3
-                  class="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
+                  class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"
                 >
                   <i class="fas fa-align-justify w-5 h-5 text-gray-500"></i>
                   Description
                 </h3>
-                <p class="text-gray-600 leading-relaxed">
+                <p class="text-gray-600 leading-relaxed text-sm">
                   {{ task.description || 'No description provided' }}
                 </p>
               </div>
@@ -43,7 +43,7 @@
               <!-- Assignees -->
               <div class="bg-gray-50 rounded-xl p-6">
                 <h3
-                  class="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
+                  class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"
                 >
                   <i class="fas fa-user-friends w-5 h-5 text-gray-500"></i>
                   Assignees
@@ -53,19 +53,19 @@
                     <span
                       v-for="(assignee, index) in task.assignees.split(',')"
                       :key="index"
-                      class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-medium"
+                      class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm"
                     >
                       {{ assignee.trim() }}
                     </span>
                   </template>
-                  <span v-else class="text-gray-500">Unassigned</span>
+                  <span v-else class="text-gray-500 text-sm">Unassigned</span>
                 </div>
               </div>
 
               <!-- Attachments Section -->
               <div class="bg-gray-50 rounded-xl p-6">
                 <h3
-                  class="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
+                  class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"
                 >
                   <i class="fas fa-paperclip w-5 h-5 text-gray-500"></i>
                   Attachments
@@ -100,13 +100,13 @@
                         </template>
                       </div>
                       <span
-                        class="text-sm text-gray-700 px-3 truncate max-w-[160px]"
+                        class="text-xs text-gray-700 px-3 truncate max-w-[160px]"
                       >
                         {{ attachment.file }}
                       </span>
                     </div>
                   </template>
-                  <span v-else class="text-gray-500">No attachments</span>
+                  <span v-else class="text-gray-500 text-sm">No attachments</span>
                 </div>
               </div>
             </div>
@@ -133,30 +133,30 @@
               <div class="bg-gray-50 rounded-xl p-6 space-y-4">
                 <div>
                   <div
-                    class="flex items-center gap-2 text-sm text-gray-500 mb-1"
+                    class="flex items-center gap-2 text-xs text-gray-500 mb-1"
                   >
                     <i class="fas fa-globe w-4 h-4"></i>
                     Timezone
                   </div>
-                  <p class="text-gray-900">{{ timezone }}</p>
+                  <p class="text-gray-900 text-sm">{{ timezone }}</p>
                 </div>
                 <div>
                   <div
-                    class="flex items-center gap-2 text-sm text-gray-500 mb-1"
+                    class="flex items-center gap-2 text-xs text-gray-500 mb-1"
                   >
                     <i class="fas fa-calendar-alt w-4 h-4"></i>
                     Created
                   </div>
-                  <p class="text-gray-900">{{ createdDate }}</p>
+                  <p class="text-gray-900 text-sm">{{ createdDate }}</p>
                 </div>
                 <div>
                   <div
-                    class="flex items-center gap-2 text-sm text-gray-500 mb-1"
+                    class="flex items-center gap-2 text-xs text-gray-500 mb-1"
                   >
                     <i class="fas fa-calendar-check w-4 h-4"></i>
                     Updated
                   </div>
-                  <p class="text-gray-900">{{ updatedDate }}</p>
+                  <p class="text-gray-900 text-sm">{{ updatedDate }}</p>
                 </div>
               </div>
             </div>
@@ -174,7 +174,7 @@
         </button>
         <button
           @click="closeModal"
-          class="px-4 py-2 text-white bg-blue-500 hover:bg-blue-600 rounded-lg transition-colors"
+          class="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors"
         >
           Done
         </button>

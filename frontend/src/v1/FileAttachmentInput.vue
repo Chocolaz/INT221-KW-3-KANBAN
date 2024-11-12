@@ -1,22 +1,17 @@
 <script setup>
-import { ref, defineEmits } from 'vue'
+import { ref, computed, defineEmits } from 'vue'
 
 const emit = defineEmits(['filesSelected'])
+
+const MAX_FILES = 10
+const MAX_FILE_SIZE = 20 * 1024 * 1024
 
 const fileInput = ref(null)
 const fileList = ref([])
 const isDragging = ref(false)
 const errorMessage = ref('')
 
-const allowedTypes = [
-  'image/*',
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-]
-
+// Function to format file size
 function formatFileSize(bytes) {
   if (bytes === 0) return '0 Bytes'
   const k = 1024
@@ -25,6 +20,7 @@ function formatFileSize(bytes) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
+// Function to get file icon based on type
 function getFileIcon(type) {
   if (type.includes('pdf')) return '📄'
   if (type.includes('word')) return '📝'
@@ -36,6 +32,7 @@ function isImageFile(type) {
   return type.startsWith('image/')
 }
 
+// Function to create thumbnail for image files
 function createThumbnail(file) {
   return new Promise((resolve) => {
     if (!isImageFile(file.type)) {
@@ -51,50 +48,55 @@ function createThumbnail(file) {
   })
 }
 
+// Check if file list exceeds limits
+const canAddMoreFiles = computed(() => fileList.value.length < MAX_FILES)
+
+// Handle file selection with validation
 async function handleFileChange(event) {
   const files = event?.target?.files ? Array.from(event.target.files) : []
   await addFiles(files)
 }
 
+// Add selected files to the list with validation
 async function addFiles(files) {
-  const validFiles = files.filter((file) => {
-    const isValidType = allowedTypes.some((type) => {
-      if (type.endsWith('*')) {
-        return file.type.startsWith(type.slice(0, -1))
-      }
-      return file.type === type
-    })
-
-    if (!isValidType) {
-      errorMessage.value = 'Invalid file type'
-      setTimeout(() => (errorMessage.value = ''), 3000)
-      return false
+  const validFiles = []
+  for (const file of files) {
+    if (file.size > MAX_FILE_SIZE) {
+      errorMessage.value = `File "${file.name}" exceeds the 20 MB size limit.`
+      continue
     }
-    return true
-  })
-
-  const filesWithThumbnails = await Promise.all(
-    validFiles.map(async (file) => ({
+    if (fileList.value.some((item) => item.file.name === file.name)) {
+      errorMessage.value = `File "${file.name}" already exists.`
+      continue
+    }
+    if (fileList.value.length + validFiles.length >= MAX_FILES) {
+      errorMessage.value = `You can only upload up to ${MAX_FILES} files.`
+      break
+    }
+    validFiles.push({
       file,
       thumbnail: await createThumbnail(file)
-    }))
-  )
+    })
+  }
 
-  fileList.value = [...fileList.value, ...filesWithThumbnails]
+  fileList.value = [...fileList.value, ...validFiles]
   emit(
     'filesSelected',
     fileList.value.map((item) => item.file)
   )
 }
 
+// Remove file from the list
 function removeFile(index) {
   fileList.value.splice(index, 1)
+  errorMessage.value = ''
   emit(
     'filesSelected',
     fileList.value.map((item) => item.file)
   )
 }
 
+// Handle drag and drop events
 function handleDragEnter(e) {
   e.preventDefault()
   isDragging.value = true
@@ -120,7 +122,10 @@ async function handleDrop(e) {
       <label for="attachments" class="text-sm font-bold text-gray-700">
         Upload Attachments
       </label>
-      <span class="text-xs text-gray-500"> Images, PDF, Word, Excel </span>
+      <!-- Error Message -->
+      <div v-if="errorMessage" class="text-xs text-red-500">
+        {{ errorMessage }}
+      </div>
     </div>
 
     <!-- Upload Area -->
@@ -137,7 +142,7 @@ async function handleDrop(e) {
           'border-blue-400 bg-blue-50': isDragging,
           'border-gray-300 hover:border-gray-400 hover:bg-gray-50': !isDragging
         }"
-        @click="$refs.fileInput.click()"
+        @click="canAddMoreFiles ? $refs.fileInput.click() : ''"
       >
         <!-- Upload Icon -->
         <div
@@ -162,7 +167,15 @@ async function handleDrop(e) {
         <div class="text-center">
           <p class="text-sm text-gray-600">
             Drop files here or
-            <span class="text-blue-500 hover:text-blue-600">browse</span>
+            <span
+              class="text-blue-500 hover:text-blue-600"
+              :class="{ 'cursor-not-allowed': !canAddMoreFiles }"
+            >
+              browse
+            </span>
+          </p>
+          <p v-if="!canAddMoreFiles" class="text-xs text-red-500">
+            Maximum file limit reached.
           </p>
         </div>
 
@@ -173,16 +186,7 @@ async function handleDrop(e) {
           multiple
           @change="handleFileChange"
           class="hidden"
-          :accept="allowedTypes.join(',')"
         />
-      </div>
-
-      <!-- Error Message -->
-      <div
-        v-if="errorMessage"
-        class="absolute -bottom-5 left-0 right-0 text-center text-xs text-red-500 animate-fade-in"
-      >
-        {{ errorMessage }}
       </div>
     </div>
 
