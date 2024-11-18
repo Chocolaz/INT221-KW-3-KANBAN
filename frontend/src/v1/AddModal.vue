@@ -5,57 +5,57 @@ import {
   onMounted,
   onUnmounted,
   defineProps,
-  defineEmits
-} from 'vue'
-import FetchUtils from '../lib/fetchUtils'
-import { useRoute } from 'vue-router'
-import { statusStyle } from '../lib/statusStyles'
-import FileAttachmentInput from './FileAttachmentInput.vue'
+  defineEmits,
+} from "vue";
+import FetchUtils from "../lib/fetchUtils";
+import { useRoute } from "vue-router";
+import { statusStyle } from "../lib/statusStyles";
+import FileAttachmentInput from "./FileAttachmentInput.vue";
 
 const props = defineProps({
   closeModal: {
     type: Function,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
-const emit = defineEmits(['taskSaved', 'showStatusModal'])
+const emit = defineEmits(["taskSaved", "showStatusModal"]);
 
-const route = useRoute()
+const route = useRoute();
 
 const taskDetails = ref({
-  title: '',
-  description: '',
-  assignees: '',
-  statusName: 'No Status'
-})
+  title: "",
+  description: "",
+  assignees: "",
+  statusName: "No Status",
+});
 
-const statuses = ref([])
-const isDropdownOpen = ref(false)
-const hoverStatus = ref(null)
+const statuses = ref([]);
+const isDropdownOpen = ref(false);
+const hoverStatus = ref(null);
 
-const fileInput = ref(null) // Ref for file input
-const selectedFiles = ref([]) // New ref to store selected files
+const fileInput = ref(null); // Ref for file input
+const selectedFiles = ref([]); // New ref to store selected files
 
 const isSaveDisabled = computed(() => {
-  const { title, description, assignees } = taskDetails.value
+  const { title, description, assignees } = taskDetails.value;
   return (
     !title.trim() ||
     title.length > 100 ||
     description.length > 500 ||
     assignees.length > 30
-  )
-})
+  );
+});
 
 async function handleSaveTask() {
-  const boardId = route.params.boardId
+  const boardId = route.params.boardId;
 
   const newTaskDTO = {
     title: taskDetails.value.title,
     description: taskDetails.value.description,
     assignees: taskDetails.value.assignees,
-    statusName: taskDetails.value.statusName
-  }
+    statusName: taskDetails.value.statusName,
+  };
 
   try {
     const { success, data, statusCode } =
@@ -63,79 +63,79 @@ async function handleSaveTask() {
         boardId,
         newTaskDTO,
         selectedFiles.value
-      )
+      );
 
     if (success && statusCode === 201) {
-      console.log('Task added successfully:', statusCode)
-      emit('taskSaved', data)
-      emit('showStatusModal', statusCode)
-      resetTaskDetails()
-      props.closeModal()
+      console.log("Task added successfully:", statusCode);
+      emit("taskSaved", data);
+      emit("showStatusModal", statusCode);
+      resetTaskDetails();
+      props.closeModal();
     } else {
-      console.error('Failed to add task')
+      console.error("Failed to add task");
     }
   } catch (error) {
-    console.error('Error saving task:', error)
+    console.error("Error saving task:", error);
   }
 }
 
 // Handler for file selection
 function handleFilesSelected(files) {
-  selectedFiles.value = files
+  selectedFiles.value = files;
 }
 
 function cancelModal() {
-  props.closeModal()
+  props.closeModal();
 }
 
 function resetTaskDetails() {
   taskDetails.value = {
-    title: '',
-    description: '',
-    assignees: '',
-    statusName: 'No Status'
-  }
+    title: "",
+    description: "",
+    assignees: "",
+    statusName: "No Status",
+  };
 }
 
 async function fetchStatuses() {
-  const boardId = route.params.boardId
+  const boardId = route.params.boardId;
 
   if (!boardId) {
-    console.error('Board ID is undefined')
-    return
+    console.error("Board ID is undefined");
+    return;
   }
 
   try {
-    const data = await FetchUtils.fetchData('statuses', boardId)
-    statuses.value = data
+    const data = await FetchUtils.fetchData("statuses", boardId);
+    statuses.value = data;
   } catch (error) {
-    console.error('Error fetching statuses:', error)
+    console.error("Error fetching statuses:", error);
   }
 }
 
 const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-}
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
 
 const selectStatus = (status) => {
-  taskDetails.value.statusName = status
-  isDropdownOpen.value = false
-}
+  taskDetails.value.statusName = status;
+  isDropdownOpen.value = false;
+};
 
 const closeDropdown = (event) => {
-  if (!event.target.closest('.status-dropdown')) {
-    isDropdownOpen.value = false
+  if (!event.target.closest(".status-dropdown")) {
+    isDropdownOpen.value = false;
   }
-}
+};
 
 onMounted(() => {
-  fetchStatuses()
-  document.addEventListener('click', closeDropdown)
-})
+  fetchStatuses();
+  document.addEventListener("click", closeDropdown);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', closeDropdown)
-})
+  document.removeEventListener("click", closeDropdown);
+});
 </script>
 
 <template>
@@ -189,7 +189,7 @@ onUnmounted(() => {
             <textarea
               id="description"
               v-model="taskDetails.description"
-              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 text-sm resize-none"
               maxlength="500"
               placeholder="Enter task description"
             ></textarea>
@@ -238,7 +238,7 @@ onUnmounted(() => {
                   :style="statusStyle(taskDetails.statusName)"
                   @click="toggleDropdown"
                 >
-                  {{ taskDetails.statusName || 'Select Status' }}
+                  {{ taskDetails.statusName || "Select Status" }}
                 </div>
 
                 <transition name="fade">
@@ -250,7 +250,7 @@ onUnmounted(() => {
                       <li
                         v-for="status in statuses"
                         :key="status.id"
-                        class="p-2 cursor-pointer text-xs transition-colors duration-200"
+                        class="p-2 cursor-pointer text-xs transition-opacity duration-200"
                         :style="statusStyle(status.name)"
                         @click="selectStatus(status.name)"
                         @mouseenter="hoverStatus = status.name"
@@ -295,17 +295,4 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-textarea {
-  resize: none;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s;
-}
-
-.fade-enter,
-.fade-leave-to {
-  opacity: 0;
-}
 </style>

@@ -5,38 +5,38 @@ import {
   defineProps,
   defineEmits,
   onMounted,
-  onUnmounted
-} from 'vue'
-import { useRoute } from 'vue-router'
-import FetchUtils from '../lib/fetchUtils'
-import { statusStyle } from '../lib/statusStyles'
+  onUnmounted,
+} from "vue";
+import { useRoute } from "vue-router";
+import FetchUtils from "../lib/fetchUtils";
+import { statusStyle } from "../lib/statusStyles";
 
-const route = useRoute()
-const boardId = route.params.boardId
+const route = useRoute();
+const boardId = route.params.boardId;
 
 const props = defineProps({
   task: {
     type: Object,
-    required: true
+    required: true,
   },
   closeModal: {
     type: Function,
-    required: true
+    required: true,
   },
   onTaskUpdated: {
     type: Function,
-    required: true
-  }
-})
+    required: true,
+  },
+});
 
-const emit = defineEmits(['editSuccess'])
+const emit = defineEmits(["editSuccess"]);
 
-const editedTask = ref({ ...props.task })
-const statuses = ref([])
-const isDropdownOpen = ref(false)
-const hoverStatus = ref(null)
+const editedTask = ref({ ...props.task });
+const statuses = ref([]);
+const isDropdownOpen = ref(false);
+const hoverStatus = ref(null);
 
-const initialTask = JSON.parse(JSON.stringify(props.task))
+const initialTask = JSON.parse(JSON.stringify(props.task));
 
 const isSaveDisabled = computed(() => {
   return (
@@ -44,8 +44,8 @@ const isSaveDisabled = computed(() => {
     editedTask.value.title.length > 100 ||
     editedTask.value.description.length > 500 ||
     editedTask.value.assignees.length > 30
-  )
-})
+  );
+});
 
 const handleEditTask = async () => {
   try {
@@ -54,62 +54,62 @@ const handleEditTask = async () => {
       description: editedTask.value.description,
       assignees: editedTask.value.assignees,
       statusName: editedTask.value.statusName,
-      updatedOn: new Date().toISOString()
-    }
+      updatedOn: new Date().toISOString(),
+    };
 
     const response = await FetchUtils.putData(
       `tasks/${props.task.taskId}`,
       boardId,
       updatedTask
-    )
+    );
 
     if (response?.success) {
-      props.onTaskUpdated(response.data)
-      props.closeModal()
-      emit('editSuccess', response.statusCode, 'edit')
-      console.log('Task updated successfully.', response.statusCode)
+      props.onTaskUpdated(response.data);
+      props.closeModal();
+      emit("editSuccess", response.statusCode, "edit");
+      console.log("Task updated successfully.", response.statusCode);
     } else {
-      console.error('Failed to update task')
-      alert('Failed to edit task. Please try again.')
+      console.error("Failed to update task");
+      alert("Failed to edit task. Please try again.");
     }
   } catch (error) {
-    console.error('Error updating task:', error)
-    alert('Error updating task. Please try again.')
+    console.error("Error updating task:", error);
+    alert("Error updating task. Please try again.");
   }
-}
+};
 
 const fetchStatuses = async () => {
   try {
-    const data = await FetchUtils.fetchData('statuses', boardId)
-    statuses.value = data
+    const data = await FetchUtils.fetchData("statuses", boardId);
+    statuses.value = data;
   } catch (error) {
-    console.error('Error fetching statuses:', error)
+    console.error("Error fetching statuses:", error);
   }
-}
+};
 
 const toggleDropdown = () => {
-  isDropdownOpen.value = !isDropdownOpen.value
-}
+  isDropdownOpen.value = !isDropdownOpen.value;
+};
 
 const selectStatus = (status) => {
-  editedTask.value.statusName = status
-  isDropdownOpen.value = false
-}
+  editedTask.value.statusName = status;
+  isDropdownOpen.value = false;
+};
 
 const closeDropdown = (event) => {
-  if (!event.target.closest('.status-dropdown')) {
-    isDropdownOpen.value = false
+  if (!event.target.closest(".status-dropdown")) {
+    isDropdownOpen.value = false;
   }
-}
+};
 
 onMounted(() => {
-  fetchStatuses()
-  document.addEventListener('click', closeDropdown)
-})
+  fetchStatuses();
+  document.addEventListener("click", closeDropdown);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('click', closeDropdown)
-})
+  document.removeEventListener("click", closeDropdown);
+});
 </script>
 
 <template>
@@ -161,7 +161,7 @@ onUnmounted(() => {
             <textarea
               id="description"
               v-model="editedTask.description"
-              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500"
+              class="mt-1 p-2 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 resize-none"
               maxlength="500"
               placeholder="Enter task description"
             ></textarea>
@@ -204,7 +204,7 @@ onUnmounted(() => {
                 :style="statusStyle(editedTask.statusName)"
                 @click="toggleDropdown"
               >
-                {{ editedTask.statusName || 'Select Status' }}
+                {{ editedTask.statusName || "Select Status" }}
               </div>
 
               <transition name="fade">
@@ -216,7 +216,7 @@ onUnmounted(() => {
                     <li
                       v-for="status in statuses"
                       :key="status.id"
-                      class="p-2 cursor-pointer text-xs transition-colors duration-200"
+                      class="p-2 cursor-pointer text-xs transition-opacity duration-200"
                       :style="statusStyle(status.name)"
                       @click="selectStatus(status.name)"
                       @mouseenter="hoverStatus = status.name"
@@ -255,20 +255,6 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-textarea {
-  resize: none;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.2s;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
 @keyframes fadeInUp {
   from {
     opacity: 0;
