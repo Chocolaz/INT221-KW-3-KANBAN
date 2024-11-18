@@ -249,7 +249,7 @@ async function handleDrop(e) {
     <transition name="fade">
       <div
         v-if="errorMessage"
-        class="text-xs text-red-500 mt-2 transition-opacity duration-500 opacity-0"
+        class="text-xs text-red-500 mt-2 animate-fade-in"
         v-html="errorMessage"
       ></div>
     </transition>
@@ -319,18 +319,4 @@ async function handleDrop(e) {
 </template>
 
 <style scoped>
-.animate-fade-in {
-  animation: fadeIn 0.2s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
 </style>
