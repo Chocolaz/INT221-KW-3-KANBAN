@@ -1,176 +1,168 @@
 <script setup>
-import { ref, computed, defineEmits } from "vue";
+import { ref, computed, defineEmits } from 'vue'
 
-const emit = defineEmits(["filesSelected"]);
+const emit = defineEmits(['filesSelected'])
 
-const MAX_FILES = 10;
-const MAX_FILE_SIZE = 20 * 1024 * 1024;
-const MAX_TOTAL_FILE_SIZE = 20 * 1024 * 1024;
+const MAX_FILES = 10
+const MAX_FILE_SIZE = 20 * 1024 * 1024
+const MAX_TOTAL_FILE_SIZE = 20 * 1024 * 1024
 
-const fileInput = ref(null);
-const fileList = ref([]);
-const isDragging = ref(false);
-const errorMessage = ref(null);
+const fileInput = ref(null)
+const fileList = ref([])
+const isDragging = ref(false)
+const errorMessage = ref(null)
 
 function formatFileSize(bytes) {
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
 function getFileIcon(type) {
-  if (type.includes("pdf")) return "📄";
-  if (type.includes("word")) return "📝";
-  if (type.includes("sheet") || type.includes("excel")) return "📊";
-  return "📎";
+  if (type.includes('pdf')) return '📄'
+  if (type.includes('word')) return '📝'
+  if (type.includes('sheet') || type.includes('excel')) return '📊'
+  return '📎'
 }
 
 function isImageFile(type) {
-  return type.startsWith("image/");
+  return type.startsWith('image/')
 }
 
 function createThumbnail(file) {
   return new Promise((resolve) => {
     if (!isImageFile(file.type)) {
-      resolve(null);
-      return;
+      resolve(null)
+      return
     }
-    const reader = new FileReader();
-    reader.onload = (e) => resolve(e.target.result);
-    reader.readAsDataURL(file);
-  });
+    const reader = new FileReader()
+    reader.onload = (e) => resolve(e.target.result)
+    reader.readAsDataURL(file)
+  })
 }
 
-const canAddMoreFiles = computed(() => fileList.value.length < MAX_FILES);
+const canAddMoreFiles = computed(() => fileList.value.length < MAX_FILES)
 
 async function handleFileChange(event) {
-  const files = event?.target?.files ? Array.from(event.target.files) : [];
-  await addFiles(files);
+  const files = event?.target?.files ? Array.from(event.target.files) : []
+  await addFiles(files)
 }
 
 function displayError(message) {
-  errorMessage.value = message;
+  errorMessage.value = message
   setTimeout(() => {
-    errorMessage.value = null;
-  }, 7000);
+    errorMessage.value = null
+  }, 7000)
 }
 
 async function addFiles(files) {
-  const validFiles = [];
-  const notAddedFiles = [];
+  const validFiles = []
+  const notAddedFiles = []
+  const duplicateFiles = []
+  const oversizedFiles = []
+  const fileCountExceededFiles = []
+  const totalSizeExceededFiles = []
 
   for (const file of files) {
-    if (
-      file.size > MAX_FILE_SIZE ||
-      fileList.value.some((item) => item.file.name === file.name)
-    ) {
-      notAddedFiles.push(file.name);
-      continue;
+    if (fileList.value.some((item) => item.file.name === file.name)) {
+      duplicateFiles.push(file.name)
+      continue
     }
 
-    if (
-      fileList.value.length + validFiles.length >= MAX_FILES ||
+    if (file.size > MAX_FILE_SIZE) {
+      oversizedFiles.push(file.name)
+      continue
+    }
+
+    const totalSize =
       fileList.value.reduce((total, item) => total + item.file.size, 0) +
-        file.size >
-        MAX_TOTAL_FILE_SIZE
-    ) {
-      notAddedFiles.push(file.name);
-      continue;
+      file.size
+
+    if (fileList.value.length + validFiles.length >= MAX_FILES) {
+      fileCountExceededFiles.push(file.name)
+      continue
+    }
+
+    if (totalSize > MAX_TOTAL_FILE_SIZE) {
+      totalSizeExceededFiles.push(file.name)
+      continue
     }
 
     validFiles.push({
       file,
-      thumbnail: await createThumbnail(file),
-    });
+      thumbnail: await createThumbnail(file)
+    })
   }
 
-  const filesToAdd = validFiles.slice(0, MAX_FILES - fileList.value.length);
-  fileList.value = [...fileList.value, ...filesToAdd];
+  const filesToAdd = validFiles.slice(0, MAX_FILES - fileList.value.length)
+  fileList.value = [...fileList.value, ...filesToAdd]
 
-  let errorMessageText = "";
+  let errorMessageText = ''
 
-  // Check for file size limit
-  if (
-    notAddedFiles.length > 0 &&
-    notAddedFiles.every((file) =>
-      files.some((f) => f.name === file && f.size > MAX_FILE_SIZE)
-    )
-  ) {
-    errorMessageText = `Each file cannot be larger than ${
+  if (duplicateFiles.length > 0) {
+    errorMessageText += `File(s) with the same filename cannot be added or updated: <p>${duplicateFiles.join(
+      ', '
+    )}</p> Please delete the existing file(s) first to update.`
+  }
+
+  if (oversizedFiles.length > 0) {
+    errorMessageText += `<br>Each file cannot be larger than ${
       MAX_FILE_SIZE / (1024 * 1024)
-    } MB.`;
-  }
-  // Check for file count limit
-  else if (
-    notAddedFiles.length > 0 &&
-    notAddedFiles.some((file) =>
-      files.some(
-        (f) =>
-          f.name === file &&
-          fileList.value.length + validFiles.length >= MAX_FILES
-      )
-    )
-  ) {
-    errorMessageText = `Each task can have at most ${MAX_FILES} files.`;
-  }
-  // Check for total file size limit
-  else if (
-    notAddedFiles.length > 0 &&
-    notAddedFiles.some((file) =>
-      files.some(
-        (f) =>
-          f.name === file &&
-          fileList.value.reduce((total, item) => total + item.file.size, 0) +
-            f.size >
-            MAX_TOTAL_FILE_SIZE
-      )
-    )
-  ) {
-    errorMessageText = `Total file size must not exceed ${
-      MAX_TOTAL_FILE_SIZE / (1024 * 1024)
-    } MB.`;
+    } MB: <p>${oversizedFiles.join(', ')}</p>`
   }
 
-  if (notAddedFiles.length > 0) {
-    errorMessageText += ` The following files were not added: <p> ${notAddedFiles.join(
-      ", "
-    )}.</p>`;
+  if (fileCountExceededFiles.length > 0) {
+    errorMessageText += `<br>Each task can have at most ${MAX_FILES} files: <p>${fileCountExceededFiles.join(
+      ', '
+    )}</p>`
+  }
+
+  if (totalSizeExceededFiles.length > 0) {
+    errorMessageText += `<br>Total file size must not exceed ${
+      MAX_TOTAL_FILE_SIZE / (1024 * 1024)
+    } MB: <p>${totalSizeExceededFiles.join(', ')}</p>`
+  }
+
+  if (notAddedFiles.length > 0 && errorMessageText === '') {
+    errorMessageText += `<br>The following files were not added: <p>${notAddedFiles.join(
+      ', '
+    )}</p>`
   }
 
   if (errorMessageText) {
-    displayError(errorMessageText);
+    displayError(errorMessageText)
   }
 
   emit(
-    "filesSelected",
+    'filesSelected',
     fileList.value.map((item) => item.file)
-  );
+  )
 }
 
 function removeFile(index) {
-  fileList.value.splice(index, 1);
+  fileList.value.splice(index, 1)
   emit(
-    "filesSelected",
+    'filesSelected',
     fileList.value.map((item) => item.file)
-  );
+  )
 }
 
 function handleDragEnter(e) {
-  e.preventDefault();
-  isDragging.value = true;
+  e.preventDefault()
+  isDragging.value = true
 }
 
 function handleDragLeave(e) {
-  e.preventDefault();
-  isDragging.value = false;
+  e.preventDefault()
+  isDragging.value = false
 }
 
 async function handleDrop(e) {
-  e.preventDefault();
-  isDragging.value = false;
-  const files = Array.from(e.dataTransfer.files);
-  await addFiles(files);
+  e.preventDefault()
+  isDragging.value = false
+  const files = Array.from(e.dataTransfer.files)
+  await addFiles(files)
 }
 </script>
 
@@ -195,7 +187,7 @@ async function handleDrop(e) {
         class="h-20 border-2 border-dashed rounded-lg transition-all duration-200 flex items-center justify-center gap-3 px-4 cursor-pointer group"
         :class="{
           'border-blue-400 bg-blue-50': isDragging,
-          'border-gray-300 hover:border-gray-400 hover:bg-gray-50': !isDragging,
+          'border-gray-300 hover:border-gray-400 hover:bg-gray-50': !isDragging
         }"
         @click="canAddMoreFiles ? $refs.fileInput.click() : ''"
       >
@@ -318,5 +310,4 @@ async function handleDrop(e) {
   </div>
 </template>
 
-<style scoped>
-</style>
+<style scoped></style>
