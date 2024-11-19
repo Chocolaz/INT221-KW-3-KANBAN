@@ -53,12 +53,11 @@ function displayError(message) {
   errorMessage.value = message
   setTimeout(() => {
     errorMessage.value = null
-  }, 7000)
+  }, 10000)
 }
 
 async function addFiles(files) {
   const validFiles = []
-  const notAddedFiles = []
   const duplicateFiles = []
   const oversizedFiles = []
   const fileCountExceededFiles = []
@@ -101,7 +100,7 @@ async function addFiles(files) {
   let errorMessageText = ''
 
   if (duplicateFiles.length > 0) {
-    errorMessageText += `File(s) with the same filename cannot be added or updated: <p>${duplicateFiles.join(
+    errorMessageText += `File(s) with the same filename cannot be added or updated to attachments: <p>${duplicateFiles.join(
       ', '
     )}</p> Please delete the existing file(s) first to update.`
   }
@@ -109,11 +108,15 @@ async function addFiles(files) {
   if (oversizedFiles.length > 0) {
     errorMessageText += `<br>Each file cannot be larger than ${
       MAX_FILE_SIZE / (1024 * 1024)
-    } MB: <p>${oversizedFiles.join(', ')}</p>`
+    } MB. 
+     <br> The following files are not added: <p>${oversizedFiles.join(
+       ', '
+     )}</p>`
   }
 
   if (fileCountExceededFiles.length > 0) {
-    errorMessageText += `<br>Each task can have at most ${MAX_FILES} files: <p>${fileCountExceededFiles.join(
+    errorMessageText += `<br>Each task can have at most ${MAX_FILES} files. 
+    <br> The following files are not added: <p>${fileCountExceededFiles.join(
       ', '
     )}</p>`
   }
@@ -121,11 +124,7 @@ async function addFiles(files) {
   if (totalSizeExceededFiles.length > 0) {
     errorMessageText += `<br>Total file size must not exceed ${
       MAX_TOTAL_FILE_SIZE / (1024 * 1024)
-    } MB: <p>${totalSizeExceededFiles.join(', ')}</p>`
-  }
-
-  if (notAddedFiles.length > 0 && errorMessageText === '') {
-    errorMessageText += `<br>The following files were not added: <p>${notAddedFiles.join(
+    } MB. <br> The following files are not added: <p>${totalSizeExceededFiles.join(
       ', '
     )}</p>`
   }
@@ -241,9 +240,56 @@ async function handleDrop(e) {
     <transition name="fade">
       <div
         v-if="errorMessage"
-        class="text-xs text-red-500 mt-2 animate-fade-in"
-        v-html="errorMessage"
-      ></div>
+        class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg shadow-md animate-fade-in"
+      >
+        <div class="flex items-center justify-between">
+          <!-- Error Icon and Title -->
+          <div class="flex items-center">
+            <svg
+              class="w-5 h-5 text-red-500 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M18.364 5.636l-6.728 6.728m0 0l-6.728-6.728m6.728 6.728l6.728 6.728M12 2v2m0 18v2m10-10h-2M4 12H2"
+              />
+            </svg>
+            <span class="font-semibold text-sm text-red-600">
+              Errors Found:
+            </span>
+          </div>
+          <!-- Dismiss Button -->
+          <button
+            @click="errorMessage = null"
+            class="text-gray-400 hover:text-red-500"
+            aria-label="Close error message"
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Error Details -->
+        <div
+          class="mt-2 text-xs text-gray-700 space-y-2"
+          v-html="errorMessage"
+        ></div>
+      </div>
     </transition>
 
     <!-- File List -->
