@@ -11,7 +11,6 @@
 
   <ToggleVisible v-if="isTaskList || isStatusList" />
 
-  <!-- Add CollabFAB when either on task list or status list -->
   <CollabFAB v-if="isTaskList || isManageCollab || isStatusList" />
 </template>
 

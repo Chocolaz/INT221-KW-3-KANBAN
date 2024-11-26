@@ -324,6 +324,62 @@ const postTaskWithAttachment = async (boardId, newTaskDTO, files) => {
   }
 }
 
+const updateTaskWithAttachment = async (
+  boardId,
+  taskId,
+  updateTaskDTO,
+  deleteAttachments = [],
+  files = []
+) => {
+  try {
+    validateBoardId(boardId)
+    if (!taskId) {
+      throw new Error('Task ID is required for updating a task.')
+    }
+
+    const fullUrl = `${baseUrl3}/boards/${boardId}/tasks/${taskId}`
+
+    const formData = new FormData()
+
+    // Add updateTaskDTO as JSON
+    formData.append(
+      'updateTaskDTO',
+      new Blob([JSON.stringify(updateTaskDTO)], { type: 'application/json' })
+    )
+
+    // Add deleteAttachments as a JSON string if provided
+    if (deleteAttachments.length > 0) {
+      formData.append(
+        'deleteAttachments',
+        new Blob([JSON.stringify(deleteAttachments)], {
+          type: 'application/json'
+        })
+      )
+    }
+
+    // Add addAttachments as files if provided
+    if (files && files.length > 0) {
+      files.forEach((file) => {
+        formData.append('addAttachments', file)
+      })
+    }
+
+    const responseData = await fetchWithAuth(fullUrl, {
+      method: 'PUT',
+      body: formData
+    })
+
+    console.log(
+      'Update task with attachment status code:',
+      responseData.statusCode
+    )
+    return responseData
+  } catch (error) {
+    console.error('Error updating task with attachment:', error)
+    throw error
+  }
+}
+
 export default {
   fetchData,
   postData,
@@ -338,5 +394,6 @@ export default {
   updateCollabAccess,
   removeCollab,
   fetchAttachments,
-  postTaskWithAttachment
+  postTaskWithAttachment,
+  updateTaskWithAttachment
 }
