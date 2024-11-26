@@ -255,6 +255,7 @@ const handleEditSuccess = (status) => {
   console.log('Received status code after edit:', status)
   statusCode.value = status
   showSuccessModal.value = true
+  fetchTasks()
 }
 
 const sortTasksByStatus = () => {
