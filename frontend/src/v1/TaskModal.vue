@@ -189,7 +189,7 @@
 import { ref, onMounted } from 'vue'
 import { defineProps } from 'vue'
 import fetchUtils from '@/lib/fetchUtils'
-import { statusStyle } from '@/lib/statusStyles'
+import { statusStyle, getFileIcon } from '@/lib/statusStyles'
 
 const props = defineProps({
   task: {
@@ -232,23 +232,6 @@ const handleAttachmentClick = (attachment) => {
     link.download = attachment.file
     link.click()
   }
-}
-
-const getFileIcon = (fileName) => {
-  const fileType = fileName.toLowerCase()
-
-  if (fileType.includes('pdf')) return '📄'
-  if (fileType.includes('doc') || fileType.includes('word')) return '📝'
-  if (
-    fileType.includes('xls') ||
-    fileType.includes('sheet') ||
-    fileType.includes('excel')
-  )
-    return '📊'
-  if (fileType.includes('ppt')) return '📈'
-  if (fileType.includes('txt')) return '📜'
-
-  return '📎'
 }
 </script>
 

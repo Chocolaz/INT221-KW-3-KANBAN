@@ -9,7 +9,7 @@ import {
 } from 'vue'
 import { useRoute } from 'vue-router'
 import FetchUtils from '../lib/fetchUtils'
-import { statusStyle } from '../lib/statusStyles'
+import { statusStyle, getFileIcon } from '../lib/statusStyles'
 import FileAttachmentInput from './FileAttachmentInput.vue'
 
 const route = useRoute()
@@ -37,6 +37,7 @@ const editedTask = ref({ ...props.task })
 const statuses = ref([])
 const isDropdownOpen = ref(false)
 const hoverStatus = ref(null)
+const fetchedAttachments = ref([])
 
 const initialTask = JSON.parse(JSON.stringify(props.task))
 
@@ -52,6 +53,16 @@ const isSaveDisabled = computed(() => {
     editedTask.value.assignees.length > 30
   )
 })
+
+const fetchAttachmentsForTask = async () => {
+  try {
+    console.log(props.task.attachments) // Debugging step
+    const attachments = props.task.attachments || []
+    fetchedAttachments.value = await FetchUtils.fetchAttachments(attachments)
+  } catch (error) {
+    console.error('Error fetching attachments:', error)
+  }
+}
 
 function handleFilesSelected(files) {
   selectedFiles.value = files
@@ -121,8 +132,14 @@ const closeDropdown = (event) => {
   }
 }
 
+const handleAttachmentClick = (attachment) => {
+  // Logic for handling click event, such as opening in a new tab
+  window.open(attachment.blobUrl, '_blank')
+}
+
 onMounted(() => {
   fetchStatuses()
+  fetchAttachmentsForTask()
   document.addEventListener('click', closeDropdown)
 })
 
@@ -259,6 +276,54 @@ onUnmounted(() => {
                     </ul>
                   </div>
                 </transition>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="fetchedAttachments.length > 0" class="mb-4">
+            <!-- Attachments Section -->
+            <div class="bg-gray-50 rounded-xl p-6">
+              <h3
+                class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"
+              >
+                <i class="fas fa-paperclip w-5 h-5 text-gray-500"></i>
+                Attachments
+              </h3>
+              <div class="flex flex-wrap gap-4">
+                <template v-if="fetchedAttachments.length">
+                  <div
+                    v-for="attachment in fetchedAttachments"
+                    :key="attachment.attachmentId"
+                    class="relative flex items-center bg-gray-200 rounded-lg overflow-hidden group transition-colors hover:bg-gray-300 cursor-pointer w-30"
+                  >
+                    <div
+                      class="w-10 h-10 flex items-center justify-center overflow-hidden bg-gray-100 rounded-lg"
+                    >
+                      <template
+                        v-if="
+                          ['jpg', 'jpeg', 'png'].includes(
+                            attachment.file.split('.').pop().toLowerCase()
+                          )
+                        "
+                      >
+                        <img
+                          v-if="attachment.blobUrl"
+                          :src="attachment.blobUrl"
+                          :alt="attachment.file"
+                          class="object-cover w-full h-full"
+                        />
+                      </template>
+                      <template v-else>
+                        <span>{{ getFileIcon(attachment.file) }}</span>
+                      </template>
+                    </div>
+                    <span
+                      class="text-xs text-gray-700 px-3 truncate max-w-[160px]"
+                    >
+                      {{ attachment.file }}
+                    </span>
+                  </div>
+                </template>
               </div>
             </div>
           </div>

@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, defineEmits } from 'vue'
+import { getFileIcon } from '@/lib/statusStyles'
 
 const emit = defineEmits(['filesSelected'])
 
@@ -17,13 +18,6 @@ function formatFileSize(bytes) {
   const sizes = ['Bytes', 'KB', 'MB', 'GB']
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
-}
-
-function getFileIcon(type) {
-  if (type.includes('pdf')) return '📄'
-  if (type.includes('word')) return '📝'
-  if (type.includes('sheet') || type.includes('excel')) return '📊'
-  return '📎'
 }
 
 function isImageFile(type) {
