@@ -42,6 +42,7 @@ public class TaskAttachmentController {
                     .body(Map.of("error", "Failed to add attachment: " + e.getMessage()));
         }
     }
+
     @DeleteMapping("/{boardId}/tasks/{taskId}/attachments/{attachmentId}")
     public ResponseEntity<?> deleteAttachment(
             @PathVariable String boardId,
@@ -51,7 +52,10 @@ public class TaskAttachmentController {
         try {
             String jwtToken = token.substring(7);
             TaskV3 task = taskAttachmentService.getTaskByBoardIdAndTaskId(boardId, taskId, jwtToken);
+
+            // This will handle both the file deletion and database update
             taskAttachmentService.deleteAttachment(task, attachmentId);
+
             return ResponseEntity.ok().build();
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode())
@@ -61,6 +65,4 @@ public class TaskAttachmentController {
                     .body(Map.of("error", "Failed to delete attachment: " + e.getMessage()));
         }
     }
-
-
 }

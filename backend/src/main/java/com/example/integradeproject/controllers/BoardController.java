@@ -1,9 +1,6 @@
 package com.example.integradeproject.controllers;
 
-import com.example.integradeproject.project_management.pm_dtos.BoardDTO;
-import com.example.integradeproject.project_management.pm_dtos.NewTask2DTO;
-import com.example.integradeproject.project_management.pm_dtos.Task2DTO;
-import com.example.integradeproject.project_management.pm_dtos.Task2IdDTO;
+import com.example.integradeproject.project_management.pm_dtos.*;
 import com.example.integradeproject.project_management.pm_entities.TaskV3;
 import com.example.integradeproject.project_management.pm_repositories.BoardRepository;
 import com.example.integradeproject.project_management.pm_repositories.TaskV3Repository;
@@ -20,6 +17,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/v3/boards")
@@ -169,6 +167,7 @@ public class BoardController {
             @PathVariable String boardId,
             @PathVariable Integer taskId,
             @RequestPart(required = false) NewTask2DTO updateTaskDTO,
+            @RequestPart(required = false) List<MultipartFile> addAttachments,
             @RequestParam(required = false) List<Integer> deleteAttachments,
             @RequestHeader(value = "Authorization", required = false) String token) {
 
@@ -190,10 +189,21 @@ public class BoardController {
             }
 
             // Handle new attachments if any
-
+            List<AttachmentDTO> newAttachments = null;
+            if (addAttachments != null && !addAttachments.isEmpty()) {
+                newAttachments = addAttachments.stream()
+                        .map(file -> taskAttachmentService.validateAndAddAttachment(task, file))
+                        .collect(Collectors.toList());
+            }
 
             // Convert updated task with latest attachments to DTO
             NewTask2DTO finalUpdatedTask = boardService.convertToNewTaskDTO(task);
+
+            // If new attachments were added, include them in the response
+            if (newAttachments != null && !newAttachments.isEmpty()) {
+                // Assuming NewTask2DTO has a method to set attachments or a constructor that can include them
+                finalUpdatedTask.setAttachments(newAttachments);
+            }
 
             return ResponseEntity.ok(finalUpdatedTask);
 

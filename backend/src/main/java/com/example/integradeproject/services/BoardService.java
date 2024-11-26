@@ -238,42 +238,55 @@ public class BoardService {
 
 
     public List<Task2DTO> getTasksForBoard(String boardId, String token, String sortBy, List<String> filterStatuses) {
+        // Find the board by its ID, throw an exception if not found
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
 
+        // If the board is public, return tasks without further authentication
         if (board.getVisibility() == Board.BoardVisibility.PUBLIC) {
             return getFilteredTasks(board, filterStatuses);
         }
 
+        // For private boards, token is mandatory
         if (token == null) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
         }
 
+        // Extract user ID from the JWT token
         String userOid = jwtTokenUtil.getUidFromToken(token);
+        // Find the user, throw an exception if not found
         PMUser user = pmUserRepository.findById(userOid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
+        // If user is the board owner, allow access
         if (board.getOwnerOid().getOid().equals(userOid)) {
             return getFilteredTasks(board, filterStatuses);
         }
 
+        // Check if user has collaboration access to the board
         Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+        // If collaboration exists with READ or WRITE access, allow access
         if (collaboration.isPresent() &&
                 (collaboration.get().getAccess_right() == Collab.AccessRight.READ ||
                         collaboration.get().getAccess_right() == Collab.AccessRight.WRITE)) {
             return getFilteredTasks(board, filterStatuses);
         }
 
+        // If no access conditions met, deny access
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to private board");
     }
-    // Helper method for filtering tasks
+
+    // Helper method to filter tasks based on board and optional status filters
     private List<Task2DTO> getFilteredTasks(Board board, List<String> filterStatuses) {
         List<TaskV3> tasks;
+        // If filter statuses are provided, find tasks with matching statuses
         if (filterStatuses != null && !filterStatuses.isEmpty()) {
             tasks = taskRepository.findByBoardIdAndStatusId_StatusNameIn(board, filterStatuses);
         } else {
+            // Otherwise, retrieve all tasks for the board
             tasks = taskRepository.findByBoardId(board);
         }
+        // Convert tasks to DTOs and return the list
         return tasks.stream().map(this::convertToTaskDTO).collect(Collectors.toList());
     }
     private Task2DTO convertToTaskDTO(TaskV3 task) {
