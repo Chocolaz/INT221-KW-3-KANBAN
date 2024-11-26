@@ -106,7 +106,9 @@
                       </span>
                     </div>
                   </template>
-                  <span v-else class="text-gray-500 text-sm">No attachments</span>
+                  <span v-else class="text-gray-500 text-sm"
+                    >No attachments</span
+                  >
                 </div>
               </div>
             </div>

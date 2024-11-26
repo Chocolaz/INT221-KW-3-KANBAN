@@ -41,8 +41,12 @@ const hoverStatus = ref(null)
 const initialTask = JSON.parse(JSON.stringify(props.task))
 
 const isSaveDisabled = computed(() => {
+  const isTaskUnchanged =
+    JSON.stringify(editedTask.value) === JSON.stringify(initialTask)
+  const isFileSelected = selectedFiles.value.length > 0
+
   return (
-    JSON.stringify(editedTask.value) === JSON.stringify(initialTask) ||
+    (isTaskUnchanged && !isFileSelected) ||
     editedTask.value.title.length > 100 ||
     editedTask.value.description.length > 500 ||
     editedTask.value.assignees.length > 30
