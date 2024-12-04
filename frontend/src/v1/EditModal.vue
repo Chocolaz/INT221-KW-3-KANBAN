@@ -45,9 +45,10 @@ const isSaveDisabled = computed(() => {
   const isTaskUnchanged =
     JSON.stringify(editedTask.value) === JSON.stringify(initialTask)
   const isFileSelected = selectedFiles.value.length > 0
+  const hasDeletedAttachments = (props.task.deleteAttachments || []).length > 0
 
   return (
-    (isTaskUnchanged && !isFileSelected) ||
+    (isTaskUnchanged && !isFileSelected && !hasDeletedAttachments) ||
     editedTask.value.title.length > 100 ||
     editedTask.value.description.length > 500 ||
     editedTask.value.assignees.length > 30
@@ -56,7 +57,7 @@ const isSaveDisabled = computed(() => {
 
 const fetchAttachmentsForTask = async () => {
   try {
-    console.log(props.task.attachments) // Debugging step
+    console.log(props.task.attachments)
     const attachments = props.task.attachments || []
     fetchedAttachments.value = await FetchUtils.fetchAttachments(attachments)
   } catch (error) {
@@ -70,7 +71,6 @@ function handleFilesSelected(files) {
 
 const handleEditTask = async () => {
   try {
-    // Prepare the task update data
     const updatedTask = {
       title: editedTask.value.title,
       description: editedTask.value.description,
@@ -79,24 +79,33 @@ const handleEditTask = async () => {
       updatedOn: new Date().toISOString()
     }
 
-    // Prepare any attachments or deletions
-    const deleteAttachments = props.task.deleteAttachments || [] // IDs of attachments to delete
-    const files = selectedFiles.value || [] // Use the selected files
+    const deleteAttachmentsArray = props.task.deleteAttachments || []
 
-    // Call the updateTaskWithAttachment function
+    const deleteAttachments =
+      deleteAttachmentsArray.length === 1
+        ? deleteAttachmentsArray[0]
+        : deleteAttachmentsArray
+
+    console.log('Request Data:', {
+      boardId,
+      taskId: props.task.taskId,
+      updatedTask,
+      deleteAttachments,
+      files: selectedFiles.value || []
+    })
+
     const response = await FetchUtils.updateTaskWithAttachment(
       boardId,
       props.task.taskId,
       updatedTask,
       deleteAttachments,
-      files
+      selectedFiles.value || []
     )
 
-    // Handle response
     if (response?.success) {
-      props.onTaskUpdated(response.data) // Notify parent component about the updated task
-      props.closeModal() // Close the modal
-      emit('editSuccess', response.statusCode, 'edit') // Emit event for success
+      props.onTaskUpdated(response.data)
+      props.closeModal()
+      emit('editSuccess', response.statusCode, 'edit')
       console.log('Task updated successfully.', response.statusCode)
     } else {
       console.error('Failed to update task')
@@ -106,6 +115,24 @@ const handleEditTask = async () => {
     console.error('Error updating task:', error)
     alert('Error updating task. Please try again.')
   }
+}
+
+const deleteAttachment = (attachmentId) => {
+  // Remove the attachment from the fetched list
+  fetchedAttachments.value = fetchedAttachments.value.filter(
+    (attachment) => attachment.attachmentId !== attachmentId
+  )
+
+  if (!props.task.deleteAttachments) {
+    props.task.deleteAttachments = []
+  }
+
+  // Add the attachment ID to the task's deleteAttachments array
+  if (!props.task.deleteAttachments.includes(attachmentId)) {
+    props.task.deleteAttachments.push(attachmentId)
+  }
+
+  console.log('deleteAttachments updated:', props.task.deleteAttachments) // Log the array content
 }
 
 const fetchStatuses = async () => {
@@ -130,11 +157,6 @@ const closeDropdown = (event) => {
   if (!event.target.closest('.status-dropdown')) {
     isDropdownOpen.value = false
   }
-}
-
-const handleAttachmentClick = (attachment) => {
-  // Logic for handling click event, such as opening in a new tab
-  window.open(attachment.blobUrl, '_blank')
 }
 
 onMounted(() => {
@@ -296,6 +318,14 @@ onUnmounted(() => {
                     :key="attachment.attachmentId"
                     class="relative flex items-center bg-gray-200 rounded-lg overflow-hidden group transition-colors hover:bg-gray-300 cursor-pointer w-30"
                   >
+                    <div class="absolute top-0 right-0 p-1">
+                      <button
+                        class="text-gray-600 hover:text-red-600"
+                        @click.stop="deleteAttachment(attachment.attachmentId)"
+                      >
+                        &times;
+                      </button>
+                    </div>
                     <div
                       class="w-10 h-10 flex items-center justify-center overflow-hidden bg-gray-100 rounded-lg"
                     >

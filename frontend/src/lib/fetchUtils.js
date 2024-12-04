@@ -347,14 +347,16 @@ const updateTaskWithAttachment = async (
       new Blob([JSON.stringify(updateTaskDTO)], { type: 'application/json' })
     )
 
-    // Add deleteAttachments as a JSON string if provided
     if (deleteAttachments.length > 0) {
+      console.log('deleteAttachments being added:', deleteAttachments) // Log the array content
       formData.append(
         'deleteAttachments',
         new Blob([JSON.stringify(deleteAttachments)], {
           type: 'application/json'
         })
       )
+    } else {
+      console.log('No attachments to delete, deleteAttachments array is empty')
     }
 
     // Add addAttachments as files if provided
@@ -362,6 +364,11 @@ const updateTaskWithAttachment = async (
       files.forEach((file) => {
         formData.append('addAttachments', file)
       })
+    }
+
+    // Log FormData to verify if 'deleteAttachments' is being added
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value)
     }
 
     const responseData = await fetchWithAuth(fullUrl, {
