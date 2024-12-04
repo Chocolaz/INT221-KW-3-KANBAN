@@ -57,7 +57,6 @@ const isSaveDisabled = computed(() => {
 
 const fetchAttachmentsForTask = async () => {
   try {
-    console.log(props.task.attachments)
     const attachments = props.task.attachments || []
     fetchedAttachments.value = await FetchUtils.fetchAttachments(attachments)
   } catch (error) {
@@ -79,20 +78,7 @@ const handleEditTask = async () => {
       updatedOn: new Date().toISOString()
     }
 
-    const deleteAttachmentsArray = props.task.deleteAttachments || []
-
-    const deleteAttachments =
-      deleteAttachmentsArray.length === 1
-        ? deleteAttachmentsArray[0]
-        : deleteAttachmentsArray
-
-    console.log('Request Data:', {
-      boardId,
-      taskId: props.task.taskId,
-      updatedTask,
-      deleteAttachments,
-      files: selectedFiles.value || []
-    })
+    const deleteAttachments = props.task.deleteAttachments || []
 
     const response = await FetchUtils.updateTaskWithAttachment(
       boardId,
@@ -123,16 +109,15 @@ const deleteAttachment = (attachmentId) => {
     (attachment) => attachment.attachmentId !== attachmentId
   )
 
-  if (!props.task.deleteAttachments) {
-    props.task.deleteAttachments = []
-  }
+  // Initialize the deleteAttachments array if it doesn't exist
+  props.task.deleteAttachments = props.task.deleteAttachments || []
 
-  // Add the attachment ID to the task's deleteAttachments array
+  // Add the attachment ID to the deleteAttachments array if not already present
   if (!props.task.deleteAttachments.includes(attachmentId)) {
     props.task.deleteAttachments.push(attachmentId)
   }
 
-  console.log('deleteAttachments updated:', props.task.deleteAttachments) // Log the array content
+  console.log('deleteAttachments updated:', props.task.deleteAttachments)
 }
 
 const fetchStatuses = async () => {

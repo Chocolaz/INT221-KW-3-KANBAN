@@ -337,39 +337,28 @@ const updateTaskWithAttachment = async (
       throw new Error('Task ID is required for updating a task.')
     }
 
-    const fullUrl = `${baseUrl3}/boards/${boardId}/tasks/${taskId}`
+    let fullUrl = `${baseUrl3}/boards/${boardId}/tasks/${taskId}`
+    if (deleteAttachments.length > 0) {
+      const deleteParams = deleteAttachments
+        .map((attachmentId) => `deleteAttachments=${attachmentId}`)
+        .join('&')
+      fullUrl += `?${deleteParams}`
+    }
 
     const formData = new FormData()
 
-    // Add updateTaskDTO as JSON
     formData.append(
       'updateTaskDTO',
       new Blob([JSON.stringify(updateTaskDTO)], { type: 'application/json' })
     )
 
-    if (deleteAttachments.length > 0) {
-      console.log('deleteAttachments being added:', deleteAttachments) // Log the array content
-      formData.append(
-        'deleteAttachments',
-        new Blob([JSON.stringify(deleteAttachments)], {
-          type: 'application/json'
-        })
-      )
-    } else {
-      console.log('No attachments to delete, deleteAttachments array is empty')
-    }
-
-    // Add addAttachments as files if provided
     if (files && files.length > 0) {
       files.forEach((file) => {
         formData.append('addAttachments', file)
       })
     }
 
-    // Log FormData to verify if 'deleteAttachments' is being added
-    for (let [key, value] of formData.entries()) {
-      console.log(key, value)
-    }
+    console.log('Final URL:', fullUrl) 
 
     const responseData = await fetchWithAuth(fullUrl, {
       method: 'PUT',
