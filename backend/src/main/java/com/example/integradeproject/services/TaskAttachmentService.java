@@ -115,19 +115,31 @@ public class TaskAttachmentService {
             );
         }
 
+        // Check total attachments size
+        long totalCurrentSize = task.getAttachments().stream()
+                .mapToLong(attachment -> {
+                    try {
+                        Path filePath = uploadPath.resolve(attachment.getFile());
+                        return Files.size(filePath);
+                    } catch (IOException e) {
+                        return 0L;
+                    }
+                })
+                .sum();
+
+        long newFileSize = file.getSize();
+        if (totalCurrentSize + newFileSize > MAX_FILE_SIZE) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Total attachment size would exceed 20MB limit"
+            );
+        }
+
         // Check max files
         if (task.getAttachments().size() >= MAX_FILES) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Maximum number of attachments (" + MAX_FILES + ") reached"
-            );
-        }
-
-        // Check file size
-        if (file.getSize() > MAX_FILE_SIZE) {
-            throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "File size exceeds maximum limit of 20MB"
             );
         }
 
@@ -151,7 +163,6 @@ public class TaskAttachmentService {
             );
         }
     }
-
     public void deleteAttachment(TaskV3 task, Integer attachmentId) {
         Attachment attachment = attachmentRepository.findById(attachmentId)
                 .orElseThrow(() -> new ResponseStatusException(

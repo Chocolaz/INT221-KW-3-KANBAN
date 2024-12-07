@@ -188,6 +188,7 @@ public class BoardController {
                 }
             }
 
+
             // Handle new attachments if any
             List<AttachmentDTO> newAttachments = null;
             if (addAttachments != null && !addAttachments.isEmpty()) {

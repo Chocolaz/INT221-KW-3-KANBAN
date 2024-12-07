@@ -140,13 +140,23 @@ public class StatusV3Service {
         Status existingStatus = statusRepository.findByStatusIdAndBoardId(statusId, board)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
 
-        validateStatus(updatedStatus, board);
-        existingStatus.setStatusName(updatedStatus.getStatusName());
-        existingStatus.setStatusDescription(updatedStatus.getStatusDescription());
+        // Modify validation to only validate description if provided
+        validateStatusDescription(updatedStatus);
+
+        // Update description only if it's provided
+        if (updatedStatus.getStatusDescription() != null) {
+            existingStatus.setStatusDescription(updatedStatus.getStatusDescription());
+        }
+
+        // Only validate and update name if it's provided
+        if (updatedStatus.getStatusName() != null) {
+            validateStatusName(updatedStatus, board, existingStatus);
+            existingStatus.setStatusName(updatedStatus.getStatusName());
+        }
+
         Status savedStatus = statusRepository.save(existingStatus);
         return mapper.map(savedStatus, StatusDTO.class);
     }
-
     @Transactional
     public void deleteStatus(String boardId, Integer statusId, String token) {
         Board board = boardRepository.findById(boardId)
@@ -203,28 +213,7 @@ public class StatusV3Service {
     }
 
 
-    private boolean isUserAuthorized(String token, Board board, Collab.AccessRight requiredAccess) {
-        if (token == null) {
-            return false;
-        }
 
-        try {
-            String userOid = jwtTokenUtil.getUidFromToken(token);
-            if (board.getOwnerOid().getOid().equals(userOid)) {
-                return true;
-            }
-
-            PMUser user = pmUserRepository.findByOid(userOid)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-            return collaboration.isPresent() &&
-                    (collaboration.get().getAccess_right() == Collab.AccessRight.WRITE ||
-                            (requiredAccess == Collab.AccessRight.READ && collaboration.get().getAccess_right() == Collab.AccessRight.READ));
-        } catch (Exception e) {
-            return false;
-        }
-    }
 
     private List<StatusDTO> getStatusesForBoard(Board board) {
         List<Status> statuses = statusRepository.findByBoardId(board);
@@ -253,6 +242,28 @@ public class StatusV3Service {
         boolean exists = statusRepository.existsByStatusNameAndBoardId(status.getStatusName(), board);
         if (exists) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name must be unique within the board");
+        }
+    }
+    private void validateStatusName(Status status, Board board, Status existingStatus) {
+        if (status.getStatusName() == null || status.getStatusName().trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name must not be null or empty");
+        }
+
+        if (status.getStatusName().length() > 50) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Name size must be between 1 and 50");
+        }
+
+        // Check if the new name is different from the existing name
+        if (!status.getStatusName().equals(existingStatus.getStatusName())) {
+            boolean exists = statusRepository.existsByStatusNameAndBoardId(status.getStatusName(), board);
+            if (exists) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Status name must be unique within the board");
+            }
+        }
+    }
+    private void validateStatusDescription(Status status) {
+        if (status.getStatusDescription() != null && status.getStatusDescription().length() > 200) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description size must be between 0 and 200");
         }
     }
 
