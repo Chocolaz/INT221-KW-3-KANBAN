@@ -77,7 +77,8 @@ const fetchWithAuth = async (url, options = {}) => {
       errorBody = { message: 'No JSON response body' }
     }
     console.error('Error response body:', errorBody)
-    throw new Error(`HTTP error! Status: ${response.status}`)
+
+    throw new Error(errorBody.error || 'HTTP error! Status: ' + response.status)
   }
 
   if (options.rawResponse) {

@@ -38,6 +38,7 @@ const statuses = ref([])
 const isDropdownOpen = ref(false)
 const hoverStatus = ref(null)
 const fetchedAttachments = ref([])
+const errorMessage = ref('') // Ref to hold error messages
 
 const initialTask = JSON.parse(JSON.stringify(props.task))
 
@@ -95,11 +96,14 @@ const handleEditTask = async () => {
       console.log('Task updated successfully.', response.statusCode)
     } else {
       console.error('Failed to update task')
-      alert('Failed to edit task. Please try again.')
+      errorMessage.value = 'Failed to edit task. Please try again.'
     }
   } catch (error) {
     console.error('Error updating task:', error)
-    alert('Error updating task. Please try again.')
+    errorMessage.value = error.response?.data?.message || error.message
+    setTimeout(() => {
+      errorMessage.value = ''
+    }, 5000)
   }
 }
 
@@ -348,7 +352,11 @@ onUnmounted(() => {
             <FileAttachmentInput @filesSelected="handleFilesSelected" />
           </div>
         </div>
+
         <div class="flex justify-end items-center p-2 border-t border-gray-200">
+          <div v-if="errorMessage" class="text-red-600 text-sm z-10 mr-6">
+            {{ errorMessage }}
+          </div>
           <div class="space-x-2">
             <button
               type="button"
@@ -370,4 +378,3 @@ onUnmounted(() => {
     </div>
   </div>
 </template>
-
