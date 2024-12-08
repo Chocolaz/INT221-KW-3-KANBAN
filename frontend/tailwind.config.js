@@ -24,12 +24,23 @@ export default {
             transform: 'translateY(0)',
           },
         },
+        'slide-fade': {
+          '0%': {
+            transform: 'translateY(-100%)',
+            opacity: '0',
+          },
+          '100%': {
+            transform: 'translateY(0)',
+            opacity: '1',
+          },
+        },
       },
       animation: {
         'fade-in-up': 'fadeInUp 0.3s ease-out',
         'fade-in': 'fadeIn 0.2s ease-in-out',
+        'slide-fade': 'slide-fade 0.5s ease',
       },
     },
   },
   plugins: [],
-};
+}

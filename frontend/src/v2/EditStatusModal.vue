@@ -124,7 +124,7 @@ const saveChanges = async () => {
     class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-50"
   >
     <div
-      class="bg-white rounded-lg p-6 max-w-md w-full relative border-2 border-red-500 animate-fade-in-up"
+      class="bg-white rounded-lg p-6 max-w-md w-full relative border-2 border-red-500 animate-[fadeInUp_0.3s_ease-out]"
     >
       <h2 class="text-lg font-semibold mb-4 text-red-600">Edit Status</h2>
       <div v-if="editedStatus">
@@ -189,23 +189,4 @@ const saveChanges = async () => {
   />
 </template>
 
-<style scoped>
-.modal-container {
-  max-width: 80%;
-}
 
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.3s ease-out;
-}
-</style>

@@ -118,7 +118,7 @@ const addStatus = async () => {
           </button>
           <button
             type="submit"
-            :class="[
+            :class="[ 
               'px-4 py-2 rounded-md itbkk-button-confirm',
               isSaveDisabled
                 ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
@@ -140,19 +140,3 @@ const addStatus = async () => {
   />
 </template>
 
-<style>
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.3s ease-out;
-}
-</style>

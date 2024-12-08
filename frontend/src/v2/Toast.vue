@@ -46,31 +46,28 @@ watch(
   <transition name="slide-fade">
     <div
       v-if="show"
-      class="fixed top-20 left-10 px-6 py-3 rounded-md shadow-md flex items-center transition-transform transform"
+      class="fixed top-20 left-10 px-6 py-3 rounded-md shadow-md flex items-center transition-transform transform animate-slide-fade"
       :class="{
         'bg-green-400 text-white': operationType === 'add',
-        'bg-blue-400 text-white':
-          statusCode === 200 && operationType === 'edit',
-        'bg-red-500 text-white':
-          statusCode === 200 && operationType === 'delete',
-        'bg-yellow-500 text-white':
-          statusCode === 200 && operationType === 'transfer',
+        'bg-blue-400 text-white': statusCode === 200 && operationType === 'edit',
+        'bg-red-500 text-white': statusCode === 200 && operationType === 'delete',
+        'bg-yellow-500 text-white': statusCode === 200 && operationType === 'transfer',
         'bg-orange-500 text-white': statusCode === 404 || statusCode === 500
       }"
     >
       <span v-if="operationType === 'add'">The status has been added</span>
-      <span v-if="statusCode === 200 && operationType === 'edit'"
-        >The status has been updated</span
-      >
-      <span v-if="statusCode === 200 && operationType === 'delete'"
-        >The status has been deleted</span
-      >
-      <span v-if="statusCode === 200 && operationType === 'transfer'"
-        >The status is transferred</span
-      >
-      <span v-if="statusCode === 500 && operationType === 'delete'"
-        >The status is being used by a task</span
-      >
+      <span v-if="statusCode === 200 && operationType === 'edit'">
+        The status has been updated
+      </span>
+      <span v-if="statusCode === 200 && operationType === 'delete'">
+        The status has been deleted
+      </span>
+      <span v-if="statusCode === 200 && operationType === 'transfer'">
+        The status is transferred
+      </span>
+      <span v-if="statusCode === 500 && operationType === 'delete'">
+        The status is being used by a task
+      </span>
       <span v-else-if="statusCode === 404">The status does not exist</span>
       <button
         class="ml-4 bg-transparent text-white text-lg font-bold cursor-pointer"
@@ -81,26 +78,3 @@ watch(
     </div>
   </transition>
 </template>
-
-<style scoped>
-.slide-fade-enter-active,
-.slide-fade-leave-active {
-  transition: transform 0.5s ease, opacity 0.5s ease;
-}
-.slide-fade-enter-from {
-  transform: translateY(-100%);
-  opacity: 0;
-}
-.slide-fade-enter-to {
-  transform: translateY(0);
-  opacity: 1;
-}
-.slide-fade-leave-from {
-  transform: translateY(0);
-  opacity: 1;
-}
-.slide-fade-leave-to {
-  transform: translateY(-100%);
-  opacity: 0;
-}
-</style>

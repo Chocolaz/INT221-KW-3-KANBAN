@@ -78,6 +78,3 @@ const cancelModal = () => {
   </div>
 </template>
 
-
-<style scoped>
-</style>

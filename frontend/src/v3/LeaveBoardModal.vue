@@ -1,7 +1,7 @@
 <template>
   <div
     v-if="isVisible"
-    class="fixed inset-0 flex items-center justify-center z-50"
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
   >
     <div class="bg-white rounded-lg shadow-lg p-6">
       <h3 class="text-lg font-semibold mb-4">Leave Board</h3>
@@ -40,14 +40,3 @@ const confirmLeave = () => {
   props.onLeave()
 }
 </script>
-
-<style scoped>
-.fixed {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-</style>

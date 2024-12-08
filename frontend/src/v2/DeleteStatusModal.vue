@@ -105,7 +105,11 @@ const handleErrors = (message) => {
     v-if="isOpen"
   >
     <div
-      class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm animate-fade-in-up"
+      class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm transition-all duration-300 animate-fade-in-up transform opacity-0 "
+      :class="{
+        'opacity-100 translate-y-0': isOpen,
+        'opacity-0 translate-y-5': !isOpen
+      }"
     >
       <h2 class="text-lg font-semibold mb-4 text-red-600">Delete Status</h2>
       <p class="text-left mb-4">Are you sure you want to delete the status?</p>
@@ -135,19 +139,3 @@ const handleErrors = (message) => {
   />
 </template>
 
-<style scoped>
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translate3d(0, 20px, 0);
-  }
-  to {
-    opacity: 1;
-    transform: translate3d(0, 0, 0);
-  }
-}
-
-.animate-fade-in-up {
-  animation: fadeInUp 0.3s ease-out;
-}
-</style>

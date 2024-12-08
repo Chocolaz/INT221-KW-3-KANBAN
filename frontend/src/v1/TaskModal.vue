@@ -3,13 +3,11 @@
     class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
   >
     <div
-      class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col mt-14 animate-modal"
+      class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col mt-14 animate-fade-in-up"
       @click.stop
     >
       <!-- Header -->
-      <div
-        class="p-6 border-b border-gray-100 flex items-start justify-between"
-      >
+      <div class="p-6 border-b border-gray-100 flex items-start justify-between">
         <h2 class="text-2xl font-semibold text-gray-900 pr-8">
           {{ task.title }}
         </h2>
@@ -185,6 +183,7 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, onMounted } from 'vue'
 import { defineProps } from 'vue'
@@ -235,41 +234,3 @@ const handleAttachmentClick = (attachment) => {
 }
 </script>
 
-<style scoped>
-.animate-modal {
-  animation: modal-in 0.3s ease-out;
-}
-
-@keyframes modal-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95) translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.overflow-y-auto {
-  scrollbar-width: thin;
-  scrollbar-color: #e5e7eb transparent;
-}
-
-.overflow-y-auto::-webkit-scrollbar {
-  width: 6px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb {
-  background-color: #e5e7eb;
-  border-radius: 3px;
-}
-
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background-color: #d1d5db;
-}
-</style>
