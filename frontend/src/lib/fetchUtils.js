@@ -1,12 +1,22 @@
 import { useRouter } from 'vue-router'
 
-const baseUrl = import.meta.env.VITE_API_URL
 const baseUrl3 = import.meta.env.VITE_API_URL3
 
 const router = useRouter()
 
 const handleResponse = async (response) => {
-  const errorBody = await response.text()
+  const contentType = response.headers.get('Content-Type') || ''
+  let errorBody = ''
+
+  try {
+    if (contentType.includes('application/json')) {
+      errorBody = await response.json()
+    } else {
+      errorBody = await response.text()
+    }
+  } catch (e) {
+    console.warn('Error reading response body:', e.message)
+  }
 
   if (!response.ok) {
     console.error(`HTTP error! Status: ${response.status}`, errorBody)
@@ -16,19 +26,18 @@ const handleResponse = async (response) => {
       localStorage.removeItem('token')
       router.push('/login')
     }
-    throw new Error(`HTTP error! Status: ${response.status}`)
+
+    throw new Error(
+      `HTTP error! Status: ${response.status}, Body: ${
+        typeof errorBody === 'string' ? errorBody : JSON.stringify(errorBody)
+      }`
+    )
   }
 
-  if (errorBody) {
-    try {
-      const responseData = JSON.parse(errorBody)
-      return { success: true, data: responseData, statusCode: response.status }
-    } catch (e) {
-      console.warn('Response is not valid JSON. Raw text:', errorBody)
-      return { success: true, data: errorBody, statusCode: response.status }
-    }
-  } else {
-    return { success: true, data: {}, statusCode: response.status }
+  return {
+    success: true,
+    data: typeof errorBody === 'string' ? errorBody : errorBody,
+    statusCode: response.status
   }
 }
 
@@ -53,12 +62,21 @@ const fetchWithAuth = async (url, options = {}) => {
   const headers = {
     ...options.headers
   }
+
   if (token) {
     headers.Authorization = `Bearer ${token}`
   }
+
   const response = await fetch(url, { ...options, headers })
 
   if (!response.ok) {
+    let errorBody = {}
+    try {
+      errorBody = await response.json()
+    } catch (error) {
+      errorBody = { message: 'No JSON response body' }
+    }
+    console.error('Error response body:', errorBody)
     throw new Error(`HTTP error! Status: ${response.status}`)
   }
 
@@ -358,7 +376,7 @@ const updateTaskWithAttachment = async (
       })
     }
 
-    console.log('Final URL:', fullUrl) 
+    console.log('Final URL:', fullUrl)
 
     const responseData = await fetchWithAuth(fullUrl, {
       method: 'PUT',
