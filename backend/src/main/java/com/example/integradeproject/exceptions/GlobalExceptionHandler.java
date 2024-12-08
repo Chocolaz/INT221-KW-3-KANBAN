@@ -10,6 +10,7 @@ import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -32,6 +33,10 @@ public class GlobalExceptionHandler {
             }
         };
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+    }
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<String> handleFileSizeException(MaxUploadSizeExceededException ex) {
+        return new ResponseEntity<>("File size exceeds maximum limit of 20MB", HttpStatus.BAD_REQUEST);
     }
 
 
