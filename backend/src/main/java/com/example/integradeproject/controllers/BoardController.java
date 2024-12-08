@@ -162,7 +162,6 @@ public class BoardController {
     }
 
     @PutMapping("/{boardId}/tasks/{taskId}")
-    @Transactional
     public ResponseEntity<?> updateTask(
             @PathVariable String boardId,
             @PathVariable Integer taskId,
@@ -189,7 +188,6 @@ public class BoardController {
             }
 
 
-            // Handle new attachments if any
             List<AttachmentDTO> newAttachments = null;
             if (addAttachments != null && !addAttachments.isEmpty()) {
                 newAttachments = addAttachments.stream()

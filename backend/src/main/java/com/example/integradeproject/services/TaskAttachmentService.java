@@ -135,11 +135,11 @@ public class TaskAttachmentService {
             );
         }
 
-        // Check max files
+        // Check max files - return 400 when exceeding 10 files
         if (task.getAttachments().size() >= MAX_FILES) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
-                    "Maximum number of attachments (" + MAX_FILES + ") reached"
+                    "Maximum number of attachments (10) has been reached. Cannot add more files."
             );
         }
 

@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 
+import java.nio.file.AccessDeniedException;
+
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -38,6 +40,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleFileSizeException(MaxUploadSizeExceededException ex) {
         return new ResponseEntity<>("File size exceeds maximum limit of 20MB", HttpStatus.BAD_REQUEST);
     }
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<String> handleAccessDeniedException(AccessDeniedException ex) {
+        return new ResponseEntity<>("Maximum attachments limit exceeded", HttpStatus.BAD_REQUEST);
+    }
+
 
 
 }
