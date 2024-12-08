@@ -39,6 +39,7 @@ const isDropdownOpen = ref(false)
 const hoverStatus = ref(null)
 const fetchedAttachments = ref([])
 const errorMessage = ref('') // Ref to hold error messages
+const failedFiles = ref([]) // Holds names of files that failed to upload
 
 const initialTask = JSON.parse(JSON.stringify(props.task))
 
@@ -97,13 +98,16 @@ const handleEditTask = async () => {
     } else {
       console.error('Failed to update task')
       errorMessage.value = 'Failed to edit task. Please try again.'
+      failedFiles.value = selectedFiles.value.map((file) => file.name)
     }
   } catch (error) {
     console.error('Error updating task:', error)
     errorMessage.value = error.response?.data?.message || error.message
+    failedFiles.value = selectedFiles.value.map((file) => file.name)
     setTimeout(() => {
       errorMessage.value = ''
-    }, 5000)
+      failedFiles.value = []
+    }, 7000)
   }
 }
 
@@ -351,12 +355,46 @@ onUnmounted(() => {
           <div class="mb-4">
             <FileAttachmentInput @filesSelected="handleFilesSelected" />
           </div>
+
+          <transition
+            enter-active-class="transition-opacity duration-500 ease-in-out"
+            enter-from-class="opacity-0"
+            enter-to-class="opacity-100"
+            leave-active-class="transition-opacity duration-500 ease-in-out"
+            leave-from-class="opacity-100"
+            leave-to-class="opacity-0"
+          >
+            <div
+              v-if="errorMessage || failedFiles.length > 0"
+              class="flex items-start gap-3 text-red-700 bg-red-100 border border-red-300 p-4 rounded-lg shadow-lg"
+            >
+              <i class="fas fa-exclamation-circle text-red-500 text-2xl"></i>
+              <div class="space-y-4">
+                <!-- Error Message -->
+                <div v-if="errorMessage" class="text-sm">
+                  <p class="font-semibold">Error:</p>
+                  <p>{{ errorMessage }}</p>
+                  <p>
+                    Please delete the attachment and add again to update the
+                    file.
+                  </p>
+                </div>
+
+                <!-- Failed Files -->
+                <div v-if="failedFiles.length > 0" class="text-sm">
+                  <p>The following files are not added:</p>
+                  <ul class="list-disc pl-6">
+                    <li v-for="fileName in failedFiles" :key="fileName">
+                      {{ fileName }}
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </transition>
         </div>
 
         <div class="flex justify-end items-center p-2 border-t border-gray-200">
-          <div v-if="errorMessage" class="text-red-600 text-sm z-10 mr-6">
-            {{ errorMessage }}
-          </div>
           <div class="space-x-2">
             <button
               type="button"
