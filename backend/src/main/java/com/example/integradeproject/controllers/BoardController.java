@@ -162,6 +162,7 @@ public class BoardController {
     }
 
     @PutMapping("/{boardId}/tasks/{taskId}")
+    @Transactional
     public ResponseEntity<?> updateTask(
             @PathVariable String boardId,
             @PathVariable Integer taskId,
@@ -171,45 +172,59 @@ public class BoardController {
             @RequestHeader(value = "Authorization", required = false) String token) {
 
         try {
+            // ตรวจสอบจำนวนไฟล์แนบก่อนเริ่มกระบวนการใดๆ
+            if (addAttachments != null && addAttachments.size() > 10) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("error", "Maximum number of attachments (10) exceeded"));
+            }
+
             String jwtToken = token != null ? token.substring(7) : null;
 
-            // First update the basic task information
+            // อัปเดตงานพื้นฐาน
             boardService.updateTask(boardId, taskId, updateTaskDTO, jwtToken);
 
-            // Get fresh task instance to handle attachments
+            // ดึง task ล่าสุด
             TaskV3 task = taskRepository.findByTaskIdAndBoardId(taskId, boardRepository.findById(boardId).get())
                     .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Task not found"));
 
-            // Handle attachment deletions if any
+            // ลบไฟล์แนบ
             if (deleteAttachments != null && !deleteAttachments.isEmpty()) {
                 for (Integer attachmentId : deleteAttachments) {
                     taskAttachmentService.deleteAttachment(task, attachmentId);
                 }
             }
 
-
+            // เพิ่มไฟล์แนบใหม่
             List<AttachmentDTO> newAttachments = null;
             if (addAttachments != null && !addAttachments.isEmpty()) {
+                // เพิ่มการตรวจสอบจำนวนไฟล์ที่มีอยู่แล้ว
+                int currentAttachmentCount = task.getAttachments().size();
+                if (currentAttachmentCount + addAttachments.size() > 10) {
+                    return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                            .body(Map.of("error", "Maximum number of attachments (10) exceeded"));
+                }
+
                 newAttachments = addAttachments.stream()
                         .map(file -> taskAttachmentService.validateAndAddAttachment(task, file))
                         .collect(Collectors.toList());
             }
 
-            // Convert updated task with latest attachments to DTO
+            // แปลง task ที่อัปเดตเป็น DTO
             NewTask2DTO finalUpdatedTask = boardService.convertToNewTaskDTO(task);
 
-            // If new attachments were added, include them in the response
+            // เพิ่มไฟล์แนบใหม่ลงใน response หากมี
             if (newAttachments != null && !newAttachments.isEmpty()) {
-                // Assuming NewTask2DTO has a method to set attachments or a constructor that can include them
                 finalUpdatedTask.setAttachments(newAttachments);
             }
 
             return ResponseEntity.ok(finalUpdatedTask);
 
         } catch (ResponseStatusException e) {
+            // จัดการข้อผิดพลาดที่เกิดจาก ResponseStatusException
             return ResponseEntity.status(e.getStatusCode())
                     .body(Map.of("error", e.getReason()));
         } catch (Exception e) {
+            // จัดการข้อผิดพลาดอื่นๆ
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to update task: " + e.getMessage()));
         }
