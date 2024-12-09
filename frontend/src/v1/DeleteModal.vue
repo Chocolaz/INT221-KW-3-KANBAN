@@ -32,12 +32,12 @@ const confirmDelete = async () => {
     const response = await FetchUtils.deleteData(
       `tasks/${props.taskId}`,
       boardId
-    ) // Use boardId from route
+    )
     const statusCode = response.statusCode
     console.log('Deletion status code:', statusCode)
-    if (statusCode === 200) {
-      emit('showSuccessModal')
-    }
+
+    emit('deleted', props.taskId, statusCode)
+
     props.closeModal()
   } catch (error) {
     console.error('Error deleting task:', error)
@@ -77,4 +77,3 @@ const cancelModal = () => {
     </div>
   </div>
 </template>
-
