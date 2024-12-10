@@ -487,9 +487,6 @@ public class BoardService {
     }
 
 
-
-
-
     public void deleteTask(String boardId, Integer taskId, String token) {
         String userOid = jwtTokenUtil.getUidFromToken(token);
         Board board = boardRepository.findById(boardId)
@@ -543,10 +540,6 @@ public class BoardService {
 
         return dto;
     }
-
-
-
-
 
 
     private void checkWriteAccess(Board board, String token) {

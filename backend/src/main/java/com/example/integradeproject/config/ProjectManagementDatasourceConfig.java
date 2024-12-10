@@ -26,12 +26,18 @@ import java.util.Objects;
 )
 public class ProjectManagementDatasourceConfig {
 
+
+    //สร้าง DataSourceProperties ที่โหลดค่าคอนฟิกจากไฟล์ application.properties หรือ application.yml
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource.pm")
     public DataSourceProperties projectManagementDataSourceProperties() {
         return new DataSourceProperties();
     }
 
+
+    //ใช้ DataSourceProperties จาก projectManagementDataSourceProperties() เพื่อสร้าง DataSource
+    //ระบุประเภทของ DataSource เป็น HikariDataSource (default connection pool ของ Spring Boot)
+    //คืนค่าเป็น DataSource ที่พร้อมใช้งาน
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource.pm.configuration")
     public DataSource projectManagementDataSource() {
@@ -41,6 +47,8 @@ public class ProjectManagementDatasourceConfig {
                 .build();
     }
 
+
+    //สร้าง EntityManagerFactory สำหรับจัดการ Entity ของ Project Management
     @Bean(name = "projectManagementEntityManager")
     @Primary
     public LocalContainerEntityManagerFactoryBean projectManagementEntityManagerFactory(
@@ -51,16 +59,11 @@ public class ProjectManagementDatasourceConfig {
                 .build();
     }
 
-//    @Bean(name = "projectManagementTransactionManager")
-//    public PlatformTransactionManager projectManagementTransactionManager(
-//            final @Qualifier("projectManagementEntityManager") LocalContainerEntityManagerFactoryBean projectManagementEntityManager) {
-//        return new JpaTransactionManager(
-//                Objects.requireNonNull(
-//                        projectManagementEntityManager.getObject()
-//                )
-//        );
-//    }
-//
+
+
+    //สร้าง JpaTransactionManager ซึ่งเป็นตัวจัดการ Transaction ของ JPA
+    //คืนค่า TransactionManager สำหรับจัดการธุรกรรมของ Project Management
+
 @Bean(name = "projectManagementTransactionManager")
 @Primary
 public PlatformTransactionManager projectManagementTransactionManager(

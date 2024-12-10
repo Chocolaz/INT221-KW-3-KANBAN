@@ -36,65 +36,24 @@ public class StatusV3Service {
     ListMapper listMapper;
     @Autowired
     private JwtTokenUtil jwtTokenUtil;
-    @PersistenceContext
-    private EntityManager entityManager;
 
-    private boolean isUserAuthorizedForWrite(String token, Board board) {
-        if (token == null) {
-            return false;
-        }
 
-        try {
-            String userOid = jwtTokenUtil.getUidFromToken(token);
-            // Check if user is owner
-            if (board.getOwnerOid().getOid().equals(userOid)) {
-                return true;
-            }
-
-            PMUser user = pmUserRepository.findByOid(userOid)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-            return collaboration.isPresent() && collaboration.get().getAccess_right() == Collab.AccessRight.WRITE;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    private boolean isUserAuthorizedForRead(String token, Board board) {
-        if (token == null) {
-            return board.getVisibility() == Board.BoardVisibility.PUBLIC;
-        }
-
-        try {
-            String userOid = jwtTokenUtil.getUidFromToken(token);
-            // Check if user is owner
-            if (board.getOwnerOid().getOid().equals(userOid)) {
-                return true;
-            }
-
-            PMUser user = pmUserRepository.findByOid(userOid)
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
-
-            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
-            return collaboration.isPresent() &&
-                    (collaboration.get().getAccess_right() == Collab.AccessRight.WRITE ||
-                            collaboration.get().getAccess_right() == Collab.AccessRight.READ);
-        } catch (Exception e) {
-            return board.getVisibility() == Board.BoardVisibility.PUBLIC;
-        }
-    }
 
     public List<StatusDTO> findAllStatusesByBoardId(String boardId, String token) {
         Board board = boardRepository.findById(boardId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Board not found"));
-
+        //if =public or  Write can get allstatus
         if (board.getVisibility() == Board.BoardVisibility.PUBLIC || isUserAuthorizedForRead(token, board)) {
             return getStatusesForBoard(board);
         }
 
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to board");
     }
+    private List<StatusDTO> getStatusesForBoard(Board board) {
+        List<Status> statuses = statusRepository.findByBoardId(board);
+        return listMapper.mapList(statuses, StatusDTO.class);
+    }
+
 
     public StatusDTO getStatusById(String boardId, Integer statusId, String token) {
         Board board = boardRepository.findById(boardId)
@@ -106,6 +65,12 @@ public class StatusV3Service {
 
         throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied to board");
     }
+    private StatusDTO findStatusInBoard(Integer statusId, Board board) {
+        return statusRepository.findByStatusIdAndBoardId(statusId, board)
+                .map(status -> mapper.map(status, StatusDTO.class))
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
+    }
+
 
     public StatusDTO createNewStatus(Status status, String boardId, String token) {
         Board board = boardRepository.findById(boardId)
@@ -215,16 +180,7 @@ public class StatusV3Service {
 
 
 
-    private List<StatusDTO> getStatusesForBoard(Board board) {
-        List<Status> statuses = statusRepository.findByBoardId(board);
-        return listMapper.mapList(statuses, StatusDTO.class);
-    }
 
-    private StatusDTO findStatusInBoard(Integer statusId, Board board) {
-        return statusRepository.findByStatusIdAndBoardId(statusId, board)
-                .map(status -> mapper.map(status, StatusDTO.class))
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Status not found in this board"));
-    }
 
     private void validateStatus(Status status, Board board) {
         if (status.getStatusName() == null || status.getStatusName().trim().isEmpty()) {
@@ -264,6 +220,51 @@ public class StatusV3Service {
     private void validateStatusDescription(Status status) {
         if (status.getStatusDescription() != null && status.getStatusDescription().length() > 200) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Description size must be between 0 and 200");
+        }
+    }
+    private boolean isUserAuthorizedForWrite(String token, Board board) {
+        if (token == null) {
+            return false;
+        }
+
+        try {
+            String userOid = jwtTokenUtil.getUidFromToken(token);
+            // Check if user is owner
+            if (board.getOwnerOid().getOid().equals(userOid)) {
+                return true;
+            }
+
+            PMUser user = pmUserRepository.findByOid(userOid)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+            return collaboration.isPresent() && collaboration.get().getAccess_right() == Collab.AccessRight.WRITE;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean isUserAuthorizedForRead(String token, Board board) {
+        if (token == null) {
+            return board.getVisibility() == Board.BoardVisibility.PUBLIC;
+        }
+
+        try {
+            String userOid = jwtTokenUtil.getUidFromToken(token);
+            // Check if user is owner
+            if (board.getOwnerOid().getOid().equals(userOid)) {
+                return true;
+            }
+
+            PMUser user = pmUserRepository.findByOid(userOid)
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+            Optional<Collab> collaboration = collabRepository.findByBoardAndOid(board, user);
+            return collaboration.isPresent() &&
+                    (collaboration.get().getAccess_right() == Collab.AccessRight.WRITE ||
+                            collaboration.get().getAccess_right() == Collab.AccessRight.READ);
+        } catch (Exception e) {
+            return board.getVisibility() == Board.BoardVisibility.PUBLIC;
         }
     }
 

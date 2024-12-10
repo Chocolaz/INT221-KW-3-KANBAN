@@ -61,6 +61,8 @@ private SecretKey secretKey;
                 .compact();
     }
 
+
+        //แปลง Token ให้เป็น Claims โดยตรวจสอบด้วย secretKey
     public Claims getClaimsFromToken(String token) {
         return Jwts.parserBuilder()
                 .setSigningKey(secretKey)
@@ -68,6 +70,7 @@ private SecretKey secretKey;
                 .parseClaimsJws(token)
                 .getBody();
     }
+
 
     public boolean validateToken(String token) {
         try {

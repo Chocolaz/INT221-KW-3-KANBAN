@@ -30,17 +30,21 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/login","/token").permitAll()
                         .requestMatchers(HttpMethod.GET, "/v3/boards/**").permitAll()
-                        .requestMatchers("/api/tasks/*/attachments").authenticated()// Allow GET requests to /api/boards/** without authentication
-                        .anyRequest().authenticated()
+                        .anyRequest().authenticated() //ต้องพิสูจน์ตัวตนสำหรับคำขออื่น ๆ
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
+                //sessionManagement: ตั้งค่านโยบายการสร้างเซสชันเป็น STATELESS
+                //Stateless หมายถึงไม่มีการเก็บสถานะเซสชันบนเซิร์ฟเวอร์ เพราะ JWT จะถูกส่งในแต่ละคำขอ
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 );
+        //exceptionHandling: ใช้ jwtAuthenticationEntryPoint เพื่อจัดการข้อผิดพลาดกรณีไม่มีสิทธิ์ (401 Unauthorized)
+
         http.addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
 
+        // เพิ่มฟิลเตอร์ JwtRequestFilter ก่อนฟิลเตอร์ UsernamePasswordAuthenticationFilter เพื่อแยกและตรวจสอบ JWT ในคำขอ
         return http.build();
     }
 
@@ -48,4 +52,5 @@ public class SecurityConfig {
     public PasswordEncoder passwordEncoder() {
         return Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();
     }
+    //ใช้ Argon2PasswordEncoder สำหรับการเข้ารหัสรหัสผ่าน:
 }

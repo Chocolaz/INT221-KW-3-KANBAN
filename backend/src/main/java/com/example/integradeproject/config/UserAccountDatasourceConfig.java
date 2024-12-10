@@ -27,11 +27,18 @@ import java.util.Objects;
 )
 public class UserAccountDatasourceConfig {
 
+    //สร้าง DataSourceProperties โดยโหลดค่าคอนฟิกจากไฟล์ application.properties
+    //คืนค่าเป็น DataSourceProperties ที่ใช้กำหนดค่าของ DataSource สำหรับฐานข้อมูล User Account
+
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource.ua")
     public DataSourceProperties userAccountDataSourceProperties() {
         return new DataSourceProperties();
     }
+
+
+    //ใช้ DataSourceProperties เพื่อสร้าง DataSource
+    //สร้าง DataSource สำหรับฐานข้อมูล User Account
 
     @Bean
     @ConfigurationProperties(prefix = "spring.datasource.ua.configuration")
@@ -42,6 +49,8 @@ public class UserAccountDatasourceConfig {
                 .build();
     }
 
+
+    //สร้าง EntityManagerFactoryBuilder ซึ่งช่วยในการสร้าง EntityManagerFactory
     @Bean
     public EntityManagerFactoryBuilder entityManagerFactoryBuilder() {
         HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
@@ -50,6 +59,7 @@ public class UserAccountDatasourceConfig {
         return new EntityManagerFactoryBuilder(vendorAdapter, new HashMap<>(), null);
     }
 
+    //สร้าง EntityManagerFactory สำหรับจัดการ Entity ของ User Account
     @Bean(name = "userAccountEntityManager")
     public LocalContainerEntityManagerFactoryBean userAccountEntityManagerFactory(
             EntityManagerFactoryBuilder builder) {
@@ -59,6 +69,8 @@ public class UserAccountDatasourceConfig {
                 .build();
     }
 
+    //ใช้ JpaTransactionManager เพื่อจัดการธุรกรรม (Transaction) ของฐานข้อมูล User Account
+    //คืนค่า TransactionManager สำหรับฐานข้อมูล User Account
     @Bean(name = "userAccountTransactionManager")
     public PlatformTransactionManager userAccountTransactionManager(
             final @Qualifier("userAccountEntityManager")

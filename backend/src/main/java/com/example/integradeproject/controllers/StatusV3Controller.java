@@ -24,6 +24,7 @@ public class StatusV3Controller {
     public ResponseEntity<?> getAllStatuses(@PathVariable String boardId, @RequestHeader(value = "Authorization", required = false) String token) {
         try {
             String jwtToken = token != null ? token.substring(7) : null;
+            //ถ้า token ไม่เป็น null จะตัด "Bearer " ออกจาก token เพื่อดึงเฉพาะค่า JWT
             List<StatusDTO> statuses = statusService.findAllStatusesByBoardId(boardId, jwtToken);
             return ResponseEntity.ok(statuses);
         } catch (ResponseStatusException e) {

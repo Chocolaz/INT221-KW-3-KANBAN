@@ -28,8 +28,6 @@ public class BoardController {
     private BoardService boardService;
 
     @Autowired
-    private JwtTokenUtil jwtTokenUtil;
-    @Autowired
     private TaskAttachmentService taskAttachmentService;
 
     @Autowired

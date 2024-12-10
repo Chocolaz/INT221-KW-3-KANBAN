@@ -11,9 +11,10 @@ import java.nio.file.Paths;
 
 @Configuration
 public class FileStorageConfig {
-    @Value("${app.upload.dir:uploads}")
+    @Value("${app.upload.dir:uploads}")  //ดึงค่าจาก app.prop
     private String uploadDir;
 
+    //create file uploads และสร้างไดเรกทอรีนั้นหากยังไม่มี เมธอด uploadPath() คืนค่า Path ของไดเรกทอรีเพื่อให้ Spring ใช้งานในการจัดการไฟล์.
     @Bean
     public Path uploadPath() {
         try {

@@ -23,6 +23,7 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
+        // return 404
         ErrorResponse errorResponse = new ErrorResponse() {
             @Override
             public HttpStatusCode getStatusCode() {

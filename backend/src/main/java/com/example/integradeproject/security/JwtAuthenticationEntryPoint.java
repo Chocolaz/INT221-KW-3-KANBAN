@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+//AuthenticationEntryPoint: อินเทอร์เฟซที่ให้เรากำหนดวิธีจัดการกรณีที่ผู้ใช้ไม่ได้รับอนุญาต (Unauthorized)
 @Component
 public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
