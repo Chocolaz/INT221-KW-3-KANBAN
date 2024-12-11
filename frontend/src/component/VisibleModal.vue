@@ -45,7 +45,7 @@ const closeModal = () => {
     @click.self="closeModal"
   >
     <div
-      class="modal-content bg-white rounded-lg shadow-lg p-6 max-w-sm w-full text-center"
+      class="modal-content bg-white rounded-lg shadow-lg p-6 max-w-sm w-full text-center animate-fade-in-up"
     >
       <h1 class="text-red-600 text-lg font-semibold"> Board visibility change?</h1>
       <span>
@@ -55,17 +55,18 @@ const closeModal = () => {
         </p>
       </span>
       <div class="flex justify-center space-x-4">
-        <button
-          class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
-          @click="confirmAction"
-        >
-          Confirm
-        </button>
+        
         <button
           class="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition"
           @click="closeModal"
         >
           Cancel
+        </button>
+        <button
+          class="bg-red-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition"
+          @click="confirmAction"
+        >
+          Confirm
         </button>
       </div>
     </div>

@@ -16,7 +16,6 @@ const selectedCollabName = ref('')
 const selectedNewAccessRight = ref('')
 const isBoardOwner = ref(false)
 
-
 const fetchCollaborators = async () => {
   try {
     const response = await fetchUtils.getCollab(props.boardId)
@@ -51,8 +50,8 @@ onMounted(fetchCollaborators)
 </script>
 
 <template>
-  <div class="flex justify-center items-center mt-10 ">
-    <div class="w-full max-w-5xl mx-auto rounded-xl ">
+  <div class="flex justify-center items-center mt-10 animate-fade-in-up">
+    <div class="w-full max-w-5xl mx-auto rounded-xl">
       <h2 class="text-2xl font-bold text-black text-center mb-6">
         Manage Collaborators
       </h2>
@@ -90,7 +89,10 @@ onMounted(fetchCollaborators)
           </thead>
           <tbody>
             <tr v-if="collaborators.length === 0">
-              <td colspan="5" class="py-10 text-center text-gray-500 italic text-lg">
+              <td
+                colspan="5"
+                class="py-10 text-center text-gray-500 italic text-lg"
+              >
                 No collaborators added
               </td>
             </tr>
@@ -107,7 +109,13 @@ onMounted(fetchCollaborators)
                 <div class="flex justify-center gap-2">
                   <select
                     :value="collab.access_right"
-                    @change="openModalAccess(collab.oid, collab.name, $event.target.value)"
+                    @change="
+                      openModalAccess(
+                        collab.oid,
+                        collab.name,
+                        $event.target.value
+                      )
+                    "
                     class="border border-gray-300 rounded p-2 focus:ring-red-300"
                   >
                     <option value="READ">READ</option>

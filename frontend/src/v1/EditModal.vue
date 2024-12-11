@@ -38,7 +38,7 @@ const statuses = ref([])
 const isDropdownOpen = ref(false)
 const hoverStatus = ref(null)
 const fetchedAttachments = ref([])
-const errorMessage = ref('') 
+const errorMessage = ref('')
 const failedFiles = ref([])
 
 const initialTask = JSON.parse(JSON.stringify(props.task))
@@ -94,7 +94,6 @@ const handleEditTask = async () => {
       props.onTaskUpdated(response.data)
       props.closeModal()
       emit('editSuccess', response.statusCode, 'edit')
-      console.log('Task updated successfully.', response.statusCode)
     } else {
       console.error('Failed to update task')
       errorMessage.value = 'Failed to edit task. Please try again.'
@@ -121,8 +120,6 @@ const deleteAttachment = (attachmentId) => {
   if (!props.task.deleteAttachments.includes(attachmentId)) {
     props.task.deleteAttachments.push(attachmentId)
   }
-
-  console.log('deleteAttachments updated:', props.task.deleteAttachments)
 }
 
 const fetchStatuses = async () => {

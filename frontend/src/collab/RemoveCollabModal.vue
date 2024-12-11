@@ -66,7 +66,7 @@ const removeCollaborator = async () => {
   <div
     class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center"
   >
-    <div class="bg-white rounded-lg shadow-lg p-6 max-w-md">
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-md animate-fade-in-up">
       <p class="text-lg font-semibold mb-4">
         Are you sure you want to remove {{ collabName }} as a collaborator?
       </p>

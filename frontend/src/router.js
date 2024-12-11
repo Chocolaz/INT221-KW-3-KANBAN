@@ -3,7 +3,6 @@ import TaskList from './v1/TaskList.vue'
 import TestAttach from './v1/TestAttach.vue'
 import StatusList from './v2/StatusList.vue'
 import Login from './v3/Login.vue'
-import BoardAdd from './v3/BoardAdd.vue'
 import BoardList from './v3/BoardList.vue'
 import NotFound from './component/NotFound.vue'
 import AccessDenied from './component/AccessDenied.vue'
@@ -71,12 +70,6 @@ const routes = [
     path: '/board',
     name: 'boardView',
     component: BoardList,
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/board/add',
-    name: 'boardAdd',
-    component: BoardAdd,
     meta: { requiresAuth: true }
   },
   {

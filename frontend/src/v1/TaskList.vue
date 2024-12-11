@@ -44,7 +44,6 @@ const tooltipMessage =
 const fetchCollaborators = async () => {
   try {
     collaborators.value = await FetchUtils.getCollab(boardId)
-    console.log(collaborators.value)
   } catch (error) {
     console.error('Error fetching collaborator details:', error)
   }
@@ -55,8 +54,6 @@ const fetchBoardDetails = async () => {
     boardData.value = await FetchUtils.getBoards(boardId)
 
     await fetchCollaborators()
-
-    console.log('boardId:', boardId)
 
     checkBoardAccess()
   } catch (error) {
@@ -70,9 +67,6 @@ const checkBoardAccess = () => {
     collaborators.value,
     currentUser.value
   )
-
-  console.log('checkBoardAccess collaborators:', collaborators.value)
-  console.log('checkBoardData:', boardData.value)
 
   canOperation.value = isOwner || hasWriteAccess
 }
@@ -159,7 +153,6 @@ const openModal = async (taskId) => {
     const data = await FetchUtils.fetchData('tasks', boardId, taskId)
     if (data) {
       selectedTask.value = data
-      console.log(selectedTask.value)
     }
   } catch (error) {
     console.error('Error fetching task details:', error)
@@ -205,7 +198,6 @@ const openDeleteModal = (taskId) => {
   }
 }
 const handleTaskDeleted = (deletedTaskId, receivedStatusCode) => {
-  console.log('Received deletion status code:', receivedStatusCode)
   statusCode.value = receivedStatusCode
   tasks.value = tasks.value.filter((task) => task.taskId !== deletedTaskId)
   closeDeleteModal()
@@ -227,7 +219,6 @@ const openEditModal = async (taskId) => {
   try {
     const data = await FetchUtils.fetchData('tasks', boardId, taskId)
     taskToEdit.value = data
-    console.log(taskToEdit.value)
     if (taskToEdit.value) {
       operationType.value = 'edit'
       showEditModal.value = true
@@ -252,7 +243,6 @@ const onTaskUpdated = (updatedTask, status) => {
 }
 
 const handleEditSuccess = (status) => {
-  console.log('Received status code after edit:', status)
   statusCode.value = status
   showSuccessModal.value = true
   fetchTasks()
@@ -271,14 +261,13 @@ const closeFilterModal = () => {
 }
 
 const applyFilter = (selectedStatusesValue) => {
-  console.log('Selected statuses:', selectedStatusesValue)
   selectedStatuses.value = selectedStatusesValue
   closeFilterModal()
 }
 
 onMounted(async () => {
   try {
-    await fetchBoardDetails() 
+    await fetchBoardDetails()
     await fetchTasks()
     await fetchStatuses()
     const taskId = route.params.taskId
@@ -574,9 +563,9 @@ h3 {
 .table th,
 .table td {
   border: none;
-  padding: 8px; 
+  padding: 8px;
   text-align: left;
-  height: 30px; 
+  height: 30px;
   word-wrap: break-word;
   word-break: break-all;
   white-space: normal;
@@ -586,7 +575,7 @@ h3 {
   background-color: #ff6b6b;
   font-weight: bold;
   color: #ffffff;
-  font-size: 14px; 
+  font-size: 14px;
 }
 
 tbody tr:nth-child(even) {

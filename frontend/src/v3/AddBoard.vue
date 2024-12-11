@@ -41,7 +41,7 @@ onMounted(() => {
     @click.self="closeModal"
   >
     <div
-      class="itbkk-modal-new bg-white p-6 rounded-lg w-80 max-w-md text-center shadow-lg"
+      class="itbkk-modal-new bg-white p-6 rounded-lg w-80 max-w-md text-center shadow-lg animate-fade-in-up"
     >
       <h2 class="text-2xl font-semibold mb-4">Add New Board</h2>
       <form @submit.prevent="submitBoard">

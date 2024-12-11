@@ -81,7 +81,7 @@ const close = () => {
   <div
     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
   >
-    <div class="bg-white p-6 rounded-lg shadow-lg">
+    <div class="bg-white p-6 rounded-lg shadow-lg animate-fade-in-up">
       <h3 class="text-xl mb-4">Add Collaborator</h3>
       <input
         type="email"
@@ -102,7 +102,7 @@ const close = () => {
         </button>
         <button
           @click="addCollaborator"
-          class="bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50"
+          class="bg-red-600 text-white py-2 px-4 rounded disabled:opacity-50"
           :disabled="!isEmailValid || collabEmail === ownerEmail"
         >
           Add
