@@ -2,8 +2,6 @@ import { useRouter } from 'vue-router'
 
 const baseUrl3 = import.meta.env.VITE_API_URL3
 
-const router = useRouter()
-
 const handleResponse = async (response) => {
   const contentType = response.headers.get('Content-Type') || ''
   let errorBody = ''
@@ -112,7 +110,6 @@ const postData = async (url, boardId, data) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     })
-    console.log('Post status code:', responseData.statusCode)
     return responseData
   } catch (error) {
     console.error('Error posting data:', error)
@@ -129,7 +126,6 @@ const putData = async (url, boardId, data) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     })
-    console.log('Put status code:', responseData.statusCode)
     return responseData
   } catch (error) {
     console.error('Error updating data:', error)
@@ -144,10 +140,6 @@ const deleteData = async (url, boardId, newId = null) => {
       ? `${baseUrl3}/boards/${boardId}/${url}/${newId}`
       : buildUrl(url, boardId)
     const responseData = await fetchWithAuth(fullUrl, { method: 'DELETE' })
-    console.log(
-      `Delete${newId ? ' and transfer' : ''} status code:`,
-      responseData.statusCode
-    )
     return responseData
   } catch (error) {
     console.error(
@@ -162,7 +154,6 @@ const getBoards = async (boardId = null) => {
   try {
     const url = boardId ? `${baseUrl3}/boards/${boardId}` : `${baseUrl3}/boards`
     const responseData = await fetchWithAuth(url)
-    console.log('Boards fetched:', responseData)
 
     return boardId ? responseData : responseData.data || responseData
   } catch (error) {
@@ -178,7 +169,6 @@ const addBoard = async (boardData) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(boardData)
     })
-    console.log('Add board status code:', responseData.statusCode)
     return responseData
   } catch (error) {
     console.error('Error adding board:', error)
@@ -191,13 +181,11 @@ const visibilityBoard = async (boardId, visibility) => {
     validateBoardId(boardId)
     const fullUrl = `${baseUrl3}/boards/${boardId}`
     const requestBody = { visibility }
-    console.log('Request Body:', requestBody)
     const responseData = await fetchWithAuth(fullUrl, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     })
-    console.log('Visibility status code:', responseData.statusCode)
     return responseData
   } catch (error) {
     if (error.message.includes('403')) {
@@ -215,7 +203,6 @@ const getCollab = async (boardId) => {
     validateBoardId(boardId)
     const fullUrl = `${baseUrl3}/boards/${boardId}/collabs`
     const responseData = await fetchWithAuth(fullUrl)
-    console.log('Collab details fetched:', responseData.data)
     return responseData.data || responseData
   } catch (error) {
     console.error('Error fetching collaboration details:', error)
@@ -232,7 +219,6 @@ const addCollab = async (boardId, data) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     })
-    console.log('Add collaboration status code:', responseData.statusCode)
     return responseData
   } catch (error) {
     console.error('Error adding collaboration:', error)
@@ -247,7 +233,6 @@ const updateCollabAccess = async (boardId, collabId, accessRight) => {
 
     const fullUrl = `${baseUrl3}/boards/${boardId}/collabs/${collabId}`
     const requestBody = { access_right: accessRight }
-    console.log(`Updating access for ${collabId} to ${accessRight}`)
 
     const responseData = await fetchWithAuth(fullUrl, {
       method: 'PATCH',
@@ -255,7 +240,6 @@ const updateCollabAccess = async (boardId, collabId, accessRight) => {
       body: JSON.stringify(requestBody)
     })
 
-    console.log(`Update access status code:`, responseData.statusCode)
     return responseData
   } catch (error) {
     console.error('Error updating collaborator access:', error.message)
@@ -269,14 +253,12 @@ const removeCollab = async (boardId, collabId) => {
     if (!collabId) throw new Error('Collaborator ID is required')
 
     const fullUrl = `${baseUrl3}/boards/${boardId}/collabs/${collabId}`
-    console.log(`Removing collaborator with ID ${collabId}`)
 
     const responseData = await fetchWithAuth(fullUrl, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' }
     })
 
-    console.log(`Remove collaborator status code:`, responseData.statusCode)
     return responseData
   } catch (error) {
     console.error('Error removing collaborator:', error.message)
@@ -332,10 +314,6 @@ const postTaskWithAttachment = async (boardId, newTaskDTO, files) => {
       body: formData
     })
 
-    console.log(
-      'Post task with attachment status code:',
-      responseData.statusCode
-    )
     return responseData
   } catch (error) {
     console.error('Error posting task with attachment:', error)
@@ -377,17 +355,11 @@ const updateTaskWithAttachment = async (
       })
     }
 
-    console.log('Final URL:', fullUrl)
-
     const responseData = await fetchWithAuth(fullUrl, {
       method: 'PUT',
       body: formData
     })
 
-    console.log(
-      'Update task with attachment status code:',
-      responseData.statusCode
-    )
     return responseData
   } catch (error) {
     console.error('Error updating task with attachment:', error)
