@@ -103,6 +103,28 @@ router.beforeEach(async (to, from, next) => {
 
   let isAuthenticated = isAccessTokenValid
 
+  if (to.params.boardId) {
+    try {
+      const { hasAccess, notFound, isPublic } = await checkBoardAccess(
+        to.params.boardId
+      )
+
+      if (notFound) {
+        return next({ name: 'notFound' })
+      }
+
+      if (isPublic) {
+        return next()
+      }
+
+      if (!hasAccess) {
+        return next({ name: 'accessDenied' })
+      }
+    } catch (error) {
+      return next({ name: 'notFound' })
+    }
+  }
+
   if (to.meta.requiresAuth && !isAuthenticated) {
     const refreshToken = getRefreshToken()
 
@@ -110,9 +132,7 @@ router.beforeEach(async (to, from, next) => {
       try {
         await refreshAccessToken()
         isAuthenticated = true
-        console.log('Access token refreshed successfully')
       } catch (error) {
-        console.error('Error refreshing token:', error)
         removeTokens()
         return next({ name: 'loginView', query: { redirect: to.fullPath } })
       }
@@ -124,22 +144,6 @@ router.beforeEach(async (to, from, next) => {
 
   if (to.name === 'loginView' && isAuthenticated) {
     return next({ name: 'boardView' })
-  }
-
-  if (to.params.boardId) {
-    try {
-      const { hasAccess, notFound } = await checkBoardAccess(to.params.boardId)
-      if (notFound) {
-        console.log('Board not found, redirecting to NotFound page')
-        return next({ name: 'notFound' })
-      } else if (!hasAccess) {
-        console.log('Access denied, redirecting to AccessDenied page')
-        return next({ name: 'accessDenied' })
-      }
-    } catch (error) {
-      console.error('Error checking board access:', error)
-      return next({ name: 'notFound' })
-    }
   }
 
   next()

@@ -34,13 +34,11 @@ const confirmDelete = async () => {
       boardId
     )
     const statusCode = response.statusCode
-    console.log('Deletion status code:', statusCode)
 
     emit('deleted', props.taskId, statusCode)
 
     props.closeModal()
   } catch (error) {
-    console.error('Error deleting task:', error)
     alert('Failed to delete task.')
   }
 }

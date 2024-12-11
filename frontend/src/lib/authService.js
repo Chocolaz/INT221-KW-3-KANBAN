@@ -1,8 +1,8 @@
 import jwtDecode from 'vue-jwt-decode'
 import fetchUtils from '@/lib/fetchUtils'
 
-const baseUrl = import.meta.env.VITE_API_URL2 
-const baseUrl3 = import.meta.env.VITE_API_URL3 
+const baseUrl = import.meta.env.VITE_API_URL2
+const baseUrl3 = import.meta.env.VITE_API_URL3
 
 export function storeTokens(accessToken, refreshToken) {
   localStorage.setItem('access_token', accessToken)
@@ -60,14 +60,11 @@ export const isTokenValid = (token, tokenType = 'access') => {
     const remainingTime = decodedToken.exp - currentTime
 
     if (remainingTime > 0) {
-      console.log(`${tokenType} token will expire in ${remainingTime} seconds`)
       return true
     } else {
-      console.log(`${tokenType} token has expired`)
       return false
     }
   } catch (error) {
-    console.error(`Error decoding ${tokenType} token:`, error)
     return false
   }
 }
@@ -84,7 +81,6 @@ export const getTokenExpirationTime = (token) => {
       return 0
     }
   } catch (error) {
-    console.error('Error decoding token:', error)
     return null
   }
 }
@@ -116,24 +112,22 @@ export async function checkBoardAccess(boardId) {
     const response = await fetchUtils.getBoards(boardId)
 
     if (response.statusCode === 403) {
-      console.log(response.statusCode)
-      return { hasAccess: false, notFound: false }
+      return { hasAccess: false, notFound: false, isPublic: false }
     }
     if (response.statusCode === 404) {
-      console.log(response.statusCode)
-      return { hasAccess: false, notFound: true }
+      return { hasAccess: false, notFound: true, isPublic: false }
     }
 
     const boardData = response.data
+    if (boardData.visibility === 'public') {
+      return { hasAccess: true, notFound: false, isPublic: true }
+    }
+
     const currentUser = localStorage.getItem('username')
     const boardOwner = boardData.owner.username || boardData.owner.name
 
-    if (boardData.visibility === 'public') {
-      return { hasAccess: true, notFound: false }
-    }
-
     if (boardOwner === currentUser) {
-      return { hasAccess: true, notFound: false }
+      return { hasAccess: true, notFound: false, isPublic: false }
     }
 
     const collaborators = await fetchUtils.getCollab(boardId)
@@ -144,14 +138,15 @@ export async function checkBoardAccess(boardId) {
     )
 
     if (hasAccess) {
-      console.log('Collaborator access granted:', hasAccess)
-      return { hasAccess: true, notFound: false }
+      return { hasAccess: true, notFound: false, isPublic: false }
     }
 
-    console.log('Access denied to user:', currentUser)
-    return { hasAccess: false, notFound: false }
+    return { hasAccess: false, notFound: false, isPublic: false }
   } catch (error) {
-    console.error('Error fetching board data:', error)
-    return { hasAccess: false, notFound: error.message.includes('404') }
+    return {
+      hasAccess: false,
+      notFound: error.message.includes('404'),
+      isPublic: false
+    }
   }
 }
