@@ -21,7 +21,6 @@ const submitBoard = async () => {
     isValidName.value = true
     const boardData = { name: newBoardName.value }
     const response = await fetchUtils.addBoard(boardData)
-    console.log('Board added:', response)
     emit('board-added')
     closeModal()
   } catch (error) {

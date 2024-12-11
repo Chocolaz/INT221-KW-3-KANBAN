@@ -37,9 +37,7 @@ const addStatus = async () => {
   operationType.value = 'add'
   try {
     const existingStatuses = await fetchUtils.fetchData('statuses', boardId)
-    const existingStatusNames = existingStatuses.map(
-      (status) => status.name
-    )
+    const existingStatusNames = existingStatuses.map((status) => status.name)
 
     if (existingStatusNames.includes(statusName.value)) {
       alert('Status name must be unique. Please enter a different name.')
@@ -50,13 +48,12 @@ const addStatus = async () => {
       name: statusName.value,
       description: statusDescription.value
     }
-    const response = await fetchUtils.postData('statuses', boardId, newStatus) 
+    const response = await fetchUtils.postData('statuses', boardId, newStatus)
     statusCode.value = response.statusCode
     if (response.success) {
       closeModal()
       emit('statusAdded')
       showToast.value = true
-      console.log(statusCode.value)
     }
   } catch (error) {
     console.error('Error adding status:', error)
@@ -118,7 +115,7 @@ const addStatus = async () => {
           </button>
           <button
             type="submit"
-            :class="[ 
+            :class="[
               'px-4 py-2 rounded-md itbkk-button-confirm',
               isSaveDisabled
                 ? 'bg-gray-400 text-gray-600 cursor-not-allowed'
@@ -139,4 +136,3 @@ const addStatus = async () => {
     @close="showToast = false"
   />
 </template>
-

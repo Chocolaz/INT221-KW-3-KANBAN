@@ -66,7 +66,6 @@ async function handleSaveTask() {
       )
 
     if (success && statusCode === 201) {
-      console.log('Task added successfully:', statusCode)
       emit('taskSaved', data)
       emit('showStatusModal', statusCode)
       resetTaskDetails()

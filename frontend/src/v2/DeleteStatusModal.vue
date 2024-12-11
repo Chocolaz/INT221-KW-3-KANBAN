@@ -30,7 +30,6 @@ const closeModal = () => {
 
 const deleteStatus = async () => {
   operationType.value = 'delete'
-  console.log('OperationType:', operationType.value)
 
   try {
     const { statusIdToDelete } = props
@@ -67,7 +66,6 @@ const deleteStatus = async () => {
 
     statusCode.value = response.statusCode
     if (response.success) {
-      console.log('Status deleted successfully!', statusCode.value)
       emit('statusDeleted')
       showToast.value = true
       closeModal()
@@ -95,7 +93,6 @@ const handleErrors = (message) => {
   } else {
     statusCode.value = 'unknown'
   }
-  console.log(statusCode.value)
 }
 </script>
 
@@ -105,7 +102,7 @@ const handleErrors = (message) => {
     v-if="isOpen"
   >
     <div
-      class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm transition-all duration-300 animate-fade-in-up transform opacity-0 "
+      class="bg-white p-6 rounded-lg shadow-lg w-full max-w-sm transition-all duration-300 animate-fade-in-up transform opacity-0"
       :class="{
         'opacity-100 translate-y-0': isOpen,
         'opacity-0 translate-y-5': !isOpen
@@ -138,4 +135,3 @@ const handleErrors = (message) => {
     @close="showToast = false"
   />
 </template>
-

@@ -1,38 +1,38 @@
 <script setup>
-import { ref, computed } from "vue";
-import { useRouter, useRoute } from "vue-router";
+import { ref, computed } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
 
-const showDropdown = ref(false);
-const router = useRouter();
-const route = useRoute();
+const showDropdown = ref(false)
+const router = useRouter()
+const route = useRoute()
 
-const username = localStorage.getItem("username");
-const isAuthenticated = !!username;
+const username = localStorage.getItem('username')
+const isAuthenticated = !!username
 
 const displayUsername = computed(() => {
-  return isAuthenticated ? username : "Guest";
-});
+  return isAuthenticated ? username : 'Guest'
+})
 
-const isManageStatus = computed(() => route.name === "statusView");
+const isManageStatus = computed(() => route.name === 'statusView')
 
 const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value;
-};
+  showDropdown.value = !showDropdown.value
+}
 
 const navigate = () => {
   if (isManageStatus.value) {
-    router.push({ name: "taskView" });
+    router.push({ name: 'taskView' })
   } else {
-    router.push({ name: "statusView" });
+    router.push({ name: 'statusView' })
   }
-  showDropdown.value = false;
-};
+  showDropdown.value = false
+}
 
 const logout = () => {
-  localStorage.clear();
-  showDropdown.value = false;
-  router.push({ name: "loginView" });
-};
+  localStorage.clear()
+  showDropdown.value = false
+  router.push({ name: 'loginView' })
+}
 </script>
 
 <template>
@@ -88,7 +88,7 @@ const logout = () => {
               @click="navigate"
               class="w-full p-3 text-left text-gray-800 text-sm transition-all duration-300 ease-in-out hover:bg-green-100 transform hover:translate-x-1"
             >
-              {{ isManageStatus ? "Task List" : "Manage Status" }}
+              {{ isManageStatus ? 'Task List' : 'Manage Status' }}
             </button>
             <button
               @click="logout"

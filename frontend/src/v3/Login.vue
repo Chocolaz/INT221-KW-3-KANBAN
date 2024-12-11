@@ -31,7 +31,6 @@ const login = async () => {
 
     if (response.ok) {
       const data = await response.json()
-      console.log('Login successful, response data:', data)
       showError.value = false
 
       storeTokens(data.access_token, data.refresh_token)
@@ -56,7 +55,6 @@ const login = async () => {
 }
 
 const handleLoginError = (response) => {
-  console.log('Login failed:', response.status)
   showError.value = true
   if (response.status === 401 || response.status === 400) {
     errorMessage.value = 'Username or Password is incorrect.'
@@ -70,7 +68,6 @@ const decodeAndLogToken = (token) => {
     const decodedToken = VueJwtDecode.decode(token)
     localStorage.setItem('username', decodedToken.name)
     localStorage.setItem('email', decodedToken.email)
-    console.log('Decoded token:', decodedToken)
   } catch (error) {
     console.error('Error decoding token:', error)
   }

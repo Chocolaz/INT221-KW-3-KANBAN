@@ -21,15 +21,6 @@ const fetchBoardData = async () => {
 
     const currentUser = localStorage.getItem('username')?.trim()
     isOwner.value = checkOwnership(boardData, currentUser)
-
-    console.log(
-      'isPublic:',
-      isPublic.value,
-      'isPrivate:',
-      isPrivate.value,
-      'isOwner:',
-      isOwner.value
-    )
   } catch (error) {
     console.error('Error fetching board data:', error)
   }

@@ -64,13 +64,10 @@ const saveChanges = async () => {
     }
 
     const rawStatuses = await fetchUtils.fetchData('statuses', boardId)
-    console.log('Raw statuses:', rawStatuses)
 
     const existingStatusNames = rawStatuses
       .filter((status) => status.name)
       .map((status) => status.name.toUpperCase())
-
-    console.log('Existing status names:', existingStatusNames)
 
     const editedStatusName = editedStatus.value.statusName?.toUpperCase() || ''
     const initialStatusName =
@@ -179,5 +176,3 @@ const saveChanges = async () => {
     @close="showToast = false"
   />
 </template>
-
-

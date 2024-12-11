@@ -32,7 +32,6 @@ const canOperation = ref(false)
 const fetchCollaborators = async () => {
   try {
     collaborators.value = await fetchUtils.getCollab(boardId)
-    console.log(collaborators.value)
   } catch (error) {
     console.error('Error fetching collaborator details:', error)
   }
@@ -43,8 +42,6 @@ const fetchBoardDetails = async () => {
     boardData.value = await fetchUtils.getBoards(boardId)
 
     await fetchCollaborators()
-
-    console.log('boardId:', boardId)
 
     checkBoardAccess()
   } catch (error) {
@@ -58,9 +55,6 @@ const checkBoardAccess = () => {
     collaborators.value,
     currentUser.value
   )
-
-  console.log('checkBoardAccess collaborators:', collaborators.value)
-  console.log('checkBoardData:', boardData.value)
 
   canOperation.value = isOwner || hasWriteAccess
 }
@@ -95,10 +89,8 @@ const openEditModal = (status) => {
     const statusValue = status.value || status
     if (statusValue && statusValue.id) {
       selectedStatus.value = { ...statusValue }
-      console.log(selectedStatus.value)
 
       selectedStatusIdToEdit.value = statusValue.id
-      console.log('id to edit: ' + selectedStatusIdToEdit.value)
 
       isEditOpen.value = true
     } else {
@@ -111,13 +103,11 @@ const openEditModal = (status) => {
 
 const openDeleteModal = (status) => {
   selectedStatusIdToDelete.value = status.id
-  console.log('Status ID:', status.id)
   isDeleteOpen.value = true
 }
 
 const openTransferModal = (status) => {
   selectedStatusIdToTransfer.value = status.id
-  console.log(selectedStatusIdToTransfer)
   isTransferOpen.value = true
 }
 
