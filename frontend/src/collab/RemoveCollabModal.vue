@@ -1,32 +1,3 @@
-<template>
-  <div
-    class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center"
-  >
-    <div class="bg-white rounded-lg shadow-lg p-6 max-w-md">
-      <p class="text-lg font-semibold mb-4">
-        Are you sure you want to remove {{ collabName }} as a collaborator?
-      </p>
-      <div v-if="errorMessage" class="text-red-500 text-center mb-4">
-        {{ errorMessage }}
-      </div>
-      <div class="flex justify-end gap-4">
-        <button
-          @click="removeCollaborator"
-          class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500"
-        >
-          Yes, Remove
-        </button>
-        <button
-          @click="$emit('close')"
-          class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref } from 'vue'
 import fetchUtils from '../lib/fetchUtils'
@@ -90,3 +61,32 @@ const removeCollaborator = async () => {
   }
 }
 </script>
+
+<template>
+  <div
+    class="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center"
+  >
+    <div class="bg-white rounded-lg shadow-lg p-6 max-w-md">
+      <p class="text-lg font-semibold mb-4">
+        Are you sure you want to remove {{ collabName }} as a collaborator?
+      </p>
+      <div v-if="errorMessage" class="text-red-500 text-center mb-4">
+        {{ errorMessage }}
+      </div>
+      <div class="flex justify-end gap-4">
+        <button
+          @click="removeCollaborator"
+          class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-500"
+        >
+          Yes, Remove
+        </button>
+        <button
+          @click="$emit('close')"
+          class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</template>

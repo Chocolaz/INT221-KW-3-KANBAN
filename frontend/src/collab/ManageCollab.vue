@@ -1,3 +1,55 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import fetchUtils from '../lib/fetchUtils'
+import AddCollaborator from './AddCollaborator.vue'
+import ModalAccess from './ModalAccess.vue'
+import RemoveCollabModal from './RemoveCollabModal.vue'
+
+const props = defineProps(['boardId'])
+
+const collaborators = ref([])
+const showAddCollabModal = ref(false)
+const showModalAccess = ref(false)
+const showRemoveModal = ref(false)
+const selectedCollabId = ref(null)
+const selectedCollabName = ref('')
+const selectedNewAccessRight = ref('')
+const isBoardOwner = ref(false)
+
+
+const fetchCollaborators = async () => {
+  try {
+    const response = await fetchUtils.getCollab(props.boardId)
+    collaborators.value = response.sort(
+      (a, b) => new Date(a.added_on) - new Date(b.added_on)
+    )
+
+    const boardResponse = await fetchUtils.getBoards()
+    const board = boardResponse.find((b) => b.id === props.boardId)
+    if (board && board.owner.name === localStorage.getItem('username')) {
+      isBoardOwner.value = true
+    }
+  } catch (error) {
+    console.error('Error fetching collaborators:', error.message)
+  }
+}
+
+const openModalAccess = (collabId, collabName, newAccessRight) => {
+  selectedCollabId.value = collabId
+  selectedCollabName.value = collabName
+  selectedNewAccessRight.value = newAccessRight
+  showModalAccess.value = true
+}
+
+const openModalRemove = (collabId, collabName) => {
+  selectedCollabId.value = collabId
+  selectedCollabName.value = collabName
+  showRemoveModal.value = true
+}
+
+onMounted(fetchCollaborators)
+</script>
+
 <template>
   <div class="flex justify-center items-center mt-10 ">
     <div class="w-full max-w-5xl mx-auto rounded-xl ">
@@ -99,57 +151,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, onMounted } from 'vue'
-import fetchUtils from '../lib/fetchUtils'
-import AddCollaborator from './AddCollaborator.vue'
-import ModalAccess from './ModalAccess.vue'
-import RemoveCollabModal from './RemoveCollabModal.vue'
-
-const props = defineProps(['boardId'])
-
-const collaborators = ref([])
-const showAddCollabModal = ref(false)
-const showModalAccess = ref(false)
-const showRemoveModal = ref(false)
-const selectedCollabId = ref(null)
-const selectedCollabName = ref('')
-const selectedNewAccessRight = ref('')
-const isBoardOwner = ref(false)
-
-// Fetch collaborators and check board ownership
-const fetchCollaborators = async () => {
-  try {
-    const response = await fetchUtils.getCollab(props.boardId)
-    collaborators.value = response.sort(
-      (a, b) => new Date(a.added_on) - new Date(b.added_on)
-    )
-
-    const boardResponse = await fetchUtils.getBoards()
-    const board = boardResponse.find((b) => b.id === props.boardId)
-    if (board && board.owner.name === localStorage.getItem('username')) {
-      isBoardOwner.value = true
-    }
-  } catch (error) {
-    console.error('Error fetching collaborators:', error.message)
-  }
-}
-
-// Open confirmation modal for access right change
-const openModalAccess = (collabId, collabName, newAccessRight) => {
-  selectedCollabId.value = collabId
-  selectedCollabName.value = collabName
-  selectedNewAccessRight.value = newAccessRight
-  showModalAccess.value = true
-}
-
-// Open confirmation modal for removing a collaborator
-const openModalRemove = (collabId, collabName) => {
-  selectedCollabId.value = collabId
-  selectedCollabName.value = collabName
-  showRemoveModal.value = true
-}
-
-onMounted(fetchCollaborators)
-</script>

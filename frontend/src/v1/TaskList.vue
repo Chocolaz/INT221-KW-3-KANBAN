@@ -276,10 +276,9 @@ const applyFilter = (selectedStatusesValue) => {
   closeFilterModal()
 }
 
-// Fetch board details and tasks on mount
 onMounted(async () => {
   try {
-    await fetchBoardDetails() // Fetch board to get permissions
+    await fetchBoardDetails() 
     await fetchTasks()
     await fetchStatuses()
     const taskId = route.params.taskId
@@ -575,9 +574,9 @@ h3 {
 .table th,
 .table td {
   border: none;
-  padding: 8px; /* Reduced padding */
+  padding: 8px; 
   text-align: left;
-  height: 30px; /* Reduced height */
+  height: 30px; 
   word-wrap: break-word;
   word-break: break-all;
   white-space: normal;
@@ -587,7 +586,7 @@ h3 {
   background-color: #ff6b6b;
   font-weight: bold;
   color: #ffffff;
-  font-size: 14px; /* Reduced font size */
+  font-size: 14px; 
 }
 
 tbody tr:nth-child(even) {

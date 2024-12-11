@@ -1,21 +1,3 @@
-<template>
-  <div>
-    <h2>{{ task.title }}</h2>
-    <p>Status: {{ task.statusName }}</p>
-    <div v-if="attachments.length">
-      <h3>Attachments</h3>
-      <div v-for="attachment in attachments" :key="attachment.attachmentId">
-        <img
-          v-if="attachment.blobUrl"
-          :src="attachment.blobUrl"
-          alt="Attachment Image"
-          class="max-w-full h-auto"
-        />
-      </div>
-    </div>
-  </div>
-</template>
-
 <script>
 import { ref, computed, onMounted } from 'vue'
 import fetchUtils from '@/lib/fetchUtils'
@@ -62,3 +44,21 @@ export default {
   }
 }
 </script>
+
+<template>
+  <div>
+    <h2>{{ task.title }}</h2>
+    <p>Status: {{ task.statusName }}</p>
+    <div v-if="attachments.length">
+      <h3>Attachments</h3>
+      <div v-for="attachment in attachments" :key="attachment.attachmentId">
+        <img
+          v-if="attachment.blobUrl"
+          :src="attachment.blobUrl"
+          alt="Attachment Image"
+          class="max-w-full h-auto"
+        />
+      </div>
+    </div>
+  </div>
+</template>

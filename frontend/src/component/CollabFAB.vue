@@ -1,6 +1,24 @@
+<script setup>
+import { useRoute, useRouter } from 'vue-router'
+import { useRouteChecks } from '../lib/utils'
+
+const { isTaskList, isManageCollab, isStatusList } = useRouteChecks()
+const route = useRoute()
+const router = useRouter()
+
+const goToManageCollab = () => {
+  const boardId = route.params.boardId
+  router.push({ name: 'manageCollab', params: { boardId } })
+}
+
+const goToTaskList = () => {
+  const boardId = route.params.boardId
+  router.push({ name: 'taskView', params: { boardId } })
+}
+</script>
+
 <template>
   <div>
-    <!-- Display collab view button if on task list or status list -->
     <div v-if="isTaskList || isStatusList">
       <div
         class="fab fixed bottom-8 right-8 w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl cursor-pointer"
@@ -10,7 +28,6 @@
       </div>
     </div>
 
-    <!-- Display task list button if on manage collab -->
     <div v-if="isManageCollab">
       <div
         class="fab fixed bottom-8 right-8 w-14 h-14 rounded-full flex items-center justify-center text-white text-2xl cursor-pointer"
@@ -21,27 +38,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { useRoute, useRouter } from 'vue-router'
-import { useRouteChecks } from '../lib/utils'
-
-const { isTaskList, isManageCollab, isStatusList } = useRouteChecks()
-const route = useRoute()
-const router = useRouter()
-
-// Redirect to manage collaboration page
-const goToManageCollab = () => {
-  const boardId = route.params.boardId
-  router.push({ name: 'manageCollab', params: { boardId } })
-}
-
-// Redirect to task list page
-const goToTaskList = () => {
-  const boardId = route.params.boardId
-  router.push({ name: 'taskView', params: { boardId } })
-}
-</script>
 
 <style scoped>
 .fab {

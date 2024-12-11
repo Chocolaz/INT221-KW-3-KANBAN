@@ -1,3 +1,6 @@
+<script setup>
+</script>
+
 <template>
   <div class="message">
     <h1>403 - Access Denied</h1>
@@ -17,8 +20,6 @@
     </div>
   </div>
 </template>
-
-<script setup></script>
 
 <style scoped>
 @keyframes floating {

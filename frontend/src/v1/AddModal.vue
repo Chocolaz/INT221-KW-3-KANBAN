@@ -34,8 +34,8 @@ const statuses = ref([])
 const isDropdownOpen = ref(false)
 const hoverStatus = ref(null)
 
-const fileInput = ref(null) // Ref for file input
-const selectedFiles = ref([]) // New ref to store selected files
+const fileInput = ref(null) 
+const selectedFiles = ref([]) 
 
 const isSaveDisabled = computed(() => {
   const { title, description, assignees } = taskDetails.value
@@ -79,7 +79,6 @@ async function handleSaveTask() {
   }
 }
 
-// Handler for file selection
 function handleFilesSelected(files) {
   selectedFiles.value = files
 }
@@ -202,7 +201,6 @@ onUnmounted(() => {
           </div>
 
           <div class="mb-4 flex space-x-4">
-            <!-- Assignees Input -->
             <div class="flex-1">
               <label
                 for="assignees"
@@ -225,7 +223,6 @@ onUnmounted(() => {
               </small>
             </div>
 
-            <!-- Status Dropdown -->
             <div class="status-dropdown w-36">
               <label
                 for="status"
@@ -266,7 +263,6 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- File input for attachments -->
           <div class="mb-4">
             <FileAttachmentInput @filesSelected="handleFilesSelected" />
           </div>

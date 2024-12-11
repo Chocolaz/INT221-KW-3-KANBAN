@@ -1,19 +1,3 @@
-<template>
-  <Navbar v-if="showNavbar" />
-
-  <BoardName v-if="isTaskList || isStatusList" />
-
-  <div id="app">
-    <RouterView />
-  </div>
-
-  <NavigationFAB />
-
-  <ToggleVisible v-if="isTaskList || isStatusList" />
-
-  <CollabFAB v-if="isTaskList || isManageCollab || isStatusList" />
-</template>
-
 <script setup>
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
@@ -30,6 +14,22 @@ const route = useRoute()
 
 const showNavbar = computed(() => route.name !== 'loginView')
 </script>
+
+<template>
+  <Navbar v-if="showNavbar" />
+
+  <BoardName v-if="isTaskList || isStatusList" />
+
+  <div id="app">
+    <RouterView />
+  </div>
+
+  <NavigationFAB />
+
+  <ToggleVisible v-if="isTaskList || isStatusList" />
+
+  <CollabFAB v-if="isTaskList || isManageCollab || isStatusList" />
+</template>
 
 <style>
 #app {

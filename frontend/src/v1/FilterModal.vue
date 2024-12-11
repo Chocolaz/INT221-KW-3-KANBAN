@@ -11,7 +11,6 @@ const emit = defineEmits(['applyFilter', 'close'])
 const showSelectedStatuses = ref([...props.selectedStatuses])
 const selectAll = ref(false)
 
-// Watch for changes to selectedStatuses and update selectAll
 watch(
   () => props.selectedStatuses,
   (newValue) => {
@@ -32,7 +31,6 @@ const selectAllChanged = () => {
   }
 }
 
-// Watch for changes to showSelectedStatuses and update selectAll
 watch(
   () => showSelectedStatuses.value,
   () => {
@@ -51,7 +49,6 @@ watch(
     >
       <h2 class="text-2xl font-semibold mb-4">Select Statuses to Filter</h2>
       <div class="space-y-4">
-        <!-- Select All Checkbox -->
         <div class="flex items-center space-x-2">
           <input
             type="checkbox"
@@ -61,7 +58,6 @@ watch(
           />
           <label class="text-sm font-medium">Select All</label>
         </div>
-        <!-- Statuses Checkboxes -->
         <div
           v-for="status in statuses"
           :key="status.name"
@@ -77,14 +73,12 @@ watch(
           <label class="text-sm">{{ status.name }}</label>
         </div>
       </div>
-      <!-- Validation Message -->
       <div
         v-if="showSelectedStatuses.length === 0 && !selectAll"
         class="text-red-600 mt-2 text-sm"
       >
         You must select at least one.
       </div>
-      <!-- Buttons -->
       <div class="flex justify-end gap-4 mt-4">
         <button
           @click="applyFilter"

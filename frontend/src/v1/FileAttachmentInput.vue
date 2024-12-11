@@ -161,14 +161,12 @@ async function handleDrop(e) {
 
 <template>
   <div class="w-full">
-    <!-- Label Row -->
     <div class="flex items-center justify-between mb-1">
       <label for="attachments" class="text-sm font-bold text-gray-700">
         Upload Attachments
       </label>
     </div>
 
-    <!-- Upload Area -->
     <div
       class="relative"
       @dragenter="handleDragEnter"
@@ -184,7 +182,6 @@ async function handleDrop(e) {
         }"
         @click="canAddMoreFiles ? $refs.fileInput.click() : ''"
       >
-        <!-- Upload Icon -->
         <div
           class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-gray-200 transition-colors"
         >
@@ -203,7 +200,6 @@ async function handleDrop(e) {
           </svg>
         </div>
 
-        <!-- Upload Text -->
         <div class="text-center">
           <p class="text-sm text-gray-600">
             Drop files here or
@@ -230,14 +226,12 @@ async function handleDrop(e) {
       </div>
     </div>
 
-    <!-- Error Message -->
     <transition name="fade">
       <div
         v-if="errorMessage"
         class="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg shadow-md animate-fade-in"
       >
         <div class="flex items-center justify-between">
-          <!-- Error Icon and Title -->
           <div class="flex items-center">
             <svg
               class="w-5 h-5 text-red-500 mr-2"
@@ -256,7 +250,6 @@ async function handleDrop(e) {
               Errors Found:
             </span>
           </div>
-          <!-- Dismiss Button -->
           <button
             @click="errorMessage = null"
             class="text-gray-400 hover:text-red-500"
@@ -278,7 +271,6 @@ async function handleDrop(e) {
           </button>
         </div>
 
-        <!-- Error Details -->
         <div
           class="mt-2 text-xs text-gray-700 space-y-2"
           v-html="errorMessage"
@@ -286,7 +278,6 @@ async function handleDrop(e) {
       </div>
     </transition>
 
-    <!-- File List -->
     <div v-if="fileList.length > 0" class="mt-3">
       <div class="text-xs text-gray-500 mb-2">
         {{ fileList.length }} file(s) selected
@@ -298,7 +289,6 @@ async function handleDrop(e) {
           :key="index"
           class="group relative flex bg-white rounded-md border border-gray-200 hover:border-gray-300 transition-all duration-200 overflow-hidden"
         >
-          <!-- Thumbnail/Icon Container -->
           <div
             class="w-12 h-12 flex-shrink-0 flex items-center justify-center bg-gray-50 border-r border-gray-200"
           >
@@ -313,7 +303,6 @@ async function handleDrop(e) {
             </span>
           </div>
 
-          <!-- File Info -->
           <div class="flex-1 p-2 flex flex-col justify-center min-w-0">
             <p class="text-xs font-medium text-gray-700 truncate">
               {{ item.file.name }}
@@ -323,7 +312,6 @@ async function handleDrop(e) {
             </p>
           </div>
 
-          <!-- Remove Button -->
           <button
             type="button"
             @click.stop="removeFile(index)"

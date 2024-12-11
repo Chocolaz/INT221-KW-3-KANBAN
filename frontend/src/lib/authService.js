@@ -1,16 +1,14 @@
 import jwtDecode from 'vue-jwt-decode'
 import fetchUtils from '@/lib/fetchUtils'
 
-const baseUrl = import.meta.env.VITE_API_URL2 // For token requests
-const baseUrl3 = import.meta.env.VITE_API_URL3 // For board requests
+const baseUrl = import.meta.env.VITE_API_URL2 
+const baseUrl3 = import.meta.env.VITE_API_URL3 
 
-// Store tokens
 export function storeTokens(accessToken, refreshToken) {
   localStorage.setItem('access_token', accessToken)
   localStorage.setItem('refresh_token', refreshToken)
 }
 
-// Get tokens
 export function getAccessToken() {
   return localStorage.getItem('access_token')
 }
@@ -19,14 +17,12 @@ export function getRefreshToken() {
   return localStorage.getItem('refresh_token')
 }
 
-// Remove tokens
 export function removeTokens() {
   localStorage.removeItem('access_token')
   localStorage.removeItem('refresh_token')
   localStorage.removeItem('username')
 }
 
-// Refresh access token
 export async function refreshAccessToken() {
   const refreshToken = getRefreshToken()
   if (!refreshToken) {
@@ -76,7 +72,6 @@ export const isTokenValid = (token, tokenType = 'access') => {
   }
 }
 
-// Calculate token expiration time in seconds
 export const getTokenExpirationTime = (token) => {
   try {
     const decodedToken = jwtDecode.decode(token)
@@ -103,7 +98,6 @@ export const checkTokenValidity = () => {
     ? getTokenExpirationTime(accessToken)
     : null
 
-  // Validate the refresh token and log expiration time
   const isRefreshTokenValid = isTokenValid(refreshToken, 'refresh')
   const refreshTokenExpiration = refreshToken
     ? getTokenExpirationTime(refreshToken)
@@ -117,7 +111,6 @@ export const checkTokenValidity = () => {
   }
 }
 
-// Check board access
 export async function checkBoardAccess(boardId) {
   try {
     const response = await fetchUtils.getBoards(boardId)
@@ -135,17 +128,14 @@ export async function checkBoardAccess(boardId) {
     const currentUser = localStorage.getItem('username')
     const boardOwner = boardData.owner.username || boardData.owner.name
 
-    // Allow access to public boards even if the user is not authenticated
     if (boardData.visibility === 'public') {
       return { hasAccess: true, notFound: false }
     }
 
-    // If the board is not public, check if the current user is the owner
     if (boardOwner === currentUser) {
       return { hasAccess: true, notFound: false }
     }
 
-    // Fetch collaborators and check if the current user has READ or WRITE access
     const collaborators = await fetchUtils.getCollab(boardId)
     const hasAccess = collaborators.some(
       (collab) =>

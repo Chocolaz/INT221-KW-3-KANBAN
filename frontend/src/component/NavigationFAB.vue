@@ -1,3 +1,22 @@
+<script setup>
+import { useRoute, useRouter } from 'vue-router'
+import { useRouteChecks } from '../lib/utils'
+
+const { isTaskList, isStatusList } = useRouteChecks()
+const route = useRoute()
+const router = useRouter()
+
+const backToHomePage = () => {
+  const boardId = route.params.boardId
+  router.push({ name: 'taskView', params: { boardId } })
+}
+
+const goToStatusManagement = () => {
+  const boardId = route.params.boardId
+  router.push({ name: 'statusView', params: { boardId } })
+}
+</script>
+
 <template>
   <div>
     <div v-if="isStatusList">
@@ -19,25 +38,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { useRoute, useRouter } from 'vue-router'
-import { useRouteChecks } from '../lib/utils'
-
-const { isTaskList, isStatusList } = useRouteChecks()
-const route = useRoute()
-const router = useRouter()
-
-const backToHomePage = () => {
-  const boardId = route.params.boardId
-  router.push({ name: 'taskView', params: { boardId } })
-}
-
-const goToStatusManagement = () => {
-  const boardId = route.params.boardId
-  router.push({ name: 'statusView', params: { boardId } })
-}
-</script>
 
 <style scoped>
 .fab {

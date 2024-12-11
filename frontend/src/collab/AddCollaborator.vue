@@ -1,43 +1,3 @@
-<template>
-  <div
-    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
-  >
-    <div class="bg-white p-6 rounded-lg shadow-lg">
-      <h3 class="text-xl mb-4">Add Collaborator</h3>
-      <input
-        type="email"
-        v-model="collabEmail"
-        placeholder="Email"
-        class="border border-gray-300 p-2 w-full mb-4"
-      />
-      <select
-        v-model="accessRight"
-        class="border border-gray-300 p-2 w-full mb-4"
-      >
-        <option value="READ">READ</option>
-        <option value="WRITE">WRITE</option>
-      </select>
-      <div class="flex justify-between">
-        <button @click="close" class="bg-gray-300 py-2 px-4 rounded">
-          Cancel
-        </button>
-        <button
-          @click="addCollaborator"
-          class="bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50"
-          :disabled="!isEmailValid || collabEmail === ownerEmail"
-        >
-          Add
-        </button>
-      </div>
-      <ToastCollab
-        :status="toastStatus"
-        :message="toastMessage"
-        @hideComplete="resetToast"
-      />
-    </div>
-  </div>
-</template>
-
 <script setup>
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -116,3 +76,43 @@ const close = () => {
   emit('close')
 }
 </script>
+
+<template>
+  <div
+    class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50"
+  >
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+      <h3 class="text-xl mb-4">Add Collaborator</h3>
+      <input
+        type="email"
+        v-model="collabEmail"
+        placeholder="Email"
+        class="border border-gray-300 p-2 w-full mb-4"
+      />
+      <select
+        v-model="accessRight"
+        class="border border-gray-300 p-2 w-full mb-4"
+      >
+        <option value="READ">READ</option>
+        <option value="WRITE">WRITE</option>
+      </select>
+      <div class="flex justify-between">
+        <button @click="close" class="bg-gray-300 py-2 px-4 rounded">
+          Cancel
+        </button>
+        <button
+          @click="addCollaborator"
+          class="bg-blue-600 text-white py-2 px-4 rounded disabled:opacity-50"
+          :disabled="!isEmailValid || collabEmail === ownerEmail"
+        >
+          Add
+        </button>
+      </div>
+      <ToastCollab
+        :status="toastStatus"
+        :message="toastMessage"
+        @hideComplete="resetToast"
+      />
+    </div>
+  </div>
+</template>

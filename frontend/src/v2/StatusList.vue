@@ -9,7 +9,6 @@ import TransferStatusModal from '../v2/TransferStatusModal.vue'
 import { statusStyle } from '../lib/statusStyles'
 import { checkOwnership, checkAccessRight } from '@/lib/utils'
 
-// State management
 const statuses = ref([])
 const tasks = ref([])
 const isAddOpen = ref(false)
@@ -22,7 +21,6 @@ const selectedStatusIdToDelete = ref(null)
 const selectedStatusIdToTransfer = ref(null)
 const collaborators = ref([])
 
-// Route and router
 const route = useRoute()
 const router = useRouter()
 
@@ -67,7 +65,6 @@ const checkBoardAccess = () => {
   canOperation.value = isOwner || hasWriteAccess
 }
 
-// Fetch data
 async function fetchData() {
   try {
     if (!boardId) throw new Error('Board ID is not available')
@@ -92,7 +89,6 @@ async function fetchData() {
   }
 }
 
-// Modal handlers
 const openAddModal = () => (isAddOpen.value = true)
 const openEditModal = (status) => {
   if (status) {
@@ -144,7 +140,6 @@ const checkTasksBeforeDelete = (status) => {
   statusInUse ? openTransferModal(status) : openDeleteModal(status)
 }
 
-// Fetch data on mount
 onMounted(async () => {
   await fetchData()
   await fetchBoardDetails()
@@ -244,7 +239,6 @@ onMounted(async () => {
       </div>
     </div>
 
-    <!-- Modals -->
     <AddStatusModal
       :isAddOpen="isAddOpen"
       @closeModal="closeModal"

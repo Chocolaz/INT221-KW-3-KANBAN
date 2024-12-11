@@ -1,3 +1,40 @@
+<script setup>
+import { ref, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
+
+const showDropdown = ref(false);
+const router = useRouter();
+const route = useRoute();
+
+const username = localStorage.getItem("username");
+const isAuthenticated = !!username;
+
+const displayUsername = computed(() => {
+  return isAuthenticated ? username : "Guest";
+});
+
+const isManageStatus = computed(() => route.name === "statusView");
+
+const toggleDropdown = () => {
+  showDropdown.value = !showDropdown.value;
+};
+
+const navigate = () => {
+  if (isManageStatus.value) {
+    router.push({ name: "taskView" });
+  } else {
+    router.push({ name: "statusView" });
+  }
+  showDropdown.value = false;
+};
+
+const logout = () => {
+  localStorage.clear();
+  showDropdown.value = false;
+  router.push({ name: "loginView" });
+};
+</script>
+
 <template>
   <nav
     class="bg-white shadow-md sticky top-0 z-10 py-3 px-6 transition-all duration-300"
@@ -65,40 +102,3 @@
     </div>
   </nav>
 </template>
-
-<script setup>
-import { ref, computed } from "vue";
-import { useRouter, useRoute } from "vue-router";
-
-const showDropdown = ref(false);
-const router = useRouter();
-const route = useRoute();
-
-const username = localStorage.getItem("username");
-const isAuthenticated = !!username;
-
-const displayUsername = computed(() => {
-  return isAuthenticated ? username : "Guest";
-});
-
-const isManageStatus = computed(() => route.name === "statusView");
-
-const toggleDropdown = () => {
-  showDropdown.value = !showDropdown.value;
-};
-
-const navigate = () => {
-  if (isManageStatus.value) {
-    router.push({ name: "taskView" });
-  } else {
-    router.push({ name: "statusView" });
-  }
-  showDropdown.value = false;
-};
-
-const logout = () => {
-  localStorage.clear();
-  showDropdown.value = false;
-  router.push({ name: "loginView" });
-};
-</script>

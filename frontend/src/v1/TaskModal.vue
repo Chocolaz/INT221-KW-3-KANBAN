@@ -1,3 +1,53 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { defineProps } from 'vue'
+import fetchUtils from '@/lib/fetchUtils'
+import { statusStyle, getFileIcon } from '@/lib/statusStyles'
+
+const props = defineProps({
+  task: {
+    type: Object,
+    required: true
+  },
+  timezone: {
+    type: String,
+    required: true
+  },
+  createdDate: {
+    type: String,
+    required: true
+  },
+  updatedDate: {
+    type: String,
+    required: true
+  },
+  closeModal: {
+    type: Function,
+    required: true
+  }
+})
+
+const attachments = ref([])
+
+onMounted(async () => {
+  attachments.value = await fetchUtils.fetchAttachments(props.task.attachments)
+})
+
+const handleAttachmentClick = (attachment) => {
+  const fileType = attachment.file.split('.').pop().toLowerCase()
+  const supportedFileTypes = ['pdf', 'jpeg', 'jpg', 'png', 'txt']
+
+  if (supportedFileTypes.includes(fileType)) {
+    window.open(attachment.blobUrl, '_blank')
+  } else {
+    const link = document.createElement('a')
+    link.href = attachment.blobUrl
+    link.download = attachment.file
+    link.click()
+  }
+}
+</script>
+
 <template>
   <div
     class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 flex items-center justify-center p-4"
@@ -6,7 +56,6 @@
       class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col mt-14 animate-fade-in-up"
       @click.stop
     >
-      <!-- Header -->
       <div class="p-6 border-b border-gray-100 flex items-start justify-between">
         <h2 class="text-2xl font-semibold text-gray-900 pr-8">
           {{ task.title }}
@@ -19,13 +68,10 @@
         </button>
       </div>
 
-      <!-- Scrollable Content -->
       <div class="flex-1 overflow-y-auto">
         <div class="p-6">
           <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Main Content - Now spans 2 columns -->
             <div class="md:col-span-2 space-y-6">
-              <!-- Description -->
               <div class="bg-gray-50 rounded-xl p-6">
                 <h3
                   class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"
@@ -38,7 +84,6 @@
                 </p>
               </div>
 
-              <!-- Assignees -->
               <div class="bg-gray-50 rounded-xl p-6">
                 <h3
                   class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"
@@ -60,7 +105,6 @@
                 </div>
               </div>
 
-              <!-- Attachments Section -->
               <div class="bg-gray-50 rounded-xl p-6">
                 <h3
                   class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"
@@ -111,9 +155,7 @@
               </div>
             </div>
 
-            <!-- Sidebar -->
             <div class="space-y-6">
-              <!-- Status -->
               <div class="bg-gray-50 rounded-xl p-6">
                 <h3
                   class="text-base font-semibold text-gray-900 mb-3 flex items-center gap-2"
@@ -129,7 +171,6 @@
                 </span>
               </div>
 
-              <!-- Metadata -->
               <div class="bg-gray-50 rounded-xl p-6 space-y-4">
                 <div>
                   <div
@@ -164,7 +205,6 @@
         </div>
       </div>
 
-      <!-- Footer -->
       <div class="border-t border-gray-100 p-4 flex justify-end gap-3">
         <button
           @click="closeModal"
@@ -182,55 +222,4 @@
     </div>
   </div>
 </template>
-
-
-<script setup>
-import { ref, onMounted } from 'vue'
-import { defineProps } from 'vue'
-import fetchUtils from '@/lib/fetchUtils'
-import { statusStyle, getFileIcon } from '@/lib/statusStyles'
-
-const props = defineProps({
-  task: {
-    type: Object,
-    required: true
-  },
-  timezone: {
-    type: String,
-    required: true
-  },
-  createdDate: {
-    type: String,
-    required: true
-  },
-  updatedDate: {
-    type: String,
-    required: true
-  },
-  closeModal: {
-    type: Function,
-    required: true
-  }
-})
-
-const attachments = ref([])
-
-onMounted(async () => {
-  attachments.value = await fetchUtils.fetchAttachments(props.task.attachments)
-})
-
-const handleAttachmentClick = (attachment) => {
-  const fileType = attachment.file.split('.').pop().toLowerCase()
-  const supportedFileTypes = ['pdf', 'jpeg', 'jpg', 'png', 'txt']
-
-  if (supportedFileTypes.includes(fileType)) {
-    window.open(attachment.blobUrl, '_blank')
-  } else {
-    const link = document.createElement('a')
-    link.href = attachment.blobUrl
-    link.download = attachment.file
-    link.click()
-  }
-}
-</script>
 

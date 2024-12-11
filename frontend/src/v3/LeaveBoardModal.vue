@@ -1,3 +1,20 @@
+<script setup>
+import { defineProps } from 'vue'
+
+const props = defineProps({
+  boardName: String,
+  isVisible: {
+    type: Boolean,
+    required: true
+  },
+  onLeave: Function
+})
+
+const confirmLeave = () => {
+  props.onLeave()
+}
+</script>
+
 <template>
   <div
     v-if="isVisible"
@@ -23,20 +40,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { defineProps } from 'vue'
-
-const props = defineProps({
-  boardName: String,
-  isVisible: {
-    type: Boolean,
-    required: true
-  },
-  onLeave: Function
-})
-
-const confirmLeave = () => {
-  props.onLeave()
-}
-</script>

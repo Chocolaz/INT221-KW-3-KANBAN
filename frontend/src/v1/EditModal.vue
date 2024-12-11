@@ -38,8 +38,8 @@ const statuses = ref([])
 const isDropdownOpen = ref(false)
 const hoverStatus = ref(null)
 const fetchedAttachments = ref([])
-const errorMessage = ref('') // Ref to hold error messages
-const failedFiles = ref([]) // Holds names of files that failed to upload
+const errorMessage = ref('') 
+const failedFiles = ref([])
 
 const initialTask = JSON.parse(JSON.stringify(props.task))
 
@@ -112,15 +112,12 @@ const handleEditTask = async () => {
 }
 
 const deleteAttachment = (attachmentId) => {
-  // Remove the attachment from the fetched list
   fetchedAttachments.value = fetchedAttachments.value.filter(
     (attachment) => attachment.attachmentId !== attachmentId
   )
 
-  // Initialize the deleteAttachments array if it doesn't exist
   props.task.deleteAttachments = props.task.deleteAttachments || []
 
-  // Add the attachment ID to the deleteAttachments array if not already present
   if (!props.task.deleteAttachments.includes(attachmentId)) {
     props.task.deleteAttachments.push(attachmentId)
   }
@@ -229,7 +226,6 @@ onUnmounted(() => {
           </div>
 
           <div class="mb-4 flex space-x-4">
-            <!-- Assignees Input -->
             <div class="flex-1">
               <label
                 for="assignees"
@@ -253,7 +249,6 @@ onUnmounted(() => {
               </small>
             </div>
 
-            <!-- Status Dropdown -->
             <div class="status-dropdown w-36">
               <label
                 for="status"
@@ -296,7 +291,6 @@ onUnmounted(() => {
           </div>
 
           <div v-if="fetchedAttachments.length > 0" class="mb-4">
-            <!-- Attachments Section -->
             <div class="bg-gray-50 rounded-xl p-6">
               <h3
                 class="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2"
@@ -351,7 +345,6 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <!-- File input for attachments -->
           <div class="mb-4">
             <FileAttachmentInput @filesSelected="handleFilesSelected" />
           </div>
@@ -370,7 +363,6 @@ onUnmounted(() => {
             >
               <i class="fas fa-exclamation-circle text-red-500 text-2xl"></i>
               <div class="space-y-4">
-                <!-- Error Message -->
                 <div v-if="errorMessage" class="text-sm">
                   <p class="font-semibold">Error:</p>
                   <p>{{ errorMessage }}</p>
@@ -380,7 +372,6 @@ onUnmounted(() => {
                   </p>
                 </div>
 
-                <!-- Failed Files -->
                 <div v-if="failedFiles.length > 0" class="text-sm">
                   <p>The following files are not added:</p>
                   <ul class="list-disc pl-6">

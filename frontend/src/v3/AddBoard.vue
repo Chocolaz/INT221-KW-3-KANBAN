@@ -1,3 +1,41 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import fetchUtils from '../lib/fetchUtils'
+
+const newBoardName = ref('')
+const isValidName = ref(true)
+
+const emit = defineEmits(['close', 'board-added'])
+
+const closeModal = () => {
+  emit('close')
+}
+
+const submitBoard = async () => {
+  if (!newBoardName.value.trim() || newBoardName.value.length > 120) {
+    isValidName.value = false
+    return
+  }
+
+  try {
+    isValidName.value = true
+    const boardData = { name: newBoardName.value }
+    const response = await fetchUtils.addBoard(boardData)
+    console.log('Board added:', response)
+    emit('board-added')
+    closeModal()
+  } catch (error) {
+    console.error('Error adding board:', error)
+    window.alert('Error adding board:', error)
+  }
+}
+
+onMounted(() => {
+  const username = localStorage.getItem('username') || 'User'
+  newBoardName.value = `${username} personal board`
+})
+</script>
+
 <template>
   <div
     class="fixed inset-0 bg-black bg-opacity-70 flex justify-center items-center z-50"
@@ -37,43 +75,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, onMounted } from 'vue'
-import fetchUtils from '../lib/fetchUtils'
-
-const newBoardName = ref('')
-const isValidName = ref(true)
-
-const emit = defineEmits(['close', 'board-added'])
-
-const closeModal = () => {
-  emit('close')
-}
-
-const submitBoard = async () => {
-  // Validation
-  if (!newBoardName.value.trim() || newBoardName.value.length > 120) {
-    isValidName.value = false
-    return
-  }
-
-  try {
-    isValidName.value = true
-    const boardData = { name: newBoardName.value }
-    const response = await fetchUtils.addBoard(boardData)
-    console.log('Board added:', response)
-    emit('board-added')
-    closeModal()
-  } catch (error) {
-    console.error('Error adding board:', error)
-    window.alert('Error adding board:', error)
-  }
-}
-
-// Set default board name with username
-onMounted(() => {
-  const username = localStorage.getItem('username') || 'User'
-  newBoardName.value = `${username} personal board`
-})
-</script>

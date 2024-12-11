@@ -1,3 +1,13 @@
+<script setup>
+import { useRouter } from 'vue-router'
+
+const router = useRouter()
+
+function goHome() {
+  router.push('/')
+}
+</script>
+
 <template>
   <section class="page_404">
     <div class="container">
@@ -26,16 +36,6 @@
     </div>
   </section>
 </template>
-
-<script setup>
-import { useRouter } from 'vue-router'
-
-const router = useRouter()
-
-function goHome() {
-  router.push('/')
-}
-</script>
 
 <style scoped>
 .page_404 {

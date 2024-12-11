@@ -1,11 +1,3 @@
-<template>
-  <h1
-    class="itbkk-board-name text-lg font-semibold text-red-600 mt-3 text-center"
-  >
-    {{ boardName }}
-  </h1>
-</template>
-
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
@@ -15,7 +7,6 @@ const route = useRoute()
 const boardId = ref(route.params.boardId)
 const boardName = ref('')
 
-// Fetch board name by ID
 const getBoardNameById = async (id) => {
   try {
     const boardData = await fetchUtils.getBoards(id)
@@ -43,3 +34,11 @@ onMounted(() => {
   }
 })
 </script>
+
+<template>
+  <h1
+    class="itbkk-board-name text-lg font-semibold text-red-600 mt-3 text-center"
+  >
+    {{ boardName }}
+  </h1>
+</template>

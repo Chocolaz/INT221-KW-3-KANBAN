@@ -1,9 +1,93 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import fetchUtils from '../lib/fetchUtils'
+import AddBoard from './AddBoard.vue'
+import LeaveBoardModal from './LeaveBoardModal.vue'
+
+const personalBoards = ref([])
+const collabBoards = ref([])
+const showModal = ref(false)
+const isLeaveModalVisible = ref(false)
+const boardToLeave = ref('')
+const boardToLeaveId = ref(null)
+const router = useRouter()
+const username = localStorage.getItem('username')
+
+const fetchBoards = async () => {
+  try {
+    const response = await fetchUtils.getBoards()
+
+    const personal = response.filter((board) => board.owner.name === username)
+    const collab = []
+
+    personal.sort((a, b) => new Date(a.created_on) - new Date(b.created_on))
+
+    for (const board of response.filter(
+      (board) => board.owner.name !== username
+    )) {
+      try {
+        const collabDetails = await fetchUtils.getCollab(board.id)
+
+        if (collabDetails.length > 0) {
+          const { access_right, added_on, oid } = collabDetails[0]
+          board.accessRight = access_right
+          board.addedOn = new Date(added_on)
+          board.oid = oid
+          collab.push(board)
+        }
+      } catch (error) {
+        console.error(
+          `Error fetching collab details for board ${board.id}:`,
+          error
+        )
+      }
+    }
+
+    collab.sort((a, b) => a.addedOn - b.addedOn)
+
+    personalBoards.value = personal
+    collabBoards.value = collab
+  } catch (error) {
+    console.error('Error fetching boards:', error.message)
+  }
+}
+
+const viewBoardTasks = (boardId) => {
+  router.push({ name: 'taskView', params: { boardId } })
+}
+
+const showLeaveModal = (boardName, boardId) => {
+  boardToLeave.value = boardName
+  boardToLeaveId.value = boardId
+  isLeaveModalVisible.value = true
+}
+
+const handleLeave = async () => {
+  try {
+    const board = collabBoards.value.find((b) => b.id === boardToLeaveId.value)
+    if (board && board.oid) {
+      const collabId = board.oid
+      await fetchUtils.removeCollab(boardToLeaveId.value, collabId)
+      await fetchBoards()
+    } else {
+      console.error('Collaborator ID not found')
+    }
+  } catch (error) {
+    console.error('Error leaving board:', error.message)
+  } finally {
+    isLeaveModalVisible.value = false
+  }
+}
+
+onMounted(fetchBoards)
+</script>
+
 <template>
   <div class="flex justify-center items-center mt-10">
     <div class="w-full max-w-5xl mx-auto rounded-xl">
       <h2 class="text-2xl font-bold text-black text-center mb-6">Board List</h2>
 
-      <!-- Create Board Button -->
       <div class="flex justify-center mb-4">
         <button
           @click="showModal = true"
@@ -14,7 +98,6 @@
         </button>
       </div>
 
-      <!-- Message when the board limit is reached -->
       <p
         v-if="personalBoards.length >= 1"
         class="text-red-500 text-center mb-4"
@@ -22,7 +105,6 @@
         You can only create up to 1 personal board.
       </p>
 
-      <!-- Personal Boards List -->
       <h3 class="text-xl font-semibold mb-2 text-center">Personal Boards</h3>
       <div
         class="rounded-lg border-2 border-red-400 shadow-md overflow-hidden mb-6"
@@ -66,7 +148,6 @@
         </table>
       </div>
 
-      <!-- Collab Boards List -->
       <h3 class="text-xl font-semibold mb-2 text-center">Collab Boards</h3>
       <div class="rounded-lg border-2 border-red-400 shadow-md overflow-hidden">
         <table class="table-fixed min-w-full bg-white">
@@ -117,14 +198,12 @@
         </table>
       </div>
 
-      <!-- Modal for Add Board -->
       <AddBoard
         v-if="showModal"
         @close="showModal = false"
         @board-added="fetchBoards"
       />
 
-      <!-- Modal for Leaving Board -->
       <LeaveBoardModal
         v-if="isLeaveModalVisible"
         :boardName="boardToLeave"
@@ -135,94 +214,3 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import fetchUtils from '../lib/fetchUtils'
-import AddBoard from './AddBoard.vue'
-import LeaveBoardModal from './LeaveBoardModal.vue'
-
-const personalBoards = ref([])
-const collabBoards = ref([])
-const showModal = ref(false)
-const isLeaveModalVisible = ref(false)
-const boardToLeave = ref('')
-const boardToLeaveId = ref(null)
-const router = useRouter()
-const username = localStorage.getItem('username')
-
-const fetchBoards = async () => {
-  try {
-    const response = await fetchUtils.getBoards()
-
-    // Filter personal boards based on the owner's name
-    const personal = response.filter((board) => board.owner.name === username)
-    const collab = []
-
-    // Sort personal boards by creation date
-    personal.sort((a, b) => new Date(a.created_on) - new Date(b.created_on))
-
-    // Check collaboration details for each board not owned by the user
-    for (const board of response.filter(
-      (board) => board.owner.name !== username
-    )) {
-      try {
-        const collabDetails = await fetchUtils.getCollab(board.id)
-
-        // Add only if collaboration details exist, indicating the user is a collaborator
-        if (collabDetails.length > 0) {
-          const { access_right, added_on, oid } = collabDetails[0]
-          board.accessRight = access_right
-          board.addedOn = new Date(added_on)
-          board.oid = oid
-          collab.push(board)
-        }
-      } catch (error) {
-        console.error(
-          `Error fetching collab details for board ${board.id}:`,
-          error
-        )
-      }
-    }
-
-    // Sort collaborative boards by the added date
-    collab.sort((a, b) => a.addedOn - b.addedOn)
-
-    // Update the board lists
-    personalBoards.value = personal
-    collabBoards.value = collab
-  } catch (error) {
-    console.error('Error fetching boards:', error.message)
-  }
-}
-
-const viewBoardTasks = (boardId) => {
-  router.push({ name: 'taskView', params: { boardId } })
-}
-
-const showLeaveModal = (boardName, boardId) => {
-  boardToLeave.value = boardName
-  boardToLeaveId.value = boardId
-  isLeaveModalVisible.value = true
-}
-
-const handleLeave = async () => {
-  try {
-    const board = collabBoards.value.find((b) => b.id === boardToLeaveId.value)
-    if (board && board.oid) {
-      const collabId = board.oid
-      await fetchUtils.removeCollab(boardToLeaveId.value, collabId)
-      await fetchBoards()
-    } else {
-      console.error('Collaborator ID not found')
-    }
-  } catch (error) {
-    console.error('Error leaving board:', error.message)
-  } finally {
-    isLeaveModalVisible.value = false
-  }
-}
-
-onMounted(fetchBoards)
-</script>

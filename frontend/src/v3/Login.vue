@@ -1,3 +1,82 @@
+<script setup>
+import { ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { storeTokens } from '../lib/authService'
+import VueJwtDecode from 'vue-jwt-decode'
+
+const baseUrl = import.meta.env.VITE_API_URL2
+const router = useRouter()
+
+const username = ref('')
+const password = ref('')
+const showError = ref(false)
+const errorMessage = ref('')
+
+const isSignInDisabled = computed(() => {
+  return username.value.trim() === '' || password.value.trim() === ''
+})
+
+const login = async () => {
+  try {
+    const response = await fetch(`${baseUrl}/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        userName: username.value,
+        password: password.value
+      })
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      console.log('Login successful, response data:', data)
+      showError.value = false
+
+      storeTokens(data.access_token, data.refresh_token)
+
+      decodeAndLogToken(data.access_token)
+
+      router.push('/board')
+    } else {
+      handleLoginError(response)
+    }
+  } catch (error) {
+    console.error('Error during login:', error)
+    showError.value = true
+    errorMessage.value = 'There is a problem. Please try again later.'
+  }
+
+  if (showError.value) {
+    setTimeout(() => {
+      showError.value = false
+    }, 3000)
+  }
+}
+
+const handleLoginError = (response) => {
+  console.log('Login failed:', response.status)
+  showError.value = true
+  if (response.status === 401 || response.status === 400) {
+    errorMessage.value = 'Username or Password is incorrect.'
+  } else {
+    errorMessage.value = 'There is a problem. Please try again later.'
+  }
+}
+
+const decodeAndLogToken = (token) => {
+  try {
+    const decodedToken = VueJwtDecode.decode(token)
+    localStorage.setItem('username', decodedToken.name)
+    localStorage.setItem('email', decodedToken.email)
+    console.log('Decoded token:', decodedToken)
+  } catch (error) {
+    console.error('Error decoding token:', error)
+  }
+}
+</script>
+
 <template>
   <div class="login-container">
     <div class="login-box">
@@ -49,88 +128,6 @@
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { storeTokens } from '../lib/authService'
-import VueJwtDecode from 'vue-jwt-decode'
-
-const baseUrl = import.meta.env.VITE_API_URL2
-const router = useRouter()
-
-const username = ref('')
-const password = ref('')
-const showError = ref(false)
-const errorMessage = ref('')
-
-const isSignInDisabled = computed(() => {
-  return username.value.trim() === '' || password.value.trim() === ''
-})
-
-const login = async () => {
-  try {
-    const response = await fetch(`${baseUrl}/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        userName: username.value,
-        password: password.value
-      })
-    })
-
-    if (response.ok) {
-      const data = await response.json()
-      console.log('Login successful, response data:', data)
-      showError.value = false
-
-      // Store tokens using the auth service
-      storeTokens(data.access_token, data.refresh_token)
-
-      // Decode token and store username
-      decodeAndLogToken(data.access_token)
-
-      // Navigate to the board route
-      router.push('/board')
-    } else {
-      handleLoginError(response)
-    }
-  } catch (error) {
-    console.error('Error during login:', error)
-    showError.value = true
-    errorMessage.value = 'There is a problem. Please try again later.'
-  }
-
-  if (showError.value) {
-    setTimeout(() => {
-      showError.value = false
-    }, 3000)
-  }
-}
-
-const handleLoginError = (response) => {
-  console.log('Login failed:', response.status)
-  showError.value = true
-  if (response.status === 401 || response.status === 400) {
-    errorMessage.value = 'Username or Password is incorrect.'
-  } else {
-    errorMessage.value = 'There is a problem. Please try again later.'
-  }
-}
-
-const decodeAndLogToken = (token) => {
-  try {
-    const decodedToken = VueJwtDecode.decode(token)
-    localStorage.setItem('username', decodedToken.name)
-    localStorage.setItem('email', decodedToken.email)
-    console.log('Decoded token:', decodedToken)
-  } catch (error) {
-    console.error('Error decoding token:', error)
-  }
-}
-</script>
 
 <style scoped>
 .login-container {

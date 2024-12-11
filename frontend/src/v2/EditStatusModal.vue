@@ -21,7 +21,6 @@ const showToast = ref(false)
 const statusCode = ref(0)
 const operationType = ref(null)
 
-// Update `editedStatus` and `initialStatus` based on `statusData`
 watch(
   () => props.statusData,
   (newValue) => {
@@ -36,7 +35,6 @@ watch(
   { immediate: true }
 )
 
-// Disable save button if status is unchanged or invalid
 const isSaveDisabled = computed(() => {
   const { statusName, statusDescription } = editedStatus.value
   return (
@@ -56,10 +54,8 @@ const saveChanges = async () => {
   try {
     if (!boardId) throw new Error('Board ID is required')
 
-    // Ensure the original status name is obtained and processed
     const originalStatusName = props.statusData.name?.toUpperCase() || ''
 
-    // Check if the status is restricted
     if (restrictedStatuses.includes(originalStatusName)) {
       const statusErrorMessage = `The "${props.statusData.name}" status cannot be edited.`
       alert(statusErrorMessage)
@@ -67,23 +63,19 @@ const saveChanges = async () => {
       return
     }
 
-    // Fetch raw statuses and debug output
     const rawStatuses = await fetchUtils.fetchData('statuses', boardId)
     console.log('Raw statuses:', rawStatuses)
 
-    // Process response to get existing status names
     const existingStatusNames = rawStatuses
       .filter((status) => status.name)
       .map((status) => status.name.toUpperCase())
 
     console.log('Existing status names:', existingStatusNames)
 
-    // Convert edited and initial status names to uppercase for comparison
     const editedStatusName = editedStatus.value.statusName?.toUpperCase() || ''
     const initialStatusName =
       initialStatus.value.statusName?.toUpperCase() || ''
 
-    // Ensure the status name is unique
     if (
       editedStatusName !== initialStatusName &&
       existingStatusNames.includes(editedStatusName)
@@ -92,7 +84,6 @@ const saveChanges = async () => {
       return
     }
 
-    // Update the status
     const response = await fetchUtils.putData(
       `statuses/${props.selectedStatusIdToEdit}`,
       boardId,

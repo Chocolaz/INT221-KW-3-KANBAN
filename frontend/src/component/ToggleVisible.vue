@@ -1,3 +1,55 @@
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import VisibleModal from './VisibleModal.vue'
+import fetchUtils from '../lib/fetchUtils'
+import { checkOwnership } from '../lib/utils.js'
+
+const route = useRoute()
+const boardId = route.params.boardId
+const isPublic = ref(false)
+const isPrivate = ref(false)
+const isModalVisible = ref(false)
+const modalMessage = ref('')
+const isOwner = ref(false)
+
+const fetchBoardData = async () => {
+  try {
+    const boardData = await fetchUtils.getBoards(boardId)
+    isPublic.value = boardData.data.visibility === 'public'
+    isPrivate.value = boardData.data.visibility === 'private'
+
+    const currentUser = localStorage.getItem('username')?.trim()
+    isOwner.value = checkOwnership(boardData, currentUser)
+
+    console.log(
+      'isPublic:',
+      isPublic.value,
+      'isPrivate:',
+      isPrivate.value,
+      'isOwner:',
+      isOwner.value
+    )
+  } catch (error) {
+    console.error('Error fetching board data:', error)
+  }
+}
+
+const showModal = () => {
+  if (isPublic.value) {
+    modalMessage.value = 'Make board private?'
+  } else if (isPrivate.value) {
+    modalMessage.value = 'Make board public?'
+  }
+
+  isModalVisible.value = true
+}
+
+onMounted(() => {
+  fetchBoardData()
+})
+</script>
+
 <template>
   <div>
     <button
@@ -21,61 +73,6 @@
     />
   </div>
 </template>
-
-<script setup>
-import { ref, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
-import VisibleModal from './VisibleModal.vue'
-import fetchUtils from '../lib/fetchUtils'
-import { checkOwnership } from '../lib/utils.js'
-
-// Define all refs at the start
-const route = useRoute()
-const boardId = route.params.boardId
-const isPublic = ref(false)
-const isPrivate = ref(false)
-const isModalVisible = ref(false)
-const modalMessage = ref('')
-const isOwner = ref(false)
-
-const fetchBoardData = async () => {
-  try {
-    const boardData = await fetchUtils.getBoards(boardId)
-    isPublic.value = boardData.data.visibility === 'public'
-    isPrivate.value = boardData.data.visibility === 'private'
-
-    // Get current user from localStorage
-    const currentUser = localStorage.getItem('username')?.trim()
-    isOwner.value = checkOwnership(boardData, currentUser)
-
-    console.log(
-      'isPublic:',
-      isPublic.value,
-      'isPrivate:',
-      isPrivate.value,
-      'isOwner:',
-      isOwner.value
-    )
-  } catch (error) {
-    console.error('Error fetching board data:', error)
-  }
-}
-
-// Show modal
-const showModal = () => {
-  if (isPublic.value) {
-    modalMessage.value = 'Make board private?'
-  } else if (isPrivate.value) {
-    modalMessage.value = 'Make board public?'
-  }
-
-  isModalVisible.value = true
-}
-
-onMounted(() => {
-  fetchBoardData()
-})
-</script>
 
 <style scoped>
 .toggle-button {

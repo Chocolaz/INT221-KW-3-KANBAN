@@ -1,14 +1,3 @@
-<template>
-  <Transition name="fade">
-    <div
-      v-if="isVisible"
-      :class="['fixed bottom-10 left-4 p-4 rounded shadow-lg', statusClass, 'transition-opacity', 'duration-500', 'ease-in-out']"
-    >
-      <p>{{ message }}</p>
-    </div>
-  </Transition>
-</template>
-
 <script setup>
 import { ref, watch, computed } from 'vue'
 
@@ -53,3 +42,14 @@ watch(
   }
 )
 </script>
+
+<template>
+  <Transition name="fade">
+    <div
+      v-if="isVisible"
+      :class="['fixed bottom-10 left-4 p-4 rounded shadow-lg', statusClass, 'transition-opacity', 'duration-500', 'ease-in-out']"
+    >
+      <p>{{ message }}</p>
+    </div>
+  </Transition>
+</template>

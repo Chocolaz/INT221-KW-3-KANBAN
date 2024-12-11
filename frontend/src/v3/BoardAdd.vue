@@ -1,6 +1,3 @@
-<!-- design-->
-
-
 <template>
     <div class="flex justify-center items-center mt-52 "> 
       <div class="bg-gradient-to-r from-pink-500 to-purple-500 p-4 rounded max-w-xl w-full mx-4">
@@ -21,9 +18,3 @@
     </div>
   </template>
   
-  <script>
-  </script>
-  
-  <style scoped>
-
-  </style>
