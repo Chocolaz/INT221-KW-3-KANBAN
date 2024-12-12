@@ -1,5 +1,3 @@
-import { useRouter } from 'vue-router'
-
 const baseUrl3 = import.meta.env.VITE_API_URL3
 
 const handleResponse = async (response) => {

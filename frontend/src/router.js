@@ -92,10 +92,12 @@ const router = createRouter({
 })
 
 router.beforeEach(async (to, from, next) => {
+  // 1. Check Token Validity
   const { isAccessTokenValid, isRefreshTokenValid } = checkTokenValidity()
 
   let isAuthenticated = isAccessTokenValid
 
+  // 2. Handle Board Access
   if (to.params.boardId) {
     try {
       const { hasAccess, notFound, isPublic } = await checkBoardAccess(
@@ -106,6 +108,7 @@ router.beforeEach(async (to, from, next) => {
         return next({ name: 'notFound' })
       }
 
+      // Allow access to public boards
       if (isPublic) {
         return next()
       }
@@ -118,23 +121,27 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
+  // 3. Handle Authentication (for routes requiring auth)
   if (to.meta.requiresAuth && !isAuthenticated) {
     const refreshToken = getRefreshToken()
 
     if (refreshToken && isRefreshTokenValid) {
       try {
         await refreshAccessToken()
+        // Update auth status after successful refresh
         isAuthenticated = true
       } catch (error) {
         removeTokens()
         return next({ name: 'loginView', query: { redirect: to.fullPath } })
       }
     } else {
+      // Redirect to login if no valid refresh token
       removeTokens()
       return next({ name: 'loginView', query: { redirect: to.fullPath } })
     }
   }
 
+  // 4. Handle Login Redirect (if authenticated user tries to access login)
   if (to.name === 'loginView' && isAuthenticated) {
     return next({ name: 'boardView' })
   }

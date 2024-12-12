@@ -23,6 +23,7 @@ export function removeTokens() {
   localStorage.removeItem('username')
 }
 
+// Fetches a new access token using the refresh token.
 export async function refreshAccessToken() {
   const refreshToken = getRefreshToken()
   if (!refreshToken) {
@@ -51,6 +52,7 @@ export async function refreshAccessToken() {
   }
 }
 
+// Checks if a token is valid (not expired) using jwtDecode.
 export const isTokenValid = (token, tokenType = 'access') => {
   if (!token) return false
 
@@ -69,6 +71,7 @@ export const isTokenValid = (token, tokenType = 'access') => {
   }
 }
 
+// Returns the time remaining until a token expires (in seconds)
 export const getTokenExpirationTime = (token) => {
   try {
     const decodedToken = jwtDecode.decode(token)
@@ -85,6 +88,7 @@ export const getTokenExpirationTime = (token) => {
   }
 }
 
+// Checks the validity of both access and refresh tokens, their expiration times.
 export const checkTokenValidity = () => {
   const accessToken = getAccessToken()
   const refreshToken = getRefreshToken()
@@ -99,6 +103,7 @@ export const checkTokenValidity = () => {
     ? getTokenExpirationTime(refreshToken)
     : null
 
+  // Returns an object with relevant information.
   return {
     isAccessTokenValid,
     isRefreshTokenValid,
@@ -107,22 +112,30 @@ export const checkTokenValidity = () => {
   }
 }
 
+// Checks if the current user has access to a specific board.
 export async function checkBoardAccess(boardId) {
   try {
     const response = await fetchUtils.getBoards(boardId)
 
+    // Handles various scenarios: success, not found, public boards, ownership, and collaboration.
+
+    //Access denied
     if (response.statusCode === 403) {
       return { hasAccess: false, notFound: false, isPublic: false }
     }
+
+    //Not found
     if (response.statusCode === 404) {
       return { hasAccess: false, notFound: true, isPublic: false }
     }
 
+    //Public visibility
     const boardData = response.data
     if (boardData.visibility === 'public') {
       return { hasAccess: true, notFound: false, isPublic: true }
     }
 
+    //Ownership
     const currentUser = localStorage.getItem('username')
     const boardOwner = boardData.owner.username || boardData.owner.name
 
@@ -130,6 +143,7 @@ export async function checkBoardAccess(boardId) {
       return { hasAccess: true, notFound: false, isPublic: false }
     }
 
+    //Collaborators
     const collaborators = await fetchUtils.getCollab(boardId)
     const hasAccess = collaborators.some(
       (collab) =>
@@ -141,6 +155,7 @@ export async function checkBoardAccess(boardId) {
       return { hasAccess: true, notFound: false, isPublic: false }
     }
 
+    //Default
     return { hasAccess: false, notFound: false, isPublic: false }
   } catch (error) {
     return {
