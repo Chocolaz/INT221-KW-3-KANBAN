@@ -142,7 +142,7 @@ public class BoardService {
         Board updatedBoard = boardRepository.save(board);
         return convertToDTO(updatedBoard);
     }
-    public List<BoardDTO> getBoardsForUser(String token) {
+     public List<BoardDTO> getBoardsForUser(String token) {
         if (token == null) {
             return boardRepository.findByVisibility(Board.BoardVisibility.PUBLIC)
                     .stream()
@@ -154,23 +154,33 @@ public class BoardService {
         PMUser user = pmUserRepository.findById(userOid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
 
-        Set<Board> userBoards = new HashSet<>(boardRepository.findByOwnerOid(user));
-        Set<Board> publicBoards = new HashSet<>(boardRepository.findByVisibility(Board.BoardVisibility.PUBLIC));
-        Set<Board> collaborationBoards = collabRepository.findByOid(user)
-                .stream()
+        // Find all unique board OIDs for the user
+        Set<String> userBoardOids = new HashSet<>();
+
+        List<BoardDTO> result = new ArrayList<>();
+
+        // Add user's owned boards
+        boardRepository.findByOwnerOid(user).stream()
+                .filter(board -> userBoardOids.add(board.getId()))
+                .map(this::convertToDTO)
+                .forEach(result::add);
+
+        // Add public boards not already in the list
+        boardRepository.findByVisibility(Board.BoardVisibility.PUBLIC).stream()
+                .filter(board -> userBoardOids.add(board.getId()))
+                .map(this::convertToDTO)
+                .forEach(result::add);
+
+        // Add collaboration boards not already in the list
+        collabRepository.findByOid(user).stream()
                 .filter(collab -> collab.getAccess_right() == Collab.AccessRight.WRITE
                         || collab.getAccess_right() == Collab.AccessRight.READ)
                 .map(Collab::getBoard)
-                .collect(Collectors.toSet());
-
-        Set<Board> allBoards = new HashSet<>();
-        allBoards.addAll(userBoards);
-        allBoards.addAll(publicBoards);
-        allBoards.addAll(collaborationBoards);
-
-        return allBoards.stream()
+                .filter(board -> userBoardOids.add(board.getId()))
                 .map(this::convertToDTO)
-                .collect(Collectors.toList());
+                .forEach(result::add);
+
+        return result;
     }
 
     public BoardDTO getBoardById(String id, String token) {
